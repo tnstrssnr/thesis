@@ -1,0 +1,10 @@
+thesis/build
+present/build
+thesis/thesis.pdf
+thesis/*.log
+thesis/*.aux
+thesis/*.fdb_latexmk
+thesis/*.fls
+present/present.pdf
+
+workspace.code-workspace
