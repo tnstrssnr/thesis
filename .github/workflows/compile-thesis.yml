@@ -1,0 +1,19 @@
+name: build-thesis
+on: [push]
+jobs:
+  build_latex:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Git Repository
+        uses: actions/checkout@v2
+      - name: Compile LaTex Document
+        uses: xu-cheng/texlive-action/full@v1
+          with:
+            run: |
+              apk add make
+              make
+      - name: Upload PDF
+        uses: actions/upload-artifact@v2
+            with:
+              name: thesis.pdf
+              path: build/thesis.pdf
