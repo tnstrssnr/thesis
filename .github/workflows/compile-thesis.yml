@@ -14,6 +14,6 @@ jobs:
             make
       - name: Upload PDF
         uses: actions/upload-artifact@v2
-          with:
-            name: thesis.pdf
-            path: build/thesis.pdf
+        with:
+          name: thesis.pdf
+          path: build/thesis.pdf
