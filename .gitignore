@@ -8,3 +8,4 @@ thesis/*.fls
 present/present.pdf
 
 workspace.code-workspace
+.vscode/
