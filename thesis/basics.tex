@@ -4,6 +4,11 @@ This chapter presents the theoretical foundations of this thesis.
 % TODO: at least 1 more sentence
 
 \section{Quantitative Information Flow Control}
+% Control ?!?!?!
+
+- Informationsfluss
+- Secure information Flow
+- Quantitative information flow
 
 % QIFC
 % attacker model
@@ -19,17 +24,28 @@ Quantitative information flow analysis provides tools to measure how much inform
 % SAT-Based Analysis and Quantification of Information Flow in Programs (Klebanov et al. '13) -- \cite{klebanov13}
 % Quantifiying Dynamic Leakage: Complexity Analysis and Model Counting-based Calculation (Chu et al '19) -- \cite{chu19}
 % Quantifying Dynamic Leakage: Complexity Analysis and Model Counting-based Calculation (Besson et al. '16) -- \cite{besson16}
-% TODO: add proper citations troughout section
+% TODO: add proper citations throughout section
 
-We consider the following scenario: Given a program $p$, that accepts some input \texttt{H} and produces some output \texttt{L}, how much information can an adversary $\mathcal{A}$ learn about $H$, by observing $p$ and \texttt{L}.
+% Nildumu: joana / stand-alone -> API zum AST aufbauen
+% was macht dieser Kommentar hier
+% vergleiche mal commits der 2 versionen
 
-\emph{Input program} We assume $p$ to be a sequential, deterministic program, that receives a set of inputs $\mathtt{H = \{h_1, ..., h_n\}}$ and produces a set of outputs $\mathtt{L = \{l_1, ..., l_m\}}$. Inputs are chosen based on a publicly known a priori probability distribution. Outputs can be produced at any point during the execution. 
-We restrict ourselves to analyzing programs that terminate normally. The program text of $p$ is publicly known.
+We consider the following scenario: Given a program \p, that accepts some input \In and produces some output \Out, how much information can an adversary \A learn about $H$, by observing \p and \Out.
+
+%% \paragraph statt \emph
+\paragraph{Input program} We assume \p to be a sequential, deterministic program, that receives a set of inputs $\mathtt{H = \{h_1, ..., h_n\}}$ and produces a set of outputs $\mathtt{L = \{l_1, ..., l_m\}}$. Inputs are chosen based on a publicly known a priori probability distribution. Outputs can be produced at any point during the execution. 
+We restrict ourselves to analyzing programs that terminate normally. The program text of \p is publicly known.
 % TODO: specify scope of language
 
-\emph{Security Lattice} Each element of \texttt{H} and \texttt{L} is associated with an element of a security lattice, describing its confidentiality level. We use a lattice with two elements $\hat{l}$, for public values and $\hat{h}$ for secret values.
+\emph{Security Lattice} Each element of \In and \Out is associated with an element of a security lattice, describing its confidentiality level. We use a lattice with two elements $\hat{l}$, for public values and $\hat{h}$ for secret values.
+% Schneider -- nur high und low
 
-\emph{Attacker Model} We consider an adversary $\mathcal{A}$ that is able to choose public inputs of $p$ and observe the resulting outputs on public channels. The attacker is not able to gain information via convert channels, such as timing, storage or resource usage.
+
+\emph{Attacker Model} We consider an adversary \A that is able to choose public inputs of \p and observe the resulting outputs on public channels. The attacker is not able to gain information via convert channels, such as timing, storage or resource usage.
+
+%% standard def von min etropy aus smith paper funzt nicht für public inputs
+%% new notion (min-entropy ???)
+%% handbuch for quantitative information flow
 
 % many leakage measures use average over all possible executions (min entropy, Shannon entropy)
 % leakage can differ greatly between different executions --> example algorithm 1
@@ -52,16 +68,24 @@ In \cite{smith09}, Smith characterizes information leakage with the following eq
 \begin{center}
     Initial uncertainty = information leaked + remaining uncertainty.
 \end{center}
-In our scenario, the unknown value \texttt{H} is the initial uncertainty, measured by some entropy measure. The remaining uncertainty is the entropy of \texttt{H} after observing \texttt{L}. 
+In our scenario, the unknown value \In is the initial uncertainty, measured by some entropy measure. The remaining uncertainty is the entropy of \In after observing \Out. 
 
-
-Because programs are deterministic, we can describe the outputs as a function $\phi_p$ of the inputs, thus $\mathtt{L} = \phi(\mathtt{H})$. Likewise it holds that $\phi_p^{-1}(\mathtt{L}) = \{ \mathtt{H} | \phi(\mathtt{H}) = \mathtt{L} \}$ is the set of all inputs, that produce the same output $\mathtt{L}$.
+Because programs are deterministic, we can describe the outputs as a function $\phi_p$ of the inputs, thus $\mOut = \phi(\mIn)$. Likewise it holds that $\phi_p^{-1}(\mOut) = \{ \mIn | \phi(\mIn) = \mOut \}$ is the set of all inputs, that produce the same output $\mOut$.
 
 \begin{definition}[Indistinguishability relation]
         bla bla bla
 \end{definition}
 
+\section{Approximate Model Counting}
 
-\section{Approximative Model Counting}
+% Model Counting
+% Complexity
+% Hashing-based approaches
+% Application to CNF
+% (\epsilon, \delta) approximation / "Probably Approximately Correct"
+
+%%% relevant for this section
+% The Complexity of Enumeration and Reliability Problems (Valiant '79) -- \cite{valiant79}
+% A scalable approximate model counter (chakraborty '13) -- \cite{chakraborty13}
 
 \section{Related Work}
