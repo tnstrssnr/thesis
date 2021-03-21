@@ -9,34 +9,92 @@ We define $\mbool = \{ \mttt, \mfff \}$ as the set of boolean constants.
 % - javac --> bytecode
 % working on CFG + SSA form
 
+\section{Preliminary Definitions}
+
+Before we start analysing the input program \p, we convert \p into SSA-form.
+
+% TODO: define preds(.) + succs(.)
+
+\begin{definition}[Immediate dominator] The immediate dominator of a basic block $b$ is the basic block $b'$ that strictly dominates $b$ and that is simultaneously dominated by every strict dominator of $b$.
+    \begin{center}
+        $idom\colon \mbb_p \longrightarrow \mbb_p$
+    \end{center}
+\end{definition}
+
+\begin{definition}[Jump condition] The function $JumpCond$ takes two basic blocks $b_1$ and $b_2$, where $b_1 \in preds(b_2)$ and returns a boolean formula that describes under which condition the program execution will jump from $b_1$ to $b_2$. If the jump instruction is unconditional, then $JmpCond$ will simply return \ttt.
+    \begin{center}
+        $JmpCond\colon \mbb_p \times \mbb_p \longrightarrow \mbform$
+    \end{center}
+\end{definition}
+
+\begin{figure}
+    \centering
+    \begin{tikzpicture}[
+                > = stealth, % arrow head style
+                shorten > = 1pt, % don't touch arrow head to node
+                auto,
+                node distance = 3cm, % distance between nodes
+                semithick % line style
+            ]
+
+            \node[rectangle, draw, align=center, minimum width=2.5cm, minimum height=1cm] (0) {$b_0$};
+            \node[rectangle, draw, align=center, minimum width=2.5cm, minimum height=1cm] (s) [below of=0] {$b_1$ \\ ... \\ \bigskip \texttt{jmp if} \textit{e}};
+            \node[rectangle, draw, align=center, minimum width=2cm, minimum height=1cm, xshift=-2cm] (v1) [below left of=s] {$b_2$};
+            \node[rectangle, draw, align=center, minimum width=2cm, minimum height=1cm, xshift=2cm] (v2) [below right of=s] {$b_3$};
+
+            \path[->] (0) edge (s);
+            \path[->] (s) edge node[above, xshift=-.5cm] {\ttt} (v1);
+            \path[->] (s) edge node[above, xshift=.5cm] {\fff} (v2);
+    \end{tikzpicture}
+    \caption{An examplary control flow graph to demonstrate the $JmpCond$ function. The function returns $JmpCond(b_0, b_1) = \mttt, JmpCond(b_1, b_2) = e$ and $JmpCond(b_1, b_3) = \neg e$}
+    % TODO: better caption
+\end{figure}
+    
 \section{Basic Analysis Design}
 
 % while implementation uses java syntax, we will use a simplified syntax in this thesis to increase readability
 % define boolean formulas
 
+
+
 In order to describe the information about the secret inputs that are contained in certain parts of the input program, we use boolean formulas.
 
 % define implicit leakages
+\paragraph{Explicit Knowledge Function}
+
+
 
 \paragraph{Implicit Information Flow}
 
-\begin{definition}{Implicit Knowledge Function} % TODO: is knowledge the right word to use here?
+\begin{definition}[Implicit Knowledge Function] % TODO: is knowledge the right word to use here?
     \begin{center}
         $\Phi\colon \mbb_p \longrightarrow \mbform$ \\
         
+        
+        %\begin{equation*}
+        %    b \mapsto
+        %\begin{cases}
+        %    \mttt & b = \mathtt{start} \\
+        
+        %    \Phi(idom(b)) \land e & \parbox[t]{.6\textwidth}{$idom(b)$ is direct predecessor of $b$ and jump from $idom(b)$ to $b$ is conditional on expression $e$ being \ttt}\\ 
+
+        %    \Phi(idom(b)) \land \not e & \parbox[t]{.6\textwidth}{$idom(b)$ is direct predecessor of $b$ and jump from $idom(b)$ to $b$ is conditional on expression $e$ being \fff}\\ 
+
+        %    \Phi(idom(b)) & \text{otherwise}\\ 
+        %\end{cases}
+        %\end{equation*}
+
         \begin{equation*}
-            b \mapsto
-        \begin{cases}
-            \mttt & b = \mathtt{start} \\
-
-            \Phi(idom(b)) \land e & \parbox[t]{.6\textwidth}{$idom(b)$ is direct predecessor of $b$ and jump from $idom(b)$ to $b$ is conditional on expression $e$ being \ttt}\\ 
-
-            \Phi(idom(b)) \land \not e & \parbox[t]{.6\textwidth}{$idom(b)$ is direct predecessor of $b$ and jump from $idom(b)$ to $b$ is conditional on expression $e$ being \fff}\\ 
-
-            \Phi(idom(b)) & \text{otherwise}\\ 
-        \end{cases}
+                b \mapsto
+            \begin{cases}
+                \mttt & b = \mathtt{start} \\
+                \bigvee\limits_{b' \in preds(b)} \Phi(b') \land JmpCond(b', b) & \text{otherwise}
+            \end{cases}
         \end{equation*}
     \end{center}
+
+    % Theorem:    Can use immediate dominator for JmpCond ....
+
     % TODO: better description for the case conditions
     % TODO: define idom(.)
     % TODO: check if this is even correct lol
