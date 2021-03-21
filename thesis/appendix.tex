@@ -1,12 +1,35 @@
 \chapter{Sonstiges}
 
 \section{Naming Conventions}
+\subsection{Identifiers used throughout the thesis:}
 \begin{table}
-    \begin{tabular}{ccc}
+    \centering
+    \begin{tabular}{lll}
         \textbf{Identifier} & \textbf{Meaning / Definition} & \textbf{Custom Command} \\
         \A & Adversary & \verb_\A_ \\
         \In & Secret input value & \verb_\In_ \verb_\mIn_\\
         \Out & Public output value & \verb_\Out_ \verb_\mOut_\\
         \p & input program & \verb_\p_ \\
+        \bool & $\{\mttt, \mfff\}$ & \verb_\bool_ \verb_\mbool_ \\
+        \ttt & Boolean constant true & \verb_\ttt_ \verb_\mtt_ \\
+        \fff & Boolean constant true & \verb_\fff_ \verb_\mfff_ \\
+        \bform & Set of Boolean formulas & \verb_\bform_ \\
+        \bb$_p$ & Set of Basic Blocks for program \p & \verb_\bb_ \\
+        \val$_p$ & Set of Values for program \p $\:$ in SSA form & \verb_\val_ \\
+        $\mathtt{start}_p$ & start block of \p's CFG & - \\
+        $\mathtt{end}_p$ & end block of \p's CFG & - \\
     \end{tabular}
 \end{table}
+
+\subsection{Other conventions}
+\begin{itemize}
+    \item \textbf{Boolean variables: } latin letters int italic font face (standard math mode font face) (e.g. $x_1^0, x_1^1, x_1^2$), subscript describes the value number of the program variable (if applicable), superscript describes the bit position (if applicable)
+    \item \textbf{Boolean formula vector: } bold face letters ($\mathbf{x}$)
+    \item \textbf{Program variables: } monospace font (\texttt{x, y, z}) 
+    \begin{itemize}
+        \item secret inputs are always called \texttt{h}, public outputs are always called \texttt{l}
+    \end{itemize}
+\end{itemize}
+
+% set of Basic Blocks in a program
+% set of values in a program

@@ -1,2 +1,52 @@
-\chapter{Entwurf und Implementierung}\label{sec:impl}
+\chapter{Design and Implementation}\label{sec:impl}
 
+The following chapter will break down the analysis techniques used in the interpreter to estimate the information leakage for the current run of the program. We will explain the basic principles of the analysis, beforegoing into further detail of handling more complex control flow structures. Lastly we will present the integration of the control fow analysis with the interpreter and how the analysis was implemented.
+
+Throughout we will use the following notation conventions:
+We define $\mbool = \{ \mttt, \mfff \}$ as the set of boolean constants.
+
+% input program:
+% - javac --> bytecode
+% working on CFG + SSA form
+
+\section{Basic Analysis Design}
+
+% while implementation uses java syntax, we will use a simplified syntax in this thesis to increase readability
+% define boolean formulas
+
+In order to describe the information about the secret inputs that are contained in certain parts of the input program, we use boolean formulas.
+
+% define implicit leakages
+
+\paragraph{Implicit Information Flow}
+
+\begin{definition}{Implicit Knowledge Function} % TODO: is knowledge the right word to use here?
+    \begin{center}
+        $\Phi\colon \mbb_p \longrightarrow \mbform$ \\
+        
+        \begin{equation*}
+            b \mapsto
+        \begin{cases}
+            \mttt & b = \mathtt{start} \\
+
+            \Phi(idom(b)) \land e & \parbox[t]{.6\textwidth}{$idom(b)$ is direct predecessor of $b$ and jump from $idom(b)$ to $b$ is conditional on expression $e$ being \ttt}\\ 
+
+            \Phi(idom(b)) \land \not e & \parbox[t]{.6\textwidth}{$idom(b)$ is direct predecessor of $b$ and jump from $idom(b)$ to $b$ is conditional on expression $e$ being \fff}\\ 
+
+            \Phi(idom(b)) & \text{otherwise}\\ 
+        \end{cases}
+        \end{equation*}
+    \end{center}
+    % TODO: better description for the case conditions
+    % TODO: define idom(.)
+    % TODO: check if this is even correct lol
+    The implicit knowledge-function maps a basic block $b \in \mbb_p$ of the input program \p to a boolean formula $f \in \mbform$ that describes the conditions that must be fulfilled by the program's values, if the $b$ is executed.
+\end{definition}
+
+% map + semantics for finding implicit leakage
+
+\section{Handling Loops, Recursion and Function calls}
+
+\section{Integration with Interpreter}
+
+\section{Implementation}
