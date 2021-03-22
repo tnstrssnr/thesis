@@ -1,19 +1,32 @@
 \chapter{Design and Implementation}\label{sec:impl}
 
-The following chapter will break down the analysis techniques used in the interpreter to estimate the information leakage for the current run of the program. We will explain the basic principles of the analysis, beforegoing into further detail of handling more complex control flow structures. Lastly we will present the integration of the control fow analysis with the interpreter and how the analysis was implemented.
-
-Throughout we will use the following notation conventions:
-We define $\mbool = \{ \mttt, \mfff \}$ as the set of boolean constants.
+The following chapter will break down the analysis techniques used in the interpreter to estimate the information leakage for the current run of the program. We will explain the basic principles of the analysis, before going into further detail of handling more complex control flow structures. Lastly we will present the integration of the control flow analysis with the interpreter and how the analysis was implemented.
 
 % input program:
 % - javac --> bytecode
 % working on CFG + SSA form
 
-\section{Preliminary Definitions}
+\section{Program Syntax and Representation}
 
-Before we start analysing the input program \p, we convert \p into SSA-form.
+% TODO: where to put this part?
+Input programs are written in Java, however we only allow a subset of Java's features to be used. Effectively our input language is a variant of the \texttt{while}-language. We use the special function \texttt{print} $x$ to leak the value $x$ to a public output channel. Figure \ref{fig:while_syntax} shows the scope of language features using a simplified syntax. 
 
-% TODO: define preds(.) + succs(.)
+% TODO: syntax --> grammar ??
+% TODO: data type --> int
+
+To analyse out input program \p, we use the control flow graph (CFG) of its static single assignment (SSA) form. In SSA form, every value of the program is assigned exactly once. We write \val$_p$ to denote the set of all values of a program.
+
+For each program \pp, we define $\bb_p$ as the set of basic blocks of \pp. We use the functions $succ(\cdot), pred(\cdot): \bb_p \longrightarrow 2^{\bb_p}$ to respectively get the successors or predecessors of a basic block. The nodes of the CFG $G = (V, E)$ of \p are $V = \bb_p \cup \{\mathtt{start}, \mathtt{end}\}$. 
+
+% TODO: explain start and end node
+% TODO: same name for function and set ?!
+
+\begin{definition}[Def-Basic Block Map]
+    A function that maps a program value to the basic block, where it is defined. Because all our input programs are in SSA form, this function is well-defined.
+    \begin{center}
+        $bb_p\colon: $\val$ \longrightarrow \bb_p$
+    \end{center} 
+\end{definition}
 
 \begin{definition}[Immediate dominator] The immediate dominator of a basic block $b$ is the basic block $b'$ that strictly dominates $b$ and that is simultaneously dominated by every strict dominator of $b$.
     \begin{center}
@@ -26,8 +39,10 @@ Before we start analysing the input program \p, we convert \p into SSA-form.
         $JmpCond\colon \mbb_p \times \mbb_p \longrightarrow \mbform$
     \end{center}
 \end{definition}
+An example evaluation of this function is shown in figure \ref{fig:jmp_cond}.
 
-\begin{figure}
+\begin{figure}[H]
+    \label{fig:jmp_cond}
     \centering
     \begin{tikzpicture}[
                 > = stealth, % arrow head style
@@ -38,15 +53,15 @@ Before we start analysing the input program \p, we convert \p into SSA-form.
             ]
 
             \node[rectangle, draw, align=center, minimum width=2.5cm, minimum height=1cm] (0) {$b_0$};
-            \node[rectangle, draw, align=center, minimum width=2.5cm, minimum height=1cm] (s) [below of=0] {$b_1$ \\ ... \\ \bigskip \texttt{jmp if} \textit{e}};
+            \node[rectangle, draw, align=center, minimum width=2.5cm, minimum height=1cm] (s) [below of=0] {$b_1$ \\... \\ \bigskip \texttt{jmp} \textit{e} \texttt{?} $b_2$ \texttt{:} $b_3$};
             \node[rectangle, draw, align=center, minimum width=2cm, minimum height=1cm, xshift=-2cm] (v1) [below left of=s] {$b_2$};
             \node[rectangle, draw, align=center, minimum width=2cm, minimum height=1cm, xshift=2cm] (v2) [below right of=s] {$b_3$};
 
             \path[->] (0) edge (s);
-            \path[->] (s) edge node[above, xshift=-.5cm] {\ttt} (v1);
-            \path[->] (s) edge node[above, xshift=.5cm] {\fff} (v2);
+            \path[->] (s) edge (v1);
+            \path[->] (s) edge (v2);
     \end{tikzpicture}
-    \caption{An examplary control flow graph to demonstrate the $JmpCond$ function. The function returns $JmpCond(b_0, b_1) = \mttt, JmpCond(b_1, b_2) = e$ and $JmpCond(b_1, b_3) = \neg e$}
+    \caption{An exemplary control flow graph to demonstrate the $JmpCond$ function. The function returns $JmpCond(b_0, b_1) = \mttt, JmpCond(b_1, b_2) = e$ and $JmpCond(b_1, b_3) = \neg e$}
     % TODO: better caption
 \end{figure}
     
@@ -60,46 +75,33 @@ Before we start analysing the input program \p, we convert \p into SSA-form.
 In order to describe the information about the secret inputs that are contained in certain parts of the input program, we use boolean formulas.
 
 % define implicit leakages
-\paragraph{Explicit Knowledge Function}
-
-
-
 \paragraph{Implicit Information Flow}
+Information flow is called \emph{implicit}, if is not the result of a direct assignment of secret values to public variables, but rather the flow of execution in the program that is dependent on secret values.
 
-\begin{definition}[Implicit Knowledge Function] % TODO: is knowledge the right word to use here?
+% TODO: Satz ist ziemlich unverständlich
+
+\begin{definition}[Implicit Knowledge Function] 
     \begin{center}
         $\Phi\colon \mbb_p \longrightarrow \mbform$ \\
-        
-        
-        %\begin{equation*}
-        %    b \mapsto
-        %\begin{cases}
-        %    \mttt & b = \mathtt{start} \\
-        
-        %    \Phi(idom(b)) \land e & \parbox[t]{.6\textwidth}{$idom(b)$ is direct predecessor of $b$ and jump from $idom(b)$ to $b$ is conditional on expression $e$ being \ttt}\\ 
-
-        %    \Phi(idom(b)) \land \not e & \parbox[t]{.6\textwidth}{$idom(b)$ is direct predecessor of $b$ and jump from $idom(b)$ to $b$ is conditional on expression $e$ being \fff}\\ 
-
-        %    \Phi(idom(b)) & \text{otherwise}\\ 
-        %\end{cases}
-        %\end{equation*}
-
         \begin{equation*}
-                b \mapsto
-            \begin{cases}
-                \mttt & b = \mathtt{start} \\
-                \bigvee\limits_{b' \in preds(b)} \Phi(b') \land JmpCond(b', b) & \text{otherwise}
-            \end{cases}
+            b \mapsto
+        \begin{cases}
+            \mttt & b = \mathtt{start} \\
+            \Phi(idom(b)) \land e & \parbox[t]{.6\textwidth}{$idom(b) \in pred(b) \land JmpCond(idom(b), b) = e$}\\ 
+            \Phi(idom(b)) & \text{otherwise}\\ 
+        \end{cases}
         \end{equation*}
     \end{center}
-
-    % Theorem:    Can use immediate dominator for JmpCond ....
-
-    % TODO: better description for the case conditions
-    % TODO: define idom(.)
-    % TODO: check if this is even correct lol
     The implicit knowledge-function maps a basic block $b \in \mbb_p$ of the input program \p to a boolean formula $f \in \mbform$ that describes the conditions that must be fulfilled by the program's values, if the $b$ is executed.
 \end{definition}
+
+
+% TODO: better description for the case conditions
+% TODO: check if this is even correct lol
+% TODO: is knowledge the right word to use here?
+% TODO: find better name for function than Phi
+
+\paragraph{Explicit Knowledge Function}
 
 % map + semantics for finding implicit leakage
 
