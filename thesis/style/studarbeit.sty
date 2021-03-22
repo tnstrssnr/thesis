@@ -139,12 +139,23 @@
 
 \recalctypearea % necessary if e.g. somebody changes fonts
 
-%%% own settings + styles
 
+
+
+
+
+
+%%%%% own settings + styles %%%%%
+
+%%% packages
 \usepackage{verbatim}
 \usepackage{amsthm}
 \usepackage{amssymb}
 \usepackage{amsmath}
+\usepackage{fourier}
+\usepackage{semantic}
+
+%%% environments
 \theoremstyle{definition}
 \newtheorem{definition}{Definition}[section]
 \newtheorem{theorem}{Theorem}
@@ -171,8 +182,10 @@
 \newcommand{\mfff}{\mathtt{false}}
 \newcommand{\ttt}{\texttt{true}}
 \newcommand{\mttt}{\mathtt{true}}
-\newcommand{\bform}{$\mathcal{F}_\mbool$}
-\newcommand{\mbform}{\mathcal{F}_\mbool}
+\newcommand{\bform}{$\mathcal{F}$}
+\newcommand{\mbform}{\mathcal{F}}
 \newcommand{\bb}{\textsc{BB}}
 \newcommand{\mbb}{$\textsc{BB}$}
 \newcommand{\val}{\textsc{Val}}
+\newcommand{\depvec}[1]{\llbracket\mathtt{#1}\rrbracket}
+\newcommand{\var}{\mathcal{V}ar}

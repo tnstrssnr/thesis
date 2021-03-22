@@ -12,7 +12,7 @@ The following chapter will break down the analysis techniques used in the interp
 Input programs are written in Java, however we only allow a subset of Java's features to be used. Effectively our input language is a variant of the \texttt{while}-language. We use the special function \texttt{print} $x$ to leak the value $x$ to a public output channel. Figure \ref{fig:while_syntax} shows the scope of language features using a simplified syntax. 
 
 % TODO: syntax --> grammar ??
-% TODO: data type --> int
+% TODO: data type --> int, fixed width
 
 To analyse out input program \p, we use the control flow graph (CFG) of its static single assignment (SSA) form. In SSA form, every value of the program is assigned exactly once. We write \val$_p$ to denote the set of all values of a program.
 
@@ -33,6 +33,48 @@ For each program \pp, we define $\bb_p$ as the set of basic blocks of \pp. We us
         $idom\colon \mbb_p \longrightarrow \mbb_p$
     \end{center}
 \end{definition}
+
+\section{Basic Analysis Design}
+
+We use propositional logic to track the way that information about the secret inputs flows through the program. Each program value is interpreted as a bit vector, where each bit is associated with a propositional formula that encodes how the state of the bit is dependent on the secret inputs. We will use subscript indices to access the i-th bit of a program value or the i-th element of a vector respectively. The bitwidth of a value \texttt{x} will be denoted as $width(\mathtt{x})$.
+
+% TODO: set of propositional formulas over set
+
+\begin{definition}[Independent Set]
+    Let \texttt{H} be the set of input values of \pp.
+    \begin{center}
+        $\var_p := \bigcup\limits_{\mathtt{h} \in \mathtt{H}} \{h^j | 0 \leq j \leq width(\mathtt{h})\}$
+    \end{center}
+    The values of a program's input parameters are not dependent on any other value in the program. We define the set $\var_p$, that contains a propositional variable for each input bit. Every other value of \p is either constant or can be described by a propositional formula over $\var_p$.
+\end{definition}
+
+We will write $\mbform_{\var_p}$ for the set of all propositional formulas over $var_p$.
+
+\begin{definition}[Input dependency map]
+    For each bit $\mathtt{x}_i$, $\depvec{x}_i$ describes its dependencies to the programs input parameters, i.e. for an execution with input values \In, it holds that $\mathtt{x}_i == 1 \iff \depvec{x}_i == \mttt$ for $0 \leq i < width(\mathtt{x})$
+    \begin{center}
+        $\llbracket \cdot \rrbracket\colon \val_p \longrightarrow \mbform_{\var_p}^{width(mathtt{x})}$
+    \end{center}
+\end{definition}
+
+To represent integer arithmetic as propositional formulas, we use two's complement representation of integers.
+
+\begin{definition}[Two's complement]
+    A function that for a given integer $n$ returns a vector of boolean constants that corresponds to the two's complement of $n$, where $0$ is represented by the value \fff and $1$ is represented by the value \ttt.
+    \begin{center}
+        $tcmp_l\colon: \mathbb{Z} \longrightarrow \{ \mttt, \mfff \}^l$
+    \end{center}
+    The map $tcmp_l$ is parameterized by the length $l$ of the return vector. If an integer $n$ requires $k > l$ bit to be correctly represented as a two's complement bit vector, $tcml$ will cut off the first $k - l$ bits and return the remaining vector.
+\end{definition}
+
+We extend the arithmetic operators of our input language to also operate on propositional formula vectors, treating them as two's complement integers and returning the result as a propositional formula vector of the same length. For a more in-depth explanation, we refer to \cite{}.
+% TODO: citation
+% TODO: arithmetic on twos complement numbers --> how detailed should this be? 
+\begin{figure}
+    \label{fig:input_deps_computation}
+
+
+\end{figure}
 
 \begin{definition}[Jump condition] The function $JumpCond$ takes two basic blocks $b_1$ and $b_2$, where $b_1 \in preds(b_2)$ and returns a boolean formula that describes under which condition the program execution will jump from $b_1$ to $b_2$. If the jump instruction is unconditional, then $JmpCond$ will simply return \ttt.
     \begin{center}
@@ -64,15 +106,6 @@ An example evaluation of this function is shown in figure \ref{fig:jmp_cond}.
     \caption{An exemplary control flow graph to demonstrate the $JmpCond$ function. The function returns $JmpCond(b_0, b_1) = \mttt, JmpCond(b_1, b_2) = e$ and $JmpCond(b_1, b_3) = \neg e$}
     % TODO: better caption
 \end{figure}
-    
-\section{Basic Analysis Design}
-
-% while implementation uses java syntax, we will use a simplified syntax in this thesis to increase readability
-% define boolean formulas
-
-
-
-In order to describe the information about the secret inputs that are contained in certain parts of the input program, we use boolean formulas.
 
 % define implicit leakages
 \paragraph{Implicit Information Flow}
