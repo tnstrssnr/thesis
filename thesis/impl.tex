@@ -38,8 +38,6 @@ For each program \pp, we define $\bb_p$ as the set of basic blocks of \pp. We us
 
 We use propositional logic to track the way that information about the secret inputs flows through the program. Each program value is interpreted as a bit vector, where each bit is associated with a propositional formula that encodes how the state of the bit is dependent on the secret inputs. We will use subscript indices to access the i-th bit of a program value or the i-th element of a vector respectively. The bitwidth of a value \texttt{x} will be denoted as $width(\mathtt{x})$.
 
-% TODO: set of propositional formulas over set
-
 \begin{definition}[Independent Set]
     Let \texttt{H} be the set of input values of \pp.
     \begin{center}
@@ -70,11 +68,22 @@ To represent integer arithmetic as propositional formulas, we use two's compleme
 We extend the arithmetic operators of our input language to also operate on propositional formula vectors, treating them as two's complement integers and returning the result as a propositional formula vector of the same length. For a more in-depth explanation, we refer to \cite{}.
 % TODO: citation
 % TODO: arithmetic on twos complement numbers --> how detailed should this be? 
+% TODO: same w/ bitwose operators
 \begin{figure}
     \label{fig:input_deps_computation}
-
-
+    \centering
+    \begin{gather*}
+        \inference[In]{\mathtt{h} \in \mathtt{H}}{\depvec{h} = (h^1, ... h^k)} \hspace{1cm}
+        \inference[Const]{n \in \text{\textsc{Const}}_p}{\depvec{n} = tcmp(n)} \\ \vspace{1cm}
+        \inference[BinArith]{\mathtt{x := y} \oplus \mathtt{z} & \depvec{y} = y & \depvec{z} = z & \oplus \in \{+, -, \cdot, \div\}}{\depvec{x} = y \oplus_{tcmp} z} \\ \vspace{1cm}
+        \inference[BinBitwise]{\mathtt{x := y} \otimes \mathtt{z} & \depvec{y} = y & \depvec{z} = z & \otimes \in \{\text{\&}, |, \XOR \}}{\depvec{x} = y \otimes_{tcmp} z}
+    \end{gather*}
+        
 \end{figure}
+
+% TODO: define width(int) = k
+% TODO: unary operations
+% TODO: Expressions
 
 \begin{definition}[Jump condition] The function $JumpCond$ takes two basic blocks $b_1$ and $b_2$, where $b_1 \in preds(b_2)$ and returns a boolean formula that describes under which condition the program execution will jump from $b_1$ to $b_2$. If the jump instruction is unconditional, then $JmpCond$ will simply return \ttt.
     \begin{center}
