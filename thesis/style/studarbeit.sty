@@ -154,6 +154,10 @@
 \usepackage{amsmath}
 \usepackage{fourier}
 \usepackage{semantic}
+\usepackage{syntax}
+\usepackage{comment}
+\setlength{\grammarparsep}{20pt plus 1pt minus 1pt} % increase separation between rules
+\setlength{\grammarindent}{12em} % increase separation between LHS/RHS 
 
 %%% environments
 \theoremstyle{definition}
@@ -170,7 +174,10 @@
 
 %%% commands for naming conventions
 \newcommand{\A}{$\mathcal{A}$}
+\newcommand{\I}{$\mathtt{I}$}
+\newcommand{\mI}{\mathtt{I}}
 \newcommand{\In}{\texttt{H}}
+\newcommand{\allIn}{$\mathcal{H}$}
 \newcommand{\Out}{\texttt{L}}
 \newcommand{\p}{$p \:$}
 \newcommand{\pp}{$p$}
@@ -190,3 +197,10 @@
 \newcommand{\depvec}[1]{\llbracket\mathtt{#1}\rrbracket}
 \newcommand{\var}{\mathcal{V}ar}
 \newcommand\XOR{\mathbin{\char`\^}}
+
+
+
+\newcommand{\separator}{\noindent\makebox[\linewidth]{\rule{\paperwidth}{0.4pt}}}
+\newcommand{\question}[1]{\textcolor{blue}{#1}}
+\newcommand{\note}[1]{\textcolor{purple}{#1}}
+\newcommand{\com}[1]{\textcolor{orange}{#1}}

@@ -6,35 +6,107 @@ The following chapter will break down the analysis techniques used in the interp
 % - javac --> bytecode
 % working on CFG + SSA form
 
-\section{Program Syntax and Representation}
+\section{Input Programs and Program Representation}
 
-% TODO: where to put this part?
-Input programs are written in Java, however we only allow a subset of Java's features to be used. Effectively our input language is a variant of the \texttt{while}-language. We use the special function \texttt{print} $x$ to leak the value $x$ to a public output channel. Figure \ref{fig:while_syntax} shows the scope of language features using a simplified syntax. 
+Input programs are written in a variant of the \texttt{while}-language with Java-like syntax. To introduce the basic principle of our analysis, we temporarily restrict the scope of the input language to the grammar shown in figure \ref{fig:whileSyntax}. We will denote secret inputs as $h_i$, constant values as $n_i$ and other program variables as $x_i$. The set of all input variables for a program will be denoted as \In and the set of all possible input sets is written as \allIn.
 
-% TODO: syntax --> grammar ??
+Semantically, we interpret programs per the standard semantics of the input language. The special function \texttt{print} $x$ leaks the value $x$ to a public output channel. All programs p are deterministic, which means for every \In $\in$ \allIn, there is a unique program execution, which we will call $p_\mIn$. Furthermore we assume that all program executions terminate normally, without throwing an exception.
+
+\begin{comment}
+   \begin{itemize}        
+        \item \question{Wie werden Eingabeparameter in Grammatiken angegeben?}
+        \item \question{""Standard semantics""?}
+        \item \question{`High level' Sprache oder Instructions, die in CFG verwendet werden? (Phi in Grammatik?)}
+        \item \note{`Erklärung' statt Grammatik zur Definition der Eingabesprache}
+        \item \note{Refer to: Clark+Hunt `Quantified Interference for a While Language'}
+    \end{itemize}
+    
+    \begin{figure}
+        \centering
+        \begin{grammar}
+            <program> ::= `in:' $[h]^*$ `;' <command>
+            
+            <command> ::= <command> `;' <command>
+            \alt $x$ `:=' <arithmeticExpr>
+            \alt $x$ `:= \phi(x_i, x_j)'
+            \alt `if' <booleanPredicate> `do' <command> `else' <command>
+            \alt `print' $x$
+            \alt `skip'
+            
+            <arithmeticExpr> ::= $x$
+            \alt $n$
+            \alt <arithmeticExpr> <\oplus> <arithmeticExpr>
+            \alt `-'<arithmeticExpr>
+            
+            <\oplus> ::= `+'
+            | `-'
+            | `*'
+            | `/'
+            | `&'
+            | `|'
+            | `^'
+            
+            <booleanPredicate> ::= `true'
+            \alt `false'
+            \alt `\neg' <booleanPredicate>
+            \alt <booleanPredicate> <\circledcirc> <booleanPredicate>
+            \alt <arithmeticExpr> <\otimes> <arithmeticExpr>
+            
+            <\otimes> ::= `==' | `!=' | `\leq' | `\geq'
+            
+            <\circledcirc> ::= `&&' | `||'
+        \end{grammar}
+        \caption{Grammar for the restricted input language used to explain the basic analysis principles. Programs are interpreted according to the standard semantics of the language features.}
+        \label{fig:whileSyntax}
+    \end{figure}
+\end{comment}
+   
+
 % TODO: data type --> int, fixed width
 
-To analyse out input program \p, we use the control flow graph (CFG) of its static single assignment (SSA) form. In SSA form, every value of the program is assigned exactly once. We write \val$_p$ to denote the set of all values of a program.
+To analyse out input program \p, we use the control flow graph (CFG) of its static single assignment (SSA) form. The nodes of a CFG are the programs basic blocks \question{Capital?} and an edge is inserted for every possible jump from one block to another. We use $\mbb_p$ for the set of all basic blocks of a program \p and $b_1, b_2, ...$ for the blocks themselves.
 
-For each program \pp, we define $\bb_p$ as the set of basic blocks of \pp. We use the functions $succ(\cdot), pred(\cdot): \bb_p \longrightarrow 2^{\bb_p}$ to respectively get the successors or predecessors of a basic block. The nodes of the CFG $G = (V, E)$ of \p are $V = \bb_p \cup \{\mathtt{start}, \mathtt{end}\}$. 
+\begin{itemize}
+    \item \note{Assume CFG has no critical edges (can be eliminated by splitting the edge w/ an empty basic block)}
+    \item \note{every bock has at least 1 predecessor and 1 successor}
+    \begin{itemize}
+        \item \note{Exception: start block (no predecessors) and exit block (no successors)}
+    \end{itemize}
+    \item \com{function for succs and preds}
+\end{itemize}
 
-% TODO: explain start and end node
-% TODO: same name for function and set ?!
+In SSA form, every value of the program is assigned exactly once. We write \val$_p$ to denote the set of all values of a program and $v_0, v_1, ...$ to denote single values. Each value is associated with its value dependencies and an execution value.
 
-\begin{definition}[Def-Basic Block Map]
-    A function that maps a program value to the basic block, where it is defined. Because all our input programs are in SSA form, this function is well-defined.
+\begin{itemize}
+    \item \note{execution values: represent actual value during execution}
+    \item \note{represented as bit vectors (two's complement}
+    \begin{itemize}
+        \item integers: width n
+        \item booleans: width 1
+    \end{itemize}
+    \item \com{specify relationship between valueDeps and execVal}
+\end{itemize}
+
+\begin{definition}[Execution Value]
+The function maps a program value to the number that was assigned during a particular execution. If in this execution, the value remains undefined, because the corresponding assignment instruction wasn't executed, the function will return $\bot$.
     \begin{center}
-        $bb_p\colon: $\val$ \longrightarrow \bb_p$
-    \end{center} 
+        $exec_{\mI, p}: \val_p \longrightarrow \{0, 1\}^n \cup \{\bot\}$
+    \end{center}
+The function is parameterized by the input \p and the set of program inputs \I, which determine the particular execution of \p that is evaluated.
 \end{definition}
 
-\begin{definition}[Immediate dominator] The immediate dominator of a basic block $b$ is the basic block $b'$ that strictly dominates $b$ and that is simultaneously dominated by every strict dominator of $b$.
-    \begin{center}
-        $idom\colon \mbb_p \longrightarrow \mbb_p$
-    \end{center}
+\begin{definition}[Value Dependencies]
+
+    
 \end{definition}
 
 \section{Basic Analysis Design}
+
+\begin{itemize}
+    \item \note{approach: symbolic execution}
+    \item \note{data + cf dependencies represented as boolean formulas}
+    \item \com{define set of boolean formulas, \ttt, \fff, operators etc.}
+\end{itemize}
 
 We use propositional logic to track the way that information about the secret inputs flows through the program. Each program value is interpreted as a bit vector, where each bit is associated with a propositional formula that encodes how the state of the bit is dependent on the secret inputs. We will use subscript indices to access the i-th bit of a program value or the i-th element of a vector respectively. The bitwidth of a value \texttt{x} will be denoted as $width(\mathtt{x})$.
 
@@ -46,97 +118,18 @@ We use propositional logic to track the way that information about the secret in
     The values of a program's input parameters are not dependent on any other value in the program. We define the set $\var_p$, that contains a propositional variable for each input bit. Every other value of \p is either constant or can be described by a propositional formula over $\var_p$.
 \end{definition}
 
-We will write $\mbform_{\var_p}$ for the set of all propositional formulas over $var_p$.
+\textbf{\note{Implicit information flow (CF dependencies)}}
 
-\begin{definition}[Input dependency map]
-    For each bit $\mathtt{x}_i$, $\depvec{x}_i$ describes its dependencies to the programs input parameters, i.e. for an execution with input values \In, it holds that $\mathtt{x}_i == 1 \iff \depvec{x}_i == \mttt$ for $0 \leq i < width(\mathtt{x})$
-    \begin{center}
-        $\llbracket \cdot \rrbracket\colon \val_p \longrightarrow \mbform_{\var_p}^{width(mathtt{x})}$
-    \end{center}
-\end{definition}
-
-To represent integer arithmetic as propositional formulas, we use two's complement representation of integers.
-
-\begin{definition}[Two's complement]
-    A function that for a given integer $n$ returns a vector of boolean constants that corresponds to the two's complement of $n$, where $0$ is represented by the value \fff and $1$ is represented by the value \ttt.
-    \begin{center}
-        $tcmp_l\colon: \mathbb{Z} \longrightarrow \{ \mttt, \mfff \}^l$
-    \end{center}
-    The map $tcmp_l$ is parameterized by the length $l$ of the return vector. If an integer $n$ requires $k > l$ bit to be correctly represented as a two's complement bit vector, $tcml$ will cut off the first $k - l$ bits and return the remaining vector.
-\end{definition}
-
-We extend the arithmetic operators of our input language to also operate on propositional formula vectors, treating them as two's complement integers and returning the result as a propositional formula vector of the same length. For a more in-depth explanation, we refer to \cite{}.
-% TODO: citation
-% TODO: arithmetic on twos complement numbers --> how detailed should this be? 
-% TODO: same w/ bitwose operators
-\begin{figure}
-    \label{fig:input_deps_computation}
-    \centering
-    \begin{gather*}
-        \inference[In]{\mathtt{h} \in \mathtt{H}}{\depvec{h} = (h^1, ... h^k)} \hspace{1cm}
-        \inference[Const]{n \in \text{\textsc{Const}}_p}{\depvec{n} = tcmp(n)} \\ \vspace{1cm}
-        \inference[BinArith]{\mathtt{x := y} \oplus \mathtt{z} & \depvec{y} = y & \depvec{z} = z & \oplus \in \{+, -, \cdot, \div\}}{\depvec{x} = y \oplus_{tcmp} z} \\ \vspace{1cm}
-        \inference[BinBitwise]{\mathtt{x := y} \otimes \mathtt{z} & \depvec{y} = y & \depvec{z} = z & \otimes \in \{\text{\&}, |, \XOR \}}{\depvec{x} = y \otimes_{tcmp} z}
-    \end{gather*}
-        
-\end{figure}
-
-% TODO: define width(int) = k
-% TODO: unary operations
-% TODO: Expressions
-
-\begin{definition}[Jump condition] The function $JumpCond$ takes two basic blocks $b_1$ and $b_2$, where $b_1 \in preds(b_2)$ and returns a boolean formula that describes under which condition the program execution will jump from $b_1$ to $b_2$. If the jump instruction is unconditional, then $JmpCond$ will simply return \ttt.
-    \begin{center}
-        $JmpCond\colon \mbb_p \times \mbb_p \longrightarrow \mbform$
-    \end{center}
-\end{definition}
-An example evaluation of this function is shown in figure \ref{fig:jmp_cond}.
-
-\begin{figure}[H]
-    \label{fig:jmp_cond}
-    \centering
-    \begin{tikzpicture}[
-                > = stealth, % arrow head style
-                shorten > = 1pt, % don't touch arrow head to node
-                auto,
-                node distance = 3cm, % distance between nodes
-                semithick % line style
-            ]
-
-            \node[rectangle, draw, align=center, minimum width=2.5cm, minimum height=1cm] (0) {$b_0$};
-            \node[rectangle, draw, align=center, minimum width=2.5cm, minimum height=1cm] (s) [below of=0] {$b_1$ \\... \\ \bigskip \texttt{jmp} \textit{e} \texttt{?} $b_2$ \texttt{:} $b_3$};
-            \node[rectangle, draw, align=center, minimum width=2cm, minimum height=1cm, xshift=-2cm] (v1) [below left of=s] {$b_2$};
-            \node[rectangle, draw, align=center, minimum width=2cm, minimum height=1cm, xshift=2cm] (v2) [below right of=s] {$b_3$};
-
-            \path[->] (0) edge (s);
-            \path[->] (s) edge (v1);
-            \path[->] (s) edge (v2);
-    \end{tikzpicture}
-    \caption{An exemplary control flow graph to demonstrate the $JmpCond$ function. The function returns $JmpCond(b_0, b_1) = \mttt, JmpCond(b_1, b_2) = e$ and $JmpCond(b_1, b_3) = \neg e$}
-    % TODO: better caption
-\end{figure}
+\begin{itemize}
+    \item \note{Associate each block w/ a boolean formula that evaluates to true <==> block is executed in the specific execution}
+    \item \note{a block is executed iff one of its predecessors is executed and if the jump comdition from that predecessors evaluates to true}
+    \item \com{Function for accessing condition of a conditional kump at the end of block -->} \question{necessary?}
+    \item \question{`Abbildungsvorschrift' nötig?}
+    \item \com{imDep: bblock -> formula -- f === wahr <--> b wird ausgeführt}
+\end{itemize}
 
 % define implicit leakages
 \paragraph{Implicit Information Flow}
-Information flow is called \emph{implicit}, if is not the result of a direct assignment of secret values to public variables, but rather the flow of execution in the program that is dependent on secret values.
-
-% TODO: Satz ist ziemlich unverständlich
-
-\begin{definition}[Implicit Knowledge Function] 
-    \begin{center}
-        $\Phi\colon \mbb_p \longrightarrow \mbform$ \\
-        \begin{equation*}
-            b \mapsto
-        \begin{cases}
-            \mttt & b = \mathtt{start} \\
-            \Phi(idom(b)) \land e & \parbox[t]{.6\textwidth}{$idom(b) \in pred(b) \land JmpCond(idom(b), b) = e$}\\ 
-            \Phi(idom(b)) & \text{otherwise}\\ 
-        \end{cases}
-        \end{equation*}
-    \end{center}
-    The implicit knowledge-function maps a basic block $b \in \mbb_p$ of the input program \p to a boolean formula $f \in \mbform$ that describes the conditions that must be fulfilled by the program's values, if the $b$ is executed.
-\end{definition}
-
 
 % TODO: better description for the case conditions
 % TODO: check if this is even correct lol
