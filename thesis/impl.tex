@@ -8,63 +8,45 @@ The following chapter will break down the analysis techniques used in the interp
 
 \section{Input Programs and Program Representation}
 
-Input programs are written in a variant of the \texttt{while}-language with Java-like syntax. To introduce the basic principle of our analysis, we temporarily restrict the scope of the input language to the grammar shown in figure \ref{fig:whileSyntax}. We will denote secret inputs as $h_i$, constant values as $n_i$ and other program variables as $x_i$. The set of all input variables for a program will be denoted as \In and the set of all possible input sets is written as \allIn.
-
-Semantically, we interpret programs per the standard semantics of the input language. The special function \texttt{print} $x$ leaks the value $x$ to a public output channel. All programs p are deterministic, which means for every \In $\in$ \allIn, there is a unique program execution, which we will call $p_\mIn$. Furthermore we assume that all program executions terminate normally, without throwing an exception.
-
 \begin{comment}
-   \begin{itemize}        
-        \item \question{Wie werden Eingabeparameter in Grammatiken angegeben?}
-        \item \question{""Standard semantics""?}
-        \item \question{`High level' Sprache oder Instructions, die in CFG verwendet werden? (Phi in Grammatik?)}
-        \item \note{`Erklärung' statt Grammatik zur Definition der Eingabesprache}
-        \item \note{Refer to: Clark+Hunt `Quantified Interference for a While Language'}
-    \end{itemize}
-    
-    \begin{figure}
-        \centering
-        \begin{grammar}
-            <program> ::= `in:' $[h]^*$ `;' <command>
-            
-            <command> ::= <command> `;' <command>
-            \alt $x$ `:=' <arithmeticExpr>
-            \alt $x$ `:= \phi(x_i, x_j)'
-            \alt `if' <booleanPredicate> `do' <command> `else' <command>
-            \alt `print' $x$
-            \alt `skip'
-            
-            <arithmeticExpr> ::= $x$
-            \alt $n$
-            \alt <arithmeticExpr> <\oplus> <arithmeticExpr>
-            \alt `-'<arithmeticExpr>
-            
-            <\oplus> ::= `+'
-            | `-'
-            | `*'
-            | `/'
-            | `&'
-            | `|'
-            | `^'
-            
-            <booleanPredicate> ::= `true'
-            \alt `false'
-            \alt `\neg' <booleanPredicate>
-            \alt <booleanPredicate> <\circledcirc> <booleanPredicate>
-            \alt <arithmeticExpr> <\otimes> <arithmeticExpr>
-            
-            <\otimes> ::= `==' | `!=' | `\leq' | `\geq'
-            
-            <\circledcirc> ::= `&&' | `||'
-        \end{grammar}
-        \caption{Grammar for the restricted input language used to explain the basic analysis principles. Programs are interpreted according to the standard semantics of the language features.}
-        \label{fig:whileSyntax}
-    \end{figure}
+
+\begin{itemize}
+    \item \question{Wie werden Eingabeparameter in Grammatiken angegeben?}
+    \item \question{""Standard semantics""?}
+    \item \question{`High level' Sprache oder Instructions, die in CFG verwendet werden? (Phi in Grammatik?)}
+    \item \note{`Erklärung' statt Grammatik zur Definition der Eingabesprache}
+    \item \note{Refer to: Clark+Hunt `Quantified Interference for a While Language'}
+\end{itemize}
 \end{comment}
-   
 
-% TODO: data type --> int, fixed width
+Input programs are written in a variant of the \texttt{while}-language with Java-like syntax, that contains the following control structures, using their standard semantics:
+\begin{itemize}
+    \setlength\itemsep{0em}
+    \item sequential composition
+    \item assignments
+    \item \texttt{if}-statements
+    \item \texttt{while}-statements
+    \item \texttt{break}-statements
+    \item function calls (with return values)
+\end{itemize}
+All variables are signed integers of a fixed width $w$. The right hand side of an assignment is an expression that uses the standard arithmetic and bitwise boolean operators. Boolean expressions used in \texttt{while}- and \texttt{if}-statements are defined in the standard way.
 
-To analyse out input program \p, we use the control flow graph (CFG) of its static single assignment (SSA) form. The nodes of a CFG are the programs basic blocks \question{Capital?} and an edge is inserted for every possible jump from one block to another. We use $\mbb_p$ for the set of all basic blocks of a program \p and $b_1, b_2, ...$ for the blocks themselves.
+We will denote secret inputs as $h_i$, constant values as $n_i$ and other program variables as $x_i$. The set of all input variables for a program will be denoted as \In and the set of all possible input sets is written as \allIn. A variable can be leaked to a public output channel via the special function \texttt{print}. We assume that all program executions terminate. More specifically, we assume that they terminate normally, without throwing any exceptions.
+
+To analyze the input program \p, we use the program's functions' control flow graphs (CFG) in static single assignment (SSA) form.  \note{umformulieren}
+
+SSA is a representation of the program, where every value is assigned exactly once. If in the original program, a variable is written to more than once, a new variable is created, that replaces the original one from that point in the program. We will refer to variables and their copies in the SSA form as values, to differentiate them from the variables used in the original input program.
+We write \val$_p$ to denote the set of all values of a program and $v_0, v_1, ...$ to denote single values. Each value is associated with its value dependencies and an execution value. \note{maybe delete last sentence}
+
+The nodes of a CFG are a function's basic blocks, plus two special blocks \texttt{start} and \texttt{end}, that mark the single entry- and exit point of the function. An edge is inserted for every possible jump from one block to another. We use $\mbb_p$ for the set of all basic blocks of a program \p and $b_1, b_2, ...$ for the blocks themselves.
+With exception of the \texttt{start}- and \texttt{end}-block, every block in the CFG has at minimum one predecessor and one successor.
+
+\begin{definition}[CFG predecessors and successors]
+    \begin{center}
+        $pred: \bb_p \longrightarrow 2^{\bb_p}$
+        $succ: \bb_p \longrightarrow 2^{\bb_p}$
+    \end{center}
+\end{definition}
 
 \begin{itemize}
     \item \note{Assume CFG has no critical edges (can be eliminated by splitting the edge w/ an empty basic block)}
@@ -74,8 +56,6 @@ To analyse out input program \p, we use the control flow graph (CFG) of its stat
     \end{itemize}
     \item \com{function for succs and preds}
 \end{itemize}
-
-In SSA form, every value of the program is assigned exactly once. We write \val$_p$ to denote the set of all values of a program and $v_0, v_1, ...$ to denote single values. Each value is associated with its value dependencies and an execution value.
 
 \begin{itemize}
     \item \note{execution values: represent actual value during execution}
@@ -142,6 +122,128 @@ We use propositional logic to track the way that information about the secret in
 
 \section{Handling Loops, Recursion and Function calls}
 
+\section{Combining static and dynamic analyses to estimate channel capacity}
+\textbf{Goal:}
+\begin{itemize}
+    \item channel capacity c := number of distinct program outputs
+    \item c large --> much leakage
+    \item c small --> little leakage
+\end{itemize}
+Consider program w/ single loop. Precisely computing channel capacity might be infeasible due to too many possible execution paths through the loop
+
+\begin{itemize}
+    \item Define unrolling limit n
+    \item Compute SAT formula $cond_n$ where $cond_n(h) == true$ iff input h leads to more than n loop iterations
+    \item if $SAT(cond_n)$ we cannot analyze the loop in a purely dynamic manner
+    \item \textbf{Switch to an analysis in parts}
+\end{itemize}
+
+\textbf{Analysis in parts:}
+\begin{itemize}
+    \item Let c = true channel capacity of the program
+    \item divide program into 3 parts: $p_b$ - before loop, $p_l$ - loop body, $p_a$ - after loop
+    \item compute channel capacities for all 3 parts separately: $k_b, k_l, k_a$
+    
+    \begin{itemize}
+        \item take into account constant bits in result from previous program part for inputs for next part
+        \item for loop part: only analyze a single loop iteration
+        \item \com{Could be done with dynamic or static analysis}
+    \end{itemize}
+    
+    \item each analysis (except the first) overapproximates the possible inputs for the program section --> computed channel capacities possibly larger than they actually are --> sound upper limit for leakage
+    \item $c \leq k_b, k_l, k_a \implies c \leq \min{k_b, k_l, k_a}$
+    \item \com{Correction: Implicitly assumes that loop is executed at least once}
+    \begin{itemize}
+        \item Use model counter to estimate number of inputs that would not enter the loop --> $k_n$
+        \item worst case: these are all different to what the loop outputs are
+        \item update $k_l += k_n$
+        \item instead of $p_l$, estimate channel capacity of if (cond) $p_l$ else skip --> all inputs that don't enter the loop (produce outputs that are accounted for in $k_n$ will lead to the same output in $p_l$; avoid counting them double)
+        \item \com{instead of $p_l$ directly, compute channel capacity of \\ \texttt{if (cond) res = loopBody else res = h return res}}
+        \item set p := $loopBody^n$ if (loop cond) loopBody else return $\bot$ to find channel capacity for program runs that execute loop more than n times
+        \item for executions that execute loop less than n times: count loop iterations as part of $p_b$
+    \end{itemize}
+    \item \com{all partial analyses could be done either statically or dynamically}
+        \begin{itemize}
+        \item \question{when to use what?}
+        \item \question{shouldn't purely dynamic analysis be feasible for all program parts here since we `eliminated' the many loop iterations?}
+        \item \note{might still not be possible bc loop might contain another loop, or recursive function, etc. --> further segmentation necessary}
+        \item number of segments that need to be analysed separately explodes
+        \item switch to static analysis when num. of segments gets too large, before then do everything dynamically to get more precise estimations
+        \item \textbf{How to decide when to do what?}
+        \begin{itemize}
+            \item for each segment: keep track of `segmentation depth' $s$
+            \item define segmentation limit $\hat{s}$
+            \item if $s >= \hat{s}$, but segment can still not be feasibly analysed in a dynamic manner, switch to static 
+        \end{itemize}
+    \end{itemize}
+    
+    
+    \item \question{How do we know, when to further partition the program?}
+    \begin{itemize}
+        \item number of loop iterations that possibly happen
+        \item width of SAT formulas generated up until this point --> number of operands, number of nodes, number of literals
+        
+    \end{itemize}
+     \item \com{\textbf{Alternative approach:}}
+    \begin{itemize}
+        \item use same method as for estimation of indistinguishability set
+    \end{itemize}
+    
+\end{itemize}
+
+\note{while (i < secret) { if (i > 64) {i = 100; break;} i++}}
+
 \section{Integration with Interpreter}
+\begin{itemize}
+    \item channel capacity --> measures leakage in terms of the number of different outputs a program can produce
+    \item even if there are only 2 different outputs, if one of those outputs can only be the result of one input, then the attacker will learn the whole secret
+    \item interesting for user to know the number of inputs to the program that will produce the same output as the user's execution did --> `indistinguishability set' D
+    \item D large --> leakage small
+    \item D small --> leakage big
+    \item precise computation of $|D|$ infeasible, we need to estimate
+    \begin{itemize}
+        \item Problem: loops + recursive calls produce SAT formulas that are too big to handle efficiently
+    \end{itemize}
+\end{itemize}
+
+\textbf{Underapproximation of $|D|$ --> finding max amount of leakage for this run}\\
+Consider program that contains a loop
+\begin{itemize}
+    \item not feasible to precisely analyse all possible numbers of loop iterations
+    \item choose unrolling limit $n$
+    \item get SAT formula $cond_n: cond_n == true$ iff input needs less than n iterations
+    \item only seek candidates for $D$ among inputs that require less than $n$ loop iterations by adding $\land cond_n$ to Model Count formula --> $D_u$
+    \item definitely $D_u \subseteq D$, so $|D_u|$ is sound upper bound for leakage
+\end{itemize}
+More precise approximation? So far we haven't considered executions ith $>n$ loop iterations at all
+\begin{itemize}
+    \item 
+\end{itemize}
+
+\textbf{Overapproximation of $D$ --> finding min amount of leakage for this run}
+Consider program that contains a loop
+\begin{itemize}
+    \item not feasible to precisely analyse all possible numbers of loop iterations
+    \item choose unrolling limit $n$
+    \item get SAT formula $cond_n: cond_n == true$ iff input needs less than n iterations (same as above)
+    \item formula that describes result of loop for $< n$ iterations: $b_{<}$
+    \item introduce new vars: $v_>$
+    \item set loop result as $cond_n ? b_{<} : v_>$ --> use that for model counting to find set $D_o$
+    \item allows inputs with more than n iterations to produce arbitrary results from the loop
+    \item every result that might actually occur is contained, but also one's that are not actually possible --> $D \subseteq D_o$, so $|D_o|$ is sound lower bound for leakage
+\end{itemize}
+
+\com{Possible to use a form of static analysis for estimation of indistinguishability set?}
+
+\begin{itemize}
+    \item static analyses determine the number of distinct outputs, not the size of the indistinguishability set
+    \item \question{can we manipulate the program s.t. the number of distinct outputs is the same as the size of $D$?}
+    \item desired output: $o$
+    \item set $p_new(h)$ := res = p(h) if (res == o) return h else return $\bot$
+    \item every input that is not part of $D$ gets mapped to the same output
+    \item result will be overestimation of $|D|$ --> gives us \textbf{lower bound of leakage}
+    \item can only work on the whole program, not on segments (would be a possible underapproximation of $D$ for middle segments) --> under- and overapproximating at the same time is not good...
+    \item \com{underapproximation if we change (res == o) to (res != o) ??}
+\end{itemize}
 
 \section{Implementation}
