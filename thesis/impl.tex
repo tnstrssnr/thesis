@@ -120,6 +120,16 @@ We use propositional logic to track the way that information about the secret in
 
 % map + semantics for finding implicit leakage
 
+\section{Increasing Efficiency through Static Pre-Processing}
+\begin{itemize}
+    \item "Konstantenfaltung" auf Bitebene
+    \item Backward-Slice des Ausgabewerts, nicht enthaltene Werte müssen nicht analysiert werden
+    \item Backward-Slice von Konstanten Werten --> Werte, die die Ausgabe beeinflussen und Abhängigkeiten dadurch immer durch konstanten Wert fließen müssen nicht analysiert werden
+\begin{itemize}
+    \item kann mitberücksichtigt werden, wenn man vor dem "Ausgabe-Backward-Slice" alle Abhängigkeiten von konstanten Werten entfernt 
+\end{itemize}
+\end{itemize}
+
 \section{Handling Loops, Recursion and Function calls}
 
 \section{Combining static and dynamic analyses to estimate channel capacity}
