@@ -6,6 +6,8 @@ thesis/*.aux
 thesis/*.fdb_latexmk
 thesis/*.fls
 present/present.pdf
+thesis/*.toc
+thesis/*.out
 
 workspace.code-workspace
 .vscode/
