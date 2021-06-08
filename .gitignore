@@ -8,6 +8,8 @@ thesis/*.fls
 present/present.pdf
 thesis/*.toc
 thesis/*.out
+thesis/*.bbl
+thesis/*.blg
 
 workspace.code-workspace
 .vscode/

@@ -72,7 +72,33 @@ Because programs are deterministic, we can describe the outputs as a function $\
         bla bla bla
 \end{definition}
 
-\section{Approximate Model Counting}
+\section{Model Counting}
+
+Given a propositional formula $F$, the model counting problem (\#SAT) is the problem of finding the number of distinct variable assignments for $F$, for which $F$ evaluates to true \cite{biere09}. So the solution for the formula shown in  \ref{fig:satEx} is \#F = 3, with the only non-fulfilling variable assignments being $\{ x = \mttt, y = \mfff\}, \{x = \mttt, y = \mttt\}$ and  $\{x = \mfff, y = \mfff\}$.
+
+\#SAT is a generalization of the SAT problem and falls into the \#P-complete complexity class, as demonstrated by Valiant in \cite{valiant79}.
+
+Early exact model counting techniques, such as \cite{birnbaum99}, or the well-known tool sharpSAT \cite{thurley06} use a DPLL-style exploration of the solution space. Another class of model counters instead employ complex transformations to turn the given CNF formula into a different representation, which makes model counting a far easier problem. Common are transformations into \emph{binary decision diagrams} (\td{citation!}) or \emph{deterministic, decomposable negation normal form} \cite{darwiche04}.
+
+\paragraph*{Approximate Model Counting}
+State-of-the-art exact model counters scale to a couple of hundred variables.  This limit can be pushed to around 1,000 variables if we allow approximate solutions \cite{biere09}.
+The first approximate \#SAT algorithm for DNF formulas was introduced by Luby and Karp in \cite{karp89} used Monte-Carlo techniques. This approach was extended to work on CNF formulas by Chakraborty, Meel and Vardi in \cite{chakraborty13}. Bith procedures fall under category of $(\epsilon, \delta)$-counters: for $0 < \epsilon, delta \leq 1$, the approximated solution $\#F_{approx}$ to the true solution of the problem \#F, lies in the interval $[(1 + \epsilon)^{-1} \#F, \: (1 + \epsilon) \#F]$ with a probability of $1 - \delta$ \cite{karp89,chakraborty13}.
+
+\begin{figure}
+    \centering
+    $F := x \lor \lnot y$
+    \caption{Propositional formula with 2 variables}
+    \label{fig:satEx}
+\end{figure}
+
+\paragraph*{Projected Model Counting}
+Given a set of propositional variables $\mathcal{V}$ and a propositional formula $F$ over $\mathcal{V}$, projected model counting (\#$\exists$SAT) is the problem of finding the number of assignments to a set of priority variables $\mathcal{P} \subseteq \mathcal{V}$, such that the assignment can be extended to an assignment over $\mathcal{V}$ that fulfills $F$. Considering the example from \ref{fig:satEx} and a priority set $\mathcal{P} = \{x\}$, the number of projected models is 2, with both possible assignments of $x$ being extendable to a fulfilling assignment over all variables by setting $y = \mfff$.
+
+The problem is introduced by Aziz et.al. in \cite{aziz15}, along with a discussion of approaches to solve \#$\exists$SAT. \td{finish}
+
+\paragraph*{\#SAT in Relation to QIFC}
+Model counting has previously been used to tackle QIFC problems \cite{klebanov13, enescu16, biondi18,chu19}. The approach requires the generation of propositional a propositional formula $F_o$, that describes values leaked on public output channels in terms of the program's high input variables.
+
 
 % Model Counting
 % Complexity
@@ -83,5 +109,3 @@ Because programs are deterministic, we can describe the outputs as a function $\
 %%% relevant for this section
 % The Complexity of Enumeration and Reliability Problems (Valiant '79) -- \cite{valiant79}
 % A scalable approximate model counter (chakraborty '13) -- \cite{chakraborty13}
-
-\section{Related Work}

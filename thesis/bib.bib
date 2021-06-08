@@ -27,64 +27,23 @@
   isbn="978-3-642-40196-1"
 }
 
-@article{chu19,
-  title={Quantifying Dynamic Leakage: Complexity Analysis and Model Counting-based Calculation},
-  author={B. Chu and K. Hashimoto and H. Seki},
-  journal={IEICE Trans. Inf. Syst.},
-  year={2019},
-  volume={102-D},
-  pages={1952-1965}
- }
-
-@INPROCEEDINGS{besson16,
-  author={F. {Besson} and N. {Bielova} and T. {Jensen}},
-  booktitle={2016 IEEE 29th Computer Security Foundations Symposium (CSF)},
-  title={Hybrid Monitoring of Attacker Knowledge},
-  year={2016},  
-  volume={},
-  number={},
-  pages={225-238},  
-  doi={10.1109/CSF.2016.23}
-}
-
-%%% Approximate Model Counting
-
-@article{valiant79,
-  author = {Valiant, Leslie},
-  year = {1979},
-  month = {08},
-  pages = {410-421},
-  title = {The Complexity of Enumeration and Reliability Problems},
-  volume = {8},
-  journal = {SIAM J. Comput.},
-  doi = {10.1137/0208032}
-}
-
-@misc{chakraborty13,
-  title={A Scalable Approximate Model Counter}, 
-  author={Supratik Chakraborty and Kuldeep S. Meel and Moshe Y. Vardi},
-  year={2013},
-  eprint={1306.5726},
-  archivePrefix={arXiv},
-  primaryClass={cs.LO}
-}
-
-@misc{cloudbleedReport,
-  author       = {John Graham-Cumming},
-  title        = {Incident report on memory leak caused by Cloudflare parser bug},
-  howpublished = {\url{https://blog.cloudflare.com/incident-report-on-memory-leak-caused-by-cloudflare-parser-bug/} (accessed: 07.06.2021},
-  year         = {2017},
-  month        = {02},
-  type         = {Website}
-}
-
-@misc{cloudbleedIssue,
-  author       = {Tavis Ormandy},
-  title        = {cloudflare: Cloudflare Reverse Proxies are Dumping Uninitialized Memory},
-  howpublished = {\url{https://bugs.chromium.org/p/project-zero/issues/detail?id=1139} (accessed: 07.06.2021)},
-  year         = {2017},
-  month        = {02},
-  type         = {Bug Report}
+@InProceedings{biondi18,
+author="Biondi, Fabrizio
+and Enescu, Michael A.
+and Heuser, Annelie
+and Legay, Axel
+and Meel, Kuldeep S.
+and Quilbeuf, Jean",
+editor="Dillig, Isil
+and Palsberg, Jens",
+title="Scalable Approximation of Quantitative Information Flow in Programs",
+booktitle="Verification, Model Checking, and Abstract Interpretation",
+year="2018",
+publisher="Springer International Publishing",
+address="Cham",
+pages="71--93",
+abstract="Quantitative information flow measurement techniques have been proven to be successful in detecting leakage of confidential information from programs. Modern approaches are based on formal methods, relying on program analysis to produce a SAT formula representing the program's behavior, and model counting to measure the possible information flow. However, while program analysis scales to large codebases like the OpenSSL project, the formulas produced are too complex for analysis with precise model counting. In this paper we use the approximate model counter ApproxMC2 to quantify information flow. We show that ApproxMC2 is able to provide a large performance increase for a very small loss of precision, allowing the analysis of SAT formulas produced from complex code. We call the resulting technique ApproxFlow and test it on a large set of benchmarks against the state of the art. Finally, we show that ApproxFlow can evaluate the leakage incurred by the Heartbleed OpenSSL bug, contrarily to the state of the art.",
+isbn="978-3-319-73721-8"
 }
 
 @article{denning82,
@@ -134,6 +93,145 @@ location = {Dublin, Ireland},
 series = {PLAS '09}
 }
 
+@article{chu19,
+  title={Quantifying Dynamic Leakage: Complexity Analysis and Model Counting-based Calculation},
+  author={B. Chu and K. Hashimoto and H. Seki},
+  journal={IEICE Trans. Inf. Syst.},
+  year={2019},
+  volume={102-D},
+  pages={1952-1965}
+ }
+
+@INPROCEEDINGS{besson16,
+  author={F. {Besson} and N. {Bielova} and T. {Jensen}},
+  booktitle={2016 IEEE 29th Computer Security Foundations Symposium (CSF)},
+  title={Hybrid Monitoring of Attacker Knowledge},
+  year={2016},  
+  volume={},
+  number={},
+  pages={225-238},  
+  doi={10.1109/CSF.2016.23}
+}
+
+%%% (Approximate) Model Counting
+
+@book{biere09,
+author = {Biere, A. and Biere, A. and Heule, M. and van Maaren, H. and Walsh, T.},
+title = {Handbook of Satisfiability: Volume 185 Frontiers in Artificial Intelligence and Applications},
+year = {2009},
+isbn = {1586039296},
+publisher = {IOS Press},
+address = {NLD},
+abstract = { 'Satisfiability (SAT) related topics have attracted researchers from various disciplines: logic, applied areas such as planning, scheduling, operations research and combinatorial optimization, but also theoretical issues on the theme of complexity and much more, they all are connected through SAT. My personal interest in SAT stems from actual solving: The increase in power of modern SAT solvers over the past 15 years has been phenomenal. It has become the key enabling technology in automated verification of both computer hardware and software. Bounded Model Checking (BMC) of computer hardware is now probably the most widely used model checking technique. The counterexamples that it finds are just satisfying instances of a Boolean formula obtained by unwinding to some fixed depth a sequential circuit and its specification in linear temporal logic. Extending model checking to software verification is a much more difficult problem on the frontier of current research. One promising approach for languages like C with finite word-length integers is to use the same idea as in BMC but with a decision procedure for the theory of bit-vectors instead of SAT. All decision procedures for bit-vectors that I am familiar with ultimately make use of a fast SAT solver to handle complex formulas. Decision procedures for more complicated theories, like linear real and integer arithmetic, are also used in program verification. Most of them use powerful SAT solvers in an essential way. Clearly, efficient SAT solving is a key technology for 21st century computer science. I expect this collection of papers on all theoretical and practical aspects of SAT solving will be extremely useful to both students and researchers and will lead to many further advances in the field.' Edmund Clarke (FORE Systems University Professor of Computer Science and Professor of Electrical and Computer Engineering at Carnegie Mellon University)}
+}
+
+@article{valiant79,
+  author = {Valiant, Leslie},
+  year = {1979},
+  month = {08},
+  pages = {410-421},
+  title = {The Complexity of Enumeration and Reliability Problems},
+  volume = {8},
+  journal = {SIAM J. Comput.},
+  doi = {10.1137/0208032}
+}
+
+@misc{chakraborty13,
+  title={A Scalable Approximate Model Counter}, 
+  author={Supratik Chakraborty and Kuldeep S. Meel and Moshe Y. Vardi},
+  year={2013},
+  eprint={1306.5726},
+  archivePrefix={arXiv},
+  primaryClass={cs.LO}
+}
+
+@article{birnbaum99,
+   title={The Good Old Davis-Putnam Procedure Helps Counting Models},
+   volume={10},
+   ISSN={1076-9757},
+   url={http://dx.doi.org/10.1613/jair.601},
+   DOI={10.1613/jair.601},
+   journal={Journal of Artificial Intelligence Research},
+   publisher={AI Access Foundation},
+   author={Birnbaum, E. and Lozinskii, E. L.},
+   year={1999},
+   month={Jun},
+   pages={457–477}
+}
+
+@InProceedings{thurley06,
+author="Thurley, Marc",
+editor="Biere, Armin
+and Gomes, Carla P.",
+title="sharpSAT -- Counting Models with Advanced Component Caching and Implicit BCP",
+booktitle="Theory and Applications of Satisfiability Testing - SAT 2006",
+year="2006",
+publisher="Springer Berlin Heidelberg",
+address="Berlin, Heidelberg",
+pages="424--429",
+abstract="We introduce sharpSAT, a new {\#}SAT solver that is based on the well known DPLL algorithm and techniques from SAT and {\#}SAT solvers. Most importantly, we introduce an entirely new approach of coding components, which reduces the cache size by at least one order of magnitude, and a new cache management scheme. Furthermore, we apply a well known look ahead based on BCP in a manner that is well suited for {\#}SAT solving. We show that these techniques are highly beneficial, especially on large structured instances, such that our solver performs significantly better than other {\#}SAT solvers.",
+isbn="978-3-540-37207-3"
+}
+
+@inproceedings{darwiche04,
+author = {Darwiche, Adnan},
+title = {New Advances in Compiling CNF to Decomposable Negation Normal Form},
+year = {2004},
+isbn = {9781586034528},
+publisher = {IOS Press},
+address = {NLD},
+abstract = {We describe a new algorithm for compiling conjunctive normal form (CNF) into Deterministic Decomposable Negation Normal (d-DNNF), which is a tractable logical form that permits model counting in polynomial time. The new implementation is based on latest techniques from both the SAT and OBDD literatures, and appears to be orders of magnitude more efficient than previous algorithms for this purpose. We compare our compiler experimentally to state of the art model counters, OBDD compilers, and previous CNF2dDNNF compilers.},
+booktitle = {Proceedings of the 16th European Conference on Artificial Intelligence},
+pages = {318–322},
+numpages = {5},
+location = {Valencia, Spain},
+series = {ECAI'04}
+}
+
+@article{karp89,
+title = {Monte-Carlo approximation algorithms for enumeration problems},
+journal = {Journal of Algorithms},
+volume = {10},
+number = {3},
+pages = {429-448},
+year = {1989},
+issn = {0196-6774},
+doi = {https://doi.org/10.1016/0196-6774(89)90038-2},
+url = {https://www.sciencedirect.com/science/article/pii/0196677489900382},
+author = {Richard M Karp and Michael Luby and Neal Madras},
+abstract = {We develop polynomial time Monte-Carlo algorithms which produce good approximate solutions to enumeration problems for which it is known that the computation of the exact solution is very hard. We start by developing a Monte-Carlo approximation algorithm for the DNF counting problem, which is the problem of counting the number of satisfying truth assignments to a formula in disjunctive normal form. The input to the algorithm is the formula and two parameters ε and δ. The algorithm produces an estimate which is between 1 − ϵ and 1 + ϵ times the number of satisfying truth assignments with probability at least 1 − δ. The running time of the algorithm is linear in the length of the formula times 1ϵ2 times ln(1δ). On the other hand, the problem of computing the exact answer for the DNF counting problem is known to be #P-complete, which implies that there is no polynomial time algorithm for the exact solution if P ≠ NP. This paper improves and gives new applications of some of the work previously reported. Variants of an ϵ, δ approximation algorithm for the DNF counting problem have been highly tailored to be especially efficient for the network reliability problems to which they are applied. In this paper the emphasis is on the development and analysis of a much more efficient ϵ, δ approximation algorithm for the DNF counting problem. The running time of the algorithm presented here substantially improves the running time of versions of this algorithm given previously. We give a new application of the algorithm to a problem which is relevant to physical chemistry and statistical physics. The resulting ϵ, δ approximation algorithm is substantially faster than the fastest known deterministic solution for the problem.}
+}
+
+@misc{aziz15,
+      title={Projected Model Counting}, 
+      author={Rehan Abdul Aziz and Geoffrey Chu and Christian Muise and Peter Stuckey},
+      year={2015},
+      eprint={1507.07648},
+      archivePrefix={arXiv},
+      primaryClass={cs.AI}
+}
+
+%%% introduction
+
+@misc{cloudbleedReport,
+  author       = {John Graham-Cumming},
+  title        = {Incident report on memory leak caused by Cloudflare parser bug},
+  howpublished = {\url{https://blog.cloudflare.com/incident-report-on-memory-leak-caused-by-cloudflare-parser-bug/} (accessed: 07.06.2021},
+  year         = {2017},
+  month        = {02},
+  type         = {Website}
+}
+
+@misc{cloudbleedIssue,
+  author       = {Tavis Ormandy},
+  title        = {cloudflare: Cloudflare Reverse Proxies are Dumping Uninitialized Memory},
+  howpublished = {\url{https://bugs.chromium.org/p/project-zero/issues/detail?id=1139} (accessed: 07.06.2021)},
+  year         = {2017},
+  month        = {02},
+  type         = {Bug Report}
+}
+
+%%% misc
 
 @InProceedings{cbmc,
 author="Kroening, Daniel
@@ -148,23 +246,4 @@ address="Berlin, Heidelberg",
 pages="389--391",
 abstract="CBMC implements bit-precise bounded model checking for C programs and has been developed and maintained for more than ten years. CBMC verifies the absence of violated assertions under a given loop unwinding bound. Other properties, such as SV-COMP's ERROR labels or memory safety properties are reduced to assertions via automated instrumentation. Only recently support for efficiently checking concurrent programs, including support for weak memory models, has been added. Thus, CBMC is now capable of finding counterexamples in all of SV-COMP's categories. As back end, the competition submission of CBMC uses MiniSat 2.2.0.",
 isbn="978-3-642-54862-8"
-}
-
-@InProceedings{biondi18,
-author="Biondi, Fabrizio
-and Enescu, Michael A.
-and Heuser, Annelie
-and Legay, Axel
-and Meel, Kuldeep S.
-and Quilbeuf, Jean",
-editor="Dillig, Isil
-and Palsberg, Jens",
-title="Scalable Approximation of Quantitative Information Flow in Programs",
-booktitle="Verification, Model Checking, and Abstract Interpretation",
-year="2018",
-publisher="Springer International Publishing",
-address="Cham",
-pages="71--93",
-abstract="Quantitative information flow measurement techniques have been proven to be successful in detecting leakage of confidential information from programs. Modern approaches are based on formal methods, relying on program analysis to produce a SAT formula representing the program's behavior, and model counting to measure the possible information flow. However, while program analysis scales to large codebases like the OpenSSL project, the formulas produced are too complex for analysis with precise model counting. In this paper we use the approximate model counter ApproxMC2 to quantify information flow. We show that ApproxMC2 is able to provide a large performance increase for a very small loss of precision, allowing the analysis of SAT formulas produced from complex code. We call the resulting technique ApproxFlow and test it on a large set of benchmarks against the state of the art. Finally, we show that ApproxFlow can evaluate the leakage incurred by the Heartbleed OpenSSL bug, contrarily to the state of the art.",
-isbn="978-3-319-73721-8"
 }
