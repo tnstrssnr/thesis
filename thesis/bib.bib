@@ -68,3 +68,103 @@
   archivePrefix={arXiv},
   primaryClass={cs.LO}
 }
+
+@misc{cloudbleedReport,
+  author       = {John Graham-Cumming},
+  title        = {Incident report on memory leak caused by Cloudflare parser bug},
+  howpublished = {\url{https://blog.cloudflare.com/incident-report-on-memory-leak-caused-by-cloudflare-parser-bug/} (accessed: 07.06.2021},
+  year         = {2017},
+  month        = {02},
+  type         = {Website}
+}
+
+@misc{cloudbleedIssue,
+  author       = {Tavis Ormandy},
+  title        = {cloudflare: Cloudflare Reverse Proxies are Dumping Uninitialized Memory},
+  howpublished = {\url{https://bugs.chromium.org/p/project-zero/issues/detail?id=1139} (accessed: 07.06.2021)},
+  year         = {2017},
+  month        = {02},
+  type         = {Bug Report}
+}
+
+@article{denning82,
+author = {Denning, Dorothy},
+year = {1982},
+month = {01},
+pages = {},
+title = {Cryptography and Data Security},
+journal = {SERBIULA (sistema Librum 2.0)}
+}
+
+@inproceedings{lowe02,
+author = {Lowe, Gavin},
+year = {2002},
+month = {02},
+pages = {18 - 31},
+title = {Quantifying information flow},
+isbn = {0-7695-1689-0},
+doi = {10.1109/CSFW.2002.1021804}
+}
+
+@INPROCEEDINGS{enescu16,
+author={Val, Celina G. and Enescu, Michael A. and Bayless, Sam and Aiello, William and Hu, Alan J.},
+booktitle={2016 IEEE European Symposium on Security and Privacy (EuroS P)}, 
+title={Precisely Measuring Quantitative Information Flow: 10K Lines of Code and Beyond}, 
+year={2016},
+volume={},
+number={},
+pages={31-46},
+doi={10.1109/EuroSP.2016.15}}
+
+@inproceedings{newsome09,
+author = {Newsome, James and McCamant, Stephen and Song, Dawn},
+title = {Measuring Channel Capacity to Distinguish Undue Influence},
+year = {2009},
+isbn = {9781605586458},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/1554339.1554349},
+doi = {10.1145/1554339.1554349},
+abstract = {The channel capacity of a program is a quantitative measure of the amount of control that the inputs to a program have over its outputs. Because it corresponds to worst-case assumptions about the probability distribution over those inputs, it is particularly appropriate for security applications where the inputs are under the control of an adversary. We introduce a family of complementary techniques for measuring channel capacity automatically using a decision procedure (SAT or #SAT solver), which give either exact or narrow probabilistic bounds.We then apply these techniques to the problem of analyzing false positives produced by dynamic taint analysis used to detect control-flow hijacking in commodity software. Dynamic taint analysis is based on the principle that an attacker should not be able to control values such as function pointers and return addresses, but it uses a simple binary approximation of control that commonly leads to both false positive and false negative errors. Based on channel capacity, we propose a more refined quantitative measure of influence, which can effectively distinguish between true attacks and false positives. We use a practical implementation of our influence measuring techniques, integrated with a dynamic taint analysis operating on x86 binaries, to classify tainting warnings produced by vulnerable network servers, such as those attacked by the Blaster and SQL Slammer worms. Influence measurement correctly distinguishes real attacks from tainting false positives, a task that would otherwise need to be done manually.},
+booktitle = {Proceedings of the ACM SIGPLAN Fourth Workshop on Programming Languages and Analysis for Security},
+pages = {73–85},
+numpages = {13},
+keywords = {model counting, channel capacity, quantitative information flow},
+location = {Dublin, Ireland},
+series = {PLAS '09}
+}
+
+
+@InProceedings{cbmc,
+author="Kroening, Daniel
+and Tautschnig, Michael",
+editor="{\'A}brah{\'a}m, Erika
+and Havelund, Klaus",
+title="CBMC -- C Bounded Model Checker",
+booktitle="Tools and Algorithms for the Construction and Analysis of Systems",
+year="2014",
+publisher="Springer Berlin Heidelberg",
+address="Berlin, Heidelberg",
+pages="389--391",
+abstract="CBMC implements bit-precise bounded model checking for C programs and has been developed and maintained for more than ten years. CBMC verifies the absence of violated assertions under a given loop unwinding bound. Other properties, such as SV-COMP's ERROR labels or memory safety properties are reduced to assertions via automated instrumentation. Only recently support for efficiently checking concurrent programs, including support for weak memory models, has been added. Thus, CBMC is now capable of finding counterexamples in all of SV-COMP's categories. As back end, the competition submission of CBMC uses MiniSat 2.2.0.",
+isbn="978-3-642-54862-8"
+}
+
+@InProceedings{biondi18,
+author="Biondi, Fabrizio
+and Enescu, Michael A.
+and Heuser, Annelie
+and Legay, Axel
+and Meel, Kuldeep S.
+and Quilbeuf, Jean",
+editor="Dillig, Isil
+and Palsberg, Jens",
+title="Scalable Approximation of Quantitative Information Flow in Programs",
+booktitle="Verification, Model Checking, and Abstract Interpretation",
+year="2018",
+publisher="Springer International Publishing",
+address="Cham",
+pages="71--93",
+abstract="Quantitative information flow measurement techniques have been proven to be successful in detecting leakage of confidential information from programs. Modern approaches are based on formal methods, relying on program analysis to produce a SAT formula representing the program's behavior, and model counting to measure the possible information flow. However, while program analysis scales to large codebases like the OpenSSL project, the formulas produced are too complex for analysis with precise model counting. In this paper we use the approximate model counter ApproxMC2 to quantify information flow. We show that ApproxMC2 is able to provide a large performance increase for a very small loss of precision, allowing the analysis of SAT formulas produced from complex code. We call the resulting technique ApproxFlow and test it on a large set of benchmarks against the state of the art. Finally, we show that ApproxFlow can evaluate the leakage incurred by the Heartbleed OpenSSL bug, contrarily to the state of the art.",
+isbn="978-3-319-73721-8"
+}

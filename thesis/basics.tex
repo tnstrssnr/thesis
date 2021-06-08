@@ -6,10 +6,6 @@ This chapter presents the theoretical foundations of this thesis.
 \section{Quantitative Information Flow Control}
 % Control ?!?!?!
 
-- Informationsfluss
-- Secure information Flow
-- Quantitative information flow
-
 % QIFC
 % attacker model
 % interpreter inputs
@@ -30,18 +26,18 @@ Quantitative information flow analysis provides tools to measure how much inform
 % was macht dieser Kommentar hier
 % vergleiche mal commits der 2 versionen
 
-We consider the following scenario: Given a program \p, that accepts some input \In and produces some output \Out, how much information can an adversary \A learn about $H$, by observing \p and \Out.
+We consider the following scenario: Given a program \p, that accepts some input \In and produces some output \Out, how much information can an adversary \A learn about $H$, by observing \p and \Out?
 
 %% \paragraph statt \emph
 \paragraph{Input program} We assume \p to be a sequential, deterministic program, that receives a set of inputs $\mathtt{H = \{h_1, ..., h_n\}}$ and produces a set of outputs $\mathtt{L = \{l_1, ..., l_m\}}$. Inputs are chosen based on a publicly known a priori probability distribution. Outputs can be produced at any point during the execution. 
 We restrict ourselves to analyzing programs that terminate normally. The program text of \p is publicly known.
 % TODO: specify scope of language
 
-\emph{Security Lattice} Each element of \In and \Out is associated with an element of a security lattice, describing its confidentiality level. We use a lattice with two elements $\hat{l}$, for public values and $\hat{h}$ for secret values.
+\paragraph{Security Lattice} Each element of \In and \Out is associated with an element of a security lattice, describing its confidentiality level. We use a lattice with two elements $\hat{l}$, for public values and $\hat{h}$ for secret values.
 % Schneider -- nur high und low
 
 
-\emph{Attacker Model} We consider an adversary \A that is able to choose public inputs of \p and observe the resulting outputs on public channels. The attacker is not able to gain information via convert channels, such as timing, storage or resource usage.
+\paragraph{Attacker Model} We consider an adversary \A that is able to choose public inputs of \p and observe the resulting outputs on public channels. The attacker is not able to gain information via convert channels, such as timing, storage or resource usage.
 
 %% standard def von min etropy aus smith paper funzt nicht für public inputs
 %% new notion (min-entropy ???)
