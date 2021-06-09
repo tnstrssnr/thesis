@@ -1,43 +1,23 @@
 \chapter{Theoretical Background}\label{sec:basics}
 
-This chapter presents the theoretical foundations of this thesis. 
-% TODO: at least 1 more sentence
+This chapter presents the theoretical background of this thesis. We will explain the foundations of quantitative information flow control and the different measures that are used to quantify information leakage. Furthermore, we will outline important aspects of (approximate) model counting, as well basic principles used in static (Q)IFC analyses \emph{Nildumu} and \emph{JOANA}, as both are used in our hybrid QIFC tool.
 
 \section{Quantitative Information Flow Control}
-% Control ?!?!?!
 
-% QIFC
-% attacker model
-% interpreter inputs
-% information + leakage
+Information flow control aims to guarantee the confidentiality of the secret input data of a program, by examining the flow of information through the program to public output channels, where the information would become accessible to an attacker.
 
-Information flow security aims to limit the amount of information about a program's secret inputs that can be revealed by its public outputs. Classical information flow analysis tries to prove the absence of such information flows, a property called \emph{non-interference}.
-For real world applications, leaking a certain amount of information is often required to build useful programs. In this case, the non-interference property is too strict. Instead we wish to limit the amount of information that is leaked.
-Quantitative information flow analysis provides tools to measure how much information can be learned by an attacker about a program's secret inputs.
+There are different ways in which such information leakage might happen: Explicit information flows happen, when a secret values itself is written to a public channel or the information is copied to a variable that is later in leaked to a public channel. An example of a program is shown in figure \ref{fig:exEx}. Information leaks through implicit flows happen, when secret values affect the program's output through influencing the execution path. Figure \ref{fig:ifEx} shows a program snippet that contains an implicit flow. Additional to explicit and implicit flows, an attacker could gain information trough covert channels by observing a program's usage of different resources, such as time or memory \cite{smith07}.
 
-%%% relevant for this section i.a.:
-% On the foundations of quantitative information flow (Smith '09) -- \cite{smith09}
-% SAT-Based Analysis and Quantification of Information Flow in Programs (Klebanov et al. '13) -- \cite{klebanov13}
-% Quantifiying Dynamic Leakage: Complexity Analysis and Model Counting-based Calculation (Chu et al '19) -- \cite{chu19}
-% Quantifying Dynamic Leakage: Complexity Analysis and Model Counting-based Calculation (Besson et al. '16) -- \cite{besson16}
-% TODO: add proper citations throughout section
-
-% Nildumu: joana / stand-alone -> API zum AST aufbauen
-% was macht dieser Kommentar hier
-% vergleiche mal commits der 2 versionen
+Qualitative information flow analysis tries to prove the absence of explicit and implicit information flows, a property called \emph{non-interference}. For real world applications, leaking a certain amount of information is often required to build useful programs. In this case, the non-interference property is too strict. Instead, we wish to limit the amount of information that is leaked. Quantitative information flow analysis provides tools to measure how much information can be learned by an attacker about a program's secret inputs \cite{smith09}.
 
 We consider the following scenario: Given a program \p, that accepts some input \In and produces some output \Out, how much information can an adversary \A learn about $H$, by observing \p and \Out?
 
-%% \paragraph statt \emph
-\paragraph{Input program} We assume \p to be a sequential, deterministic program, that receives a set of inputs $\mathtt{H = \{h_1, ..., h_n\}}$ and produces a set of outputs $\mathtt{L = \{l_1, ..., l_m\}}$. Inputs are chosen based on a publicly known a priori probability distribution. Outputs can be produced at any point during the execution. 
-We restrict ourselves to analyzing programs that terminate normally. The program text of \p is publicly known.
-% TODO: specify scope of language
+\paragraph{Input program} We assume \p to be a sequential, deterministic program, that receives a set of inputs $\mathtt{H = \{h_1, ..., h_n\}}$ and produces a set of outputs $\mathtt{L = \{l_1, ..., l_m\}}$. We will write the sets of all possible inputs and outputs as $\mathcal{H}$ $\mathcal{L}$ resprectively. Inputs are chosen based on a publicly known a priori probability distribution. The program text of \p is publicly known. A more detailed description of the input language we used, we refer to \ref{sec:inputLang}.
 
-\paragraph{Security Lattice} Each element of \In and \Out is associated with an element of a security lattice, describing its confidentiality level. We use a lattice with two elements $\hat{l}$, for public values and $\hat{h}$ for secret values.
+\paragraph{Security Lattice} Each element of \In and \Out is associated with an element of a security lattice, describing its confidentiality level. We use a lattice with two elements $\hat{l}$, for public values and $\hat{h}$ for secret values. If not otherwise specified, we consider all inputs to be high and all outputs to be low.
 % Schneider -- nur high und low
 
-
-\paragraph{Attacker Model} We consider an adversary \A that is able to choose public inputs of \p and observe the resulting outputs on public channels. The attacker is not able to gain information via convert channels, such as timing, storage or resource usage.
+\paragraph{Attacker Model} We consider an adversary \A that is able to observe the program text of \p and the resulting outputs on public channels. He or she is also aware of the set of program inputs and its underlying probability distribution. We assume the attacker is not able to extract any information through covert channels. The goal of the attacker is to guess the secret input of the program, using the information they can extract through observing the program's output.
 
 %% standard def von min etropy aus smith paper funzt nicht für public inputs
 %% new notion (min-entropy ???)
@@ -47,18 +27,44 @@ We restrict ourselves to analyzing programs that terminate normally. The program
 % leakage can differ greatly between different executions --> example algorithm 1
 % want to measure amount of information attacker has about the input after a single program execution
 
-\begin{algorithm}
-	\caption{} %TODO: caption?  
-    \hspace*{\algorithmicindent} \textbf{Input} h: int \\
-    \hspace*{\algorithmicindent} \textbf{Output} l: int
-	\begin{algorithmic}[1]
-        \State $l: int \leftarrow 0$
-		\If{$h == 42$}
-        \State $l \leftarrow 1$
-        \EndIf\\
-        \Return l
-	\end{algorithmic} 
-\end{algorithm}
+\begin{figure}
+    \centering
+    \begin{minipage}{.7\linewidth}
+        \begin{algorithm}[H]
+            \hspace*{\algorithmicindent} \textbf{Input} h: int \\
+            \hspace*{\algorithmicindent} \textbf{Output} l: int
+            \hspace*{1em}
+            \begin{algorithmic}[1]
+                \State $l: int \leftarrow h \: \% \: 10$
+                \State leak_to_pub_channel(l)
+            \end{algorithmic} 
+        \end{algorithm}
+\end{minipage}
+\caption{Example for information leakage through explicit flows}
+\label{fig:exEx}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \begin{minipage}{.7\linewidth}
+        \begin{algorithm}[H]
+            \hspace*{\algorithmicindent} \textbf{Input} h: int \\
+            \hspace*{\algorithmicindent} \textbf{Output} l: int
+            \hspace*{1em}
+            \begin{algorithmic}[1]
+                \State $l: int \leftarrow 0$
+                \If{$h == 42$}
+                \State $l \leftarrow 1$
+                \EndIf
+                \State leak_to_pub_channel(l)
+            \end{algorithmic} 
+        \end{algorithm}
+\end{minipage}
+\caption{Example for information leakage through implicit flows}
+\label{fig:ifEx}
+\end{figure}
+
+\subsection{Quantifying Information Flow}
 
 In \cite{smith09}, Smith characterizes information leakage with the following equation:
 \begin{center}
@@ -66,11 +72,120 @@ In \cite{smith09}, Smith characterizes information leakage with the following eq
 \end{center}
 In our scenario, the unknown value \In is the initial uncertainty, measured by some entropy measure. The remaining uncertainty is the entropy of \In after observing \Out. 
 
-Because programs are deterministic, we can describe the outputs as a function $\phi_p$ of the inputs, thus $\mOut = \phi(\mIn)$. Likewise it holds that $\phi_p^{-1}(\mOut) = \{ \mIn | \phi(\mIn) = \mOut \}$ is the set of all inputs, that produce the same output $\mOut$.
+Because the programs we consider are deterministic, each program $p$ induces a mapping $\llbracket p \rrbracket: \mathcal{H} \longrightarrow \mathcal{L}$. From this mapping we can define an equivalence relation called the \emph{indistinguishability relation} as shown in definition \ref{def:ir}. The equivalence class of this relation are pre-images of the possible program outputs (see definition \ref{def:is}). When the adversary observes the value \Out, he knows that the secret input must be an element of $\mathcal{H}_mOut$. Thus, the bigger the size of $\mathcal{H}_mOut$, the less likely the adversary is, to guess the secret input in a single try \cite{backes09, smith09, alvim19}. 
 
-\begin{definition}[Indistinguishability relation]
-        bla bla bla
+\begin{definition}[Indistinguishability Relation]\label{def:ir}
+        For each program $p$, we define the \emph{indistinguishability relation} $\thicksim$ over $\mathcal{H}$ as:
+        \begin{center}
+            $\forall \mIn, \mIn' \in \mathcal{H}: \mIn \thicksim  \mIn' \iff \llbracket p \rrbracket(\mIn) = \llbracket p \rrbracket(\mIn')$
+        \end{center}
 \end{definition}
+
+\begin{definition}[Indistinguishability Set]\label{def:is}
+    The indistinguishability set of a public output $\mOut \in \mathcal{L}$ of a program $p$ is given as:
+    \begin{center}
+        $\mathcal{H}_{\mOut} := \llbracket p \rrbracket^{-1} (\mOut) = \{ H \in \mathcal{H} \: | \: \llbracket p \rrbracket (\mIn) = \mOut \}$
+    \end{center}
+\end{definition}
+
+\paragraph*{Measuring Leakage with Vulnerability}
+A widely used measure for information leakage is \emph{vulnerability} and \emph{min-entropy} (\td{citations}). Following the definitions from \cite{smith09}, the vulnerability of a value $X$ describes `the worst case probability, that an adversary could guess the value of $X$ in one try.'
+
+\begin{definition}[Vulnerability]\label{def:vul}
+    Let $X$ be a random variables and $\mathcal{X}$ the set of possible values for $X$. The \emph{vulnerability} $V(X)$ is defined as
+    \begin{center}
+        $V(X) := \max\limits_{x \in \mathcal{X}} P[X = x]$
+    \end{center}
+\end{definition}
+
+\begin{definition}[Min-Entropy]
+    Using the same definitions as in \ref{def:vul}, the min-entropy of $X$ is given bx
+    \begin{center}
+        $H_\infty (X) := \log \frac{1}{V(X)}$ \footnote{we use the notation `$\log$' for the logarithm of base 2.}
+    \end{center}
+\end{definition}
+
+\begin{definition}[Channel Capacity]
+    Piven a program $p$, the channel capacity of $p$ is the number of distinct outputs $|\mathcal{L}|$ than can be produced by $p$
+\end{definition}
+
+\td{finish}
+
+\section{Symbolic Execution}
+Symbolic Execution is a program analysis technique in which, instead of real inputs, symbolic values are used to determine, which parts of the program are executed and which outputs they may produce. Each symbolic execution path encodes many actual program executions.
+Symbolic execution is often used for testing and program verification purposes.
+
+\td{cite: king}
+
+\note{neccessary??}
+
+\section{Program Representation}
+
+\subsection{Static Single Assignment}
+Static single assignment (SSA) is a representation of the program, where every value is assigned exactly once. If in the original program, a variable is written to more than once, a copy of the variable is created, that replaces the original one from that point in the program \cite{cytron91}. \com{zitat?} We will throughout this thesis refer to variables and their copies in the SSA form as values, to differentiate them from the variables used in the original input program. We write \val$_p$ to denote the set of all values of a program and $v_0, v_1, ...$ to denote single values.
+
+
+\subsection{Control Flow Graphs}
+A control flow graph (CFG) is a graph, that represents all possible program execution traces via paths in the graph \cite{allen70}. They are widely used in compiler optimizations and static program analyses. The nodes of a CFG are a function's basic blocks, plus two special blocks \texttt{start} and \texttt{end}, that mark the single entry- and exit point of the function. An edge is inserted for every possible jump from one block to another. An example graph for the program from figure \ref{fig:ifEx} can be seen in \ref{fig:cfg}.
+
+We use $\mbb_p$ for the set of all basic blocks of a program \p and $b_1, b_2, ...$ for the blocks themselves. With exception of the \texttt{start}- and \texttt{end}-block, every block in the CFG has at minimum one predecessor and one successor. In \ref{def:succPred} we define functions to access the predecessors and successors of a basic block, that we will use throughout this thesis. We assume all CFGs to have no critical edges (see \cite{dragoonBook}). This property can be assured by splitting critcal edges with empty basic blocks, should they occur. 
+
+\begin{definition}[CFG predecessors and successors]\label{def:succPred}
+    The functions will return the set of predecessor and successor blocks respectively for the given basic block.
+    \begin{center}
+        $pred: \bb_p \longrightarrow 2^{\bb_p}$\\
+        $succ: \bb_p \longrightarrow 2^{\bb_p}$
+    \end{center}
+    We assume for $pred(b)$ that the returned set of predecessors for $b$ is ordered and that the order corresponds to the arguments of any $\phi$-functions that might be present in $b$.
+\end{definition}
+
+\subsection{Program Dependence Graphs}
+A program dependence graph (PDG) is an intermediate representation of a program that makes explicit the programs data and control dependencies \cite{ferrante87}.  
+
+\begin{figure}
+    \begin{subfigure}{.5\textwidth}
+            \begin{tikzpicture}
+                \tikzstyle{process} = [rectangle, minimum width=2.5cm, minimum height=.7cm, text centered, draw=black, node distance=1.5cm]
+                \tikzstyle{arrow} = [thick,->,>=stealth]
+                
+                \node (entry) [process] {Entry};
+                \node (b1) [process, below of=entry, align=center] {\texttt{int l = 0;} \\ \texttt{if (h == 42)}};
+                \node (b2) [process, below of=b1, xshift=-2cm] {\texttt{int l = 1;}};
+                \node (b22) [process, below of=b1, xshift=+2cm, draw = blue] {};
+                \node (b3) [process, below of=b2, xshift=+2cm] {\texttt{return l;}};
+                \node (exit) [process, below of=b3] {Exit};
+
+                \draw [arrow] (entry) -- (b1);
+                \draw [arrow] (b1) -- (b2);
+                \draw [arrow] (b1) -- (b22);
+                \draw [arrow] (b2) -- (b3);
+                \draw [arrow] (b22) -- (b3);
+                \draw [arrow] (b3) -- (exit);
+            \end{tikzpicture}
+        \caption{CFG for the program snippet shown in \ref{fig:ifEx}. The highlighted node was inserted to split a critical edge.}
+        \label{fig:cfg}
+    \end{subfigure}
+    \begin{subfigure}{.5\textwidth}
+        \begin{tikzpicture}
+            \tikzstyle{process} = [rectangle, minimum width=2.5cm, minimum height=.7cm, text centered, draw=black, node distance=1.5cm]
+            \tikzstyle{arrow} = [thick,->,>=stealth]
+            
+            \node (entry) [process] {\td{This should be a PDG}};
+            \node (b1) [process, below of=entry, align=center] {\texttt{int l = 0;} \\ \texttt{if (h == 42)}};
+            \node (b2) [process, below of=b1, xshift=-2cm] {\texttt{int l = 1;}};
+            \node (b22) [process, below of=b1, xshift=+2cm, draw = blue] {};
+            \node (b3) [process, below of=b2, xshift=+2cm] {\texttt{return l;}};
+            \node (exit) [process, below of=b3] {Exit};
+
+            \draw [arrow] (entry) -- (b1);
+            \draw [arrow] (b1) -- (b2);
+            \draw [arrow] (b1) -- (b22);
+            \draw [arrow] (b2) -- (b3);
+            \draw [arrow] (b22) -- (b3);
+            \draw [arrow] (b3) -- (exit);
+        \end{tikzpicture}
+    \end{subfigure}
+\end{figure}
 
 \section{Model Counting}
 
@@ -95,10 +210,6 @@ The first approximate \#SAT algorithm for DNF formulas was introduced by Luby an
 Given a set of propositional variables $\mathcal{V}$ and a propositional formula $F$ over $\mathcal{V}$, projected model counting (\#$\exists$SAT) is the problem of finding the number of assignments to a set of priority variables $\mathcal{P} \subseteq \mathcal{V}$, such that the assignment can be extended to an assignment over $\mathcal{V}$ that fulfills $F$. Considering the example from \ref{fig:satEx} and a priority set $\mathcal{P} = \{x\}$, the number of projected models is 2, with both possible assignments of $x$ being extendable to a fulfilling assignment over all variables by setting $y = \mfff$.
 
 The problem is introduced by Aziz et.al. in \cite{aziz15}, along with a discussion of approaches to solve \#$\exists$SAT. \td{finish}
-
-\paragraph*{\#SAT in Relation to QIFC}
-Model counting has previously been used to tackle QIFC problems \cite{klebanov13, enescu16, biondi18,chu19}. The approach requires the generation of propositional a propositional formula $F_o$, that describes values leaked on public output channels in terms of the program's high input variables.
-
 
 % Model Counting
 % Complexity

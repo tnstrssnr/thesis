@@ -5,8 +5,25 @@
 %\usepackage[ngerman]{babel}
 \usepackage[ngerman,english]{babel}     % use this if your thesis is in English -- last option specifies the default language
 
-\usepackage{tikz}
-\usetikzlibrary{positioning,calc,arrows}
+\usepackage{pgf, tikz}
+\usetikzlibrary{positioning,calc,arrows, automata, shapes, calc, decorations}
+\usepackage{caption}
+\usepackage{subcaption}
+
+\tikzstyle{midnode}=[
+    draw=blue!70,   % draw the border with 70% transparent blue
+    rectangle,      % the shape of the node is a rectangle
+    fill=blue!10,   % fill the box with 20% blue
+    text width=1cm,
+    text centered]
+
+\tikzstyle{smallnode}=[
+    draw=blue!70,   % draw the border with 70% transparent blue
+    rectangle,      % the shape of the node is a rectangle
+    fill=blue!10,   % fill the box with 20% blue
+    text width=0.4cm,
+    text centered]
+
 % \usetikzlibrary{firm}
 
 \usepackage{listings}
@@ -25,8 +42,9 @@
 \usepackage{csquotes} % provides \enquote{} macro for "quotes"
 
 \usepackage{amsmath}
+\usepackage{stmaryrd}
 % \usepackage{amsthm} % load this before cleveref to get correctly named references to custom theorems
-\usepackage[labelformat=simple]{subfig}
+%\usepackage[labelformat=simple]{subfig}
 \usepackage[font={sf},margin=10pt,labelfont=bf]{caption}
 \usepackage{booktabs}
 % \usepackage{algorithm2e} % load before hyperref for correct links to line numbers with cleveref

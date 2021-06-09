@@ -49,8 +49,6 @@ A similiar approach is used by Biondi et. al. in \cite{biondi18}. They also use 
 
 Chu and Hashimoto in \cite{chu19} also combine the CBMC framework with an approximate model counter, however they do not measure channel capacity as the previously mentioned works did, instead they estimate the pre-image size of a certain program output.
 
-In many of these works, there have been attempts to mitigate the problems that are caused by path explosion in input programs and the computational limits of state of the art model counters. These attempts include using approximate model counting instead of a precise calculation (\cite{biondi18, chu19}) or transformations of SAT formulas into easier to handle representations (\cite{klebanov13}). We have not yet seen an attempt to use static (Q)IFC techniques to reduce complexity at the time of formula creation. \com{Abschnitt iwie komisch so mittendrin}
-
 % combined
 A previous attempt at combining static and dynamic techniques has been made by McCamant and Ernst (\cite{mccamant08}). They transform programs into network graphs with edge capacities corresponding to the amount of Information that might flow between the corresponding program parts. Thus, the maximum leak of information corresponds to the maximum flow in the created network. 
 
