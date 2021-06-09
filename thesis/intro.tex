@@ -40,24 +40,19 @@ Many modern dynamic QIF analyses are based on symbolic execution and SAT solving
 
 While early mentions of quantifying information flow have been made, for example by Denning \cite{denning82}, a formal definition and theoretical groundwork for the QIF problem are given more recently by Lowe \cite{lowe02} and Smith \cite{smith09}.
 
+QIFC analyses based on model counting have previously been introduced by several people.
+Newsome, McCamant and Song \cite{newsome09} transform their programs into boolean predicates that accurately models its semantics. Using SAT techniques they then measure the program's channel capacity. The results are used to find false positives in a dynamic taint analysis in order to more accurately determine the amount of influence of an attacker over the program.
 
-% static
-- Nildumu
-- joana
+Klebanov, Manthey and Muise (\cite{klebanov13}) use the bounded model checking tool CBMC (\cite{cbmc}) to generate a boolean predicate and the d-DNNF-based \#SAT tools \textsc{sharp}SAT (\cite{thurley06}) and \textsc{DSHARP} (\cite{muise12}).
 
+A similiar approach is used by Biondi et. al. in \cite{biondi18}. They also use CBMC to create a SAT formula. In order to address scalability issues with overly complex SAT formulas, they are the first use an approximate model counter, in this case ApproxMC (\cite{chakraborty13}).
 
+Chu and Hashimoto in \cite{chu19} also combine the CBMC framework with an approximate model counter, however they do not measure channel capacity as the previously mentioned works did, instead they estimate the pre-image size of a certain program output.
 
-QIFC analyses based on model counting have previously been introduced by Newsome, McCamant and Song \cite{newsome09}, who use SAT techniques to measure channel capacity to refine a dynamic tainting technique to measure the amount of influence of an attacker over the program. They employ a symbolic execution tool, to obtain a propositional formula that represents the constraints on the program's outputs after its execution. A constraint solver is then used to describe the set of possible outputs.
-
-A similar approach is used by Klebanov, Manthey and Muise \cite{klebanov13}, who use the bounded model checking tool CBMC (\cite{cbmc}) for their SAT formula generation and d-DNNF-based \#SAT tools \textsc{sharp}SAT (\cite{}) and \textsc{DSHARP} (\cite{}).
-
-
-The first use of an approximate model counter is made by Biondi et. al. int \cite{biondi18} in order to address scalability issues with overly complex SAT formulas.
-
-- Enescu in \cite{enescu16}
-- Chu \cite{chu19}
-
-
+In many of these works, there have been attempts to mitigate the problems that are caused by path explosion in input programs and the computational limits of state of the art model counters. These attempts include using approximate model counting instead of a precise calculation (\cite{biondi18, chu19}) or transformations of SAT formulas into easier to handle representations (\cite{klebanov13}). We have not yet seen an attempt to use static (Q)IFC techniques to reduce complexity at the time of formula creation. \com{Abschnitt iwie komisch so mittendrin}
 
 % combined
-- McCamant, Ernst Network Flow
+A previous attempt at combining static and dynamic techniques has been made by McCamant and Ernst (\cite{mccamant08}). They transform programs into network graphs with edge capacities corresponding to the amount of Information that might flow between the corresponding program parts. Thus, the maximum leak of information corresponds to the maximum flow in the created network. 
+
+% hybrid monitors in quallitative IFC?
+% static methods?

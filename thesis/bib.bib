@@ -113,6 +113,17 @@ series = {PLAS '09}
   doi={10.1109/CSF.2016.23}
 }
 
+@inproceedings{mccamant08,
+   author = {Stephen McCamant and Michael D. Ernst},
+   title = {Quantitative information flow as network flow capacity},
+   booktitle = {PLDI 2008: Proceedings of the {ACM} {SIGPLAN} 2008
+	Conference on Programming Language Design and Implementation},
+   pages = {193--205},
+   address = {Tucson, AZ, USA},
+   month = jun,
+   year = {2008}
+}
+
 %%% (Approximate) Model Counting
 
 @book{biere09,
@@ -171,6 +182,16 @@ address="Berlin, Heidelberg",
 pages="424--429",
 abstract="We introduce sharpSAT, a new {\#}SAT solver that is based on the well known DPLL algorithm and techniques from SAT and {\#}SAT solvers. Most importantly, we introduce an entirely new approach of coding components, which reduces the cache size by at least one order of magnitude, and a new cache management scheme. Furthermore, we apply a well known look ahead based on BCP in a manner that is well suited for {\#}SAT solving. We show that these techniques are highly beneficial, especially on large structured instances, such that our solver performs significantly better than other {\#}SAT solvers.",
 isbn="978-3-540-37207-3"
+}
+
+@inproceedings{muise12,
+author = {Muise, Christian and Mcilraith, Sheila and Beck, J. and Hsu, Eric},
+year = {2012},
+month = {05},
+pages = {},
+title = {Dsharp: Fast d-DNNF Compilation with sharpSAT},
+isbn = {978-3-642-30352-4},
+doi = {10.1007/978-3-642-30353-1_36}
 }
 
 @inproceedings{darwiche04,
@@ -247,3 +268,22 @@ pages="389--391",
 abstract="CBMC implements bit-precise bounded model checking for C programs and has been developed and maintained for more than ten years. CBMC verifies the absence of violated assertions under a given loop unwinding bound. Other properties, such as SV-COMP's ERROR labels or memory safety properties are reduced to assertions via automated instrumentation. Only recently support for efficiently checking concurrent programs, including support for weak memory models, has been added. Thus, CBMC is now capable of finding counterexamples in all of SV-COMP's categories. As back end, the competition submission of CBMC uses MiniSat 2.2.0.",
 isbn="978-3-642-54862-8"
 }
+
+%%% CFG
+
+@inproceedings{allen70,
+author = {Allen, Frances E.},
+title = {Control Flow Analysis},
+year = {1970},
+isbn = {9781450373869},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/800028.808479},
+doi = {10.1145/800028.808479},
+abstract = {Any static, global analysis of the expression and data relationships in a program requires a knowledge of the control flow of the program. Since one of the primary reasons for doing such a global analysis in a compiler is to produce optimized programs, control flow analysis has been embedded in many compilers and has been described in several papers. An early paper by Prosser [5] described the use of Boolean matrices (or, more particularly, connectivity matrices) in flow analysis. The use of “dominance” relationships in flow analysis was first introduced by Prosser and much expanded by Lowry and Medlock [6]. References [6,8,9] describe compilers which use various forms of control flow analysis for optimization. Some recent developments in the area are reported in [4] and in [7].The underlying motivation in all the different types of control flow analysis is the need to codify the flow relationships in the program. The codification may be in connectivity matrices, in predecessor-successor tables, in dominance lists, etc. Whatever the form, the purpose is to facilitate determining what the flow relationships are; in other words to facilitate answering such questions as: is this an inner loop?, if an expression is removed from the loop where can it be correctly and profitably placed?, which variable definitions can affect this use?In this paper the basic control flow relationships are expressed in a directed graph. Various graph constructs are then found and shown to codify interesting global relationships.},
+booktitle = {Proceedings of a Symposium on Compiler Optimization},
+pages = {1–19},
+numpages = {19},
+location = {Urbana-Champaign, Illinois}
+}
+
