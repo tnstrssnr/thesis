@@ -36,7 +36,7 @@ We consider the following scenario: Given a program \p, that accepts some input 
             \hspace*{1em}
             \begin{algorithmic}[1]
                 \State $l: int \leftarrow h \: \% \: 10$
-                \State leak_to_pub_channel(l)
+                \State leak(l)
             \end{algorithmic} 
         \end{algorithm}
 \end{minipage}
@@ -56,7 +56,7 @@ We consider the following scenario: Given a program \p, that accepts some input 
                 \If{$h == 42$}
                 \State $l \leftarrow 1$
                 \EndIf
-                \State leak_to_pub_channel(l)
+                \State leak(l)
             \end{algorithmic} 
         \end{algorithm}
 \end{minipage}
@@ -110,14 +110,6 @@ A widely used measure for information leakage is \emph{vulnerability} and \emph{
 \end{definition}
 
 \td{finish}
-
-\section{Symbolic Execution}
-Symbolic Execution is a program analysis technique in which, instead of real inputs, symbolic values are used to determine, which parts of the program are executed and which outputs they may produce. Each symbolic execution path encodes many actual program executions.
-Symbolic execution is often used for testing and program verification purposes.
-
-\td{cite: king}
-
-\note{neccessary??}
 
 \section{Program Representation}
 
