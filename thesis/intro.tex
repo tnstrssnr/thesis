@@ -38,7 +38,7 @@ Many modern dynamic QIF analyses are based on symbolic execution and SAT solving
 
 \section{Related Work}\label{sec:relWork}
 
-While early mentions of quantifying information flow have been made, for example by Denning \cite{denning82}, a formal definition and theoretical groundwork for the QIF problem are given more recently by Lowe \cite{lowe02} and Smith \cite{smith09}.
+While early mentions of quantifying information flow have been made, for example by Denning \cite{denning82}, a formal definition and theoretical groundwork for the QIF problem are given more recently by Lowe \cite{lowe02} and Smith \cite{smith09}. A recent publication by Alvim et. al \cite{alvim19} gives a comprehensive overview over the theory behind quantitative information flow.
 
 QIFC analyses based on model counting have previously been introduced by several people.
 Newsome, McCamant and Song \cite{newsome09} transform their programs into boolean predicates that accurately models its semantics. Using SAT techniques they then measure the program's channel capacity. The results are used to find false positives in a dynamic taint analysis in order to more accurately determine the amount of influence of an attacker over the program.

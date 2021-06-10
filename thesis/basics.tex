@@ -140,20 +140,27 @@ We use $\mbb_p$ for the set of all basic blocks of a program \p and $b_1, b_2, .
 \end{definition}
 
 \subsection{Program Dependence Graphs}
-A program dependence graph (PDG) is an intermediate representation of a program that makes explicit the programs data and control dependencies \cite{ferrante87}.  
+A program dependence graph (PDG) is an intermediate representation of a program that makes explicit the programs data and control dependencies. Its nodes are the programs statements and expressions and the edges represent the dependencies that exist between those \cite{ferrante87}. The Program Dependence Graph of \ref{fig:ifEx} is shown in figure \ref{fig:pdg}.
+
+A data dependency edge between nodes $x$ and $y$ exists, if $x$ assigns a value that is used in the statement $y$.
+
+A control dependency edge between nodes $x$ and $y$ exists, if the outcome of $x$ has influence on whether node $y$ will be executed.
+
+Thus, a path $x \stackrel{*}{\rightsquigarrow } y$ between two nodes exists, if information can flow in the program from location $x$ to location $y$. Consequently, if there is no path, no information can flow between the two statements. This property makes PDGs a popular tool for information flow analysis \cite{horwitz88,giffhorn12}.
 
 \begin{figure}
-    \begin{subfigure}{.5\textwidth}
+    \begin{subfigure}[t]{.45\textwidth}
+        \centering
             \begin{tikzpicture}
-                \tikzstyle{process} = [rectangle, minimum width=2.5cm, minimum height=.7cm, text centered, draw=black, node distance=1.5cm]
+                \tikzstyle{node} = [rectangle, minimum width=2.5cm, minimum height=.7cm, text centered, draw=black, node distance=1.5cm]
                 \tikzstyle{arrow} = [thick,->,>=stealth]
                 
-                \node (entry) [process] {Entry};
-                \node (b1) [process, below of=entry, align=center] {\texttt{int l = 0;} \\ \texttt{if (h == 42)}};
-                \node (b2) [process, below of=b1, xshift=-2cm] {\texttt{int l = 1;}};
-                \node (b22) [process, below of=b1, xshift=+2cm, draw = blue] {};
-                \node (b3) [process, below of=b2, xshift=+2cm] {\texttt{return l;}};
-                \node (exit) [process, below of=b3] {Exit};
+                \node (entry) [node] {Entry};
+                \node (b1) [node, below of=entry, align=center] {\texttt{int l = 0;} \\ \texttt{if (h == 42)}};
+                \node (b2) [node, below of=b1, xshift=-2cm] {\texttt{l = 1;}};
+                \node (b22) [node, below of=b1, xshift=+2cm, draw = blue] {};
+                \node (b3) [node, below of=b2, xshift=+2cm] {\texttt{return l;}};
+                \node (exit) [node, below of=b3] {Exit};
 
                 \draw [arrow] (entry) -- (b1);
                 \draw [arrow] (b1) -- (b2);
@@ -162,30 +169,31 @@ A program dependence graph (PDG) is an intermediate representation of a program 
                 \draw [arrow] (b22) -- (b3);
                 \draw [arrow] (b3) -- (exit);
             \end{tikzpicture}
-        \caption{CFG for the program snippet shown in \ref{fig:ifEx}. The highlighted node was inserted to split a critical edge.}
+        \caption{Control Flow Graph\\The highlighted node was inserted to split a critical edge.}
         \label{fig:cfg}
-    \end{subfigure}
-    \begin{subfigure}{.5\textwidth}
+    \end{subfigure}\hfill
+    \begin{subfigure}[t]{.45\textwidth}
+        \centering
         \begin{tikzpicture}
-            \tikzstyle{process} = [rectangle, minimum width=2.5cm, minimum height=.7cm, text centered, draw=black, node distance=1.5cm]
+            \tikzstyle{node} = [ellipse, minimum width=2.5cm, minimum height=.7cm, text centered, draw=black, node distance=2cm]
             \tikzstyle{arrow} = [thick,->,>=stealth]
             
-            \node (entry) [process] {\td{This should be a PDG}};
-            \node (b1) [process, below of=entry, align=center] {\texttt{int l = 0;} \\ \texttt{if (h == 42)}};
-            \node (b2) [process, below of=b1, xshift=-2cm] {\texttt{int l = 1;}};
-            \node (b22) [process, below of=b1, xshift=+2cm, draw = blue] {};
-            \node (b3) [process, below of=b2, xshift=+2cm] {\texttt{return l;}};
-            \node (exit) [process, below of=b3] {Exit};
+            \node (b1) [node] {\texttt{int l = 0;}};
+            \node (b2) [node, below left of=b1] {\texttt{h == 42}};
+            \node (b3) [node, below of=b2] {\texttt{l = 1;}};
+            \node (b4) [node, below right of=b3] {\texttt{return l;}};
 
-            \draw [arrow] (entry) -- (b1);
-            \draw [arrow] (b1) -- (b2);
-            \draw [arrow] (b1) -- (b22);
-            \draw [arrow] (b2) -- (b3);
-            \draw [arrow] (b22) -- (b3);
-            \draw [arrow] (b3) -- (exit);
+            \draw [arrow] (b1) -- (b4);
+            \draw [arrow, blue] (b2) -- (b3);
+            \draw [arrow] (b3) -- (b4);
         \end{tikzpicture}
+        \caption{Program Dependence Graph\\The black edges are data dependencies, while blue edges show control dependencies}
+        \label{fig:pdg}
     \end{subfigure}
+    \caption{Different graph representations for the program snippet in \ref{fig:ifEx}}
 \end{figure}
+
+\section{Program Slicing}
 
 \section{Model Counting}
 
@@ -197,7 +205,7 @@ Early exact model counting techniques, such as \cite{birnbaum99}, or the well-kn
 
 \paragraph*{Approximate Model Counting}
 State-of-the-art exact model counters scale to a couple of hundred variables.  This limit can be pushed to around 1,000 variables if we allow approximate solutions \cite{biere09}.
-The first approximate \#SAT algorithm for DNF formulas was introduced by Luby and Karp in \cite{karp89} used Monte-Carlo techniques. This approach was extended to work on CNF formulas by Chakraborty, Meel and Vardi in \cite{chakraborty13}. Bith procedures fall under category of $(\epsilon, \delta)$-counters: for $0 < \epsilon, delta \leq 1$, the approximated solution $\#F_{approx}$ to the true solution of the problem \#F, lies in the interval $[(1 + \epsilon)^{-1} \#F, \: (1 + \epsilon) \#F]$ with a probability of $1 - \delta$ \cite{karp89,chakraborty13}.
+The first approximate \#SAT algorithm for DNF formulas was introduced by Luby and Karp in \cite{karp89} used Monte-Carlo techniques. This approach was extended to work on CNF formulas by Chakraborty, Meel and Vardi in \cite{chakraborty13}. Both procedures fall under category of $(\epsilon, \delta)$-counters: for $0 < \epsilon, \delta \leq 1$, the approximated solution $\#F_{approx}$ to the true solution of the problem \#F, lies in the interval $[(1 + \epsilon)^{-1} \#F, \: (1 + \epsilon) \#F]$ with a probability of $1 - \delta$ \cite{karp89,chakraborty13}.
 
 \begin{figure}
     \centering
@@ -205,6 +213,8 @@ The first approximate \#SAT algorithm for DNF formulas was introduced by Luby an
     \caption{Propositional formula with 2 variables}
     \label{fig:satEx}
 \end{figure}
+
+
 
 \paragraph*{Projected Model Counting}
 Given a set of propositional variables $\mathcal{V}$ and a propositional formula $F$ over $\mathcal{V}$, projected model counting (\#$\exists$SAT) is the problem of finding the number of assignments to a set of priority variables $\mathcal{P} \subseteq \mathcal{V}$, such that the assignment can be extended to an assignment over $\mathcal{V}$ that fulfills $F$. Considering the example from \ref{fig:satEx} and a priority set $\mathcal{P} = \{x\}$, the number of projected models is 2, with both possible assignments of $x$ being extendable to a fulfilling assignment over all variables by setting $y = \mfff$.

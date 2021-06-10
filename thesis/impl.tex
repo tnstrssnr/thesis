@@ -110,7 +110,7 @@ We use propositional logic to track the way that information about the secret in
 
 \section{Handling Loops, Recursion and Function calls}
 
-\section{Combining static and dynamic analyses to estimate channel capacity}
+\section{Hybrid Analysis: Channel Capacity}
 \textbf{Goal:}
 \begin{itemize}
     \item channel capacity c := number of distinct program outputs
@@ -180,6 +180,39 @@ Consider program w/ single loop. Precisely computing channel capacity might be i
 \end{itemize}
 
 \note{while (i < secret) { if (i > 64) {i = 100; break;} i++}}
+
+\section{Hybrid Analysis: Indistinguishability}
+
+\textbf{Goal: }estimate cardinality of indistinguishability set -- size of equivalence class $\mathcal{H}_l$ for output $l$.
+
+\textbf{Given: } Program p, which is divided into 3 sequential segments: $S_1, S_2, S_3$
+\begin{itemize}
+    \item Segments $S_1$ and $S_3$ can be analysed dynamically, for segments $S_2$ this is infeasible
+    \item tools in our analysis: dynamic analysis that can measure $|\mathcal{H}_l|$ and static analysis that can measure channel capacity
+    \item Let $\sigma_i$ be the state of the store after Segment $S_i$ finished executing, $\Sigma$ set of all possible stores
+    \item Process of estimating $|\mathcal{H}_l$:
+    \begin{enumerate}
+        \item using dynamic analysis, $d_3 := |{\sigma \in \Sigma: \llbracket S_3 \rrbracket (\sigma) = l}|$
+        \begin{itemize}
+            \item Set of all `Segments 2 results' that will lead to the output $l$
+        \end{itemize}
+        \item How to get an estimation for runs that use more iterations / need greater recursion depth?
+        \item $S_2$ to be statically analysed
+        \item Set S' := S_2 ; if ($\sigma == \sigma_2$) leak(h) else leak(0)
+        \item number of distinct outputs = number of inputs that will have same behaviour after the segment as the analysed inputs + 1 --> indistinguuishable
+        \item \com{Problem: static analysis will overestimate, we are only allowed to underestimate} --> instead of $\sigma == \sigma_2$, test $\sigma \neq \sigma_2$ and subtract from total number inputs
+    \end{enumerate}
+    \item \com{Problem: can each of those a valid output from $S_2$?}
+            \item \com{Instead: use whole program formulas and restrict \# loop iterations and recursion depth for static analysis}
+            \item \com{analyse whole program with static analysis and make sure all loops are executed at least \emph{recLimit} times}
+            \begin{itemize}
+                \item need possibility to throw exception / jump to end of program at any point
+                \item wrap everything in a function and call return?
+                \item use indicator variable, check if set at the end to find which valid program runs 
+            \end{itemize}
+            \item analyses each only takes into account executions that the other one doesn't --> adding values up should be ok
+            \item 
+\end{itemize}
 
 \section{Integration with Interpreter}
 \begin{itemize}
