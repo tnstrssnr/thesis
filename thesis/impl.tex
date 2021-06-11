@@ -11,6 +11,55 @@ The analysis is integrated in an interpreter that will execute the program for a
 
 \td{which guarantees does our analysis give?}
 
+\section{Notation Conventions}
+\com{so far mainly stuff that i don't know where to put yet...}
+
+\paragraph{Program Representation}
+In our analysis we work with the inputs CFG as well as the PDG, both in SSA form. Throughout we will use the following notations:
+
+\begin{definition}
+    Let $p$ be a program with statements $Stmts_p$ and basic blocks $\mbb_p$. The function
+    \begin{center}
+        $BB_p: Stmts \longrightarrow \mbb_p$
+    \end{center}
+    returns for every statement $s \in Stmts$ the basic block $b \in \mbb_p$ that contains the statement $s$.
+\end{definition}
+
+\begin{definition}
+    Let $p$ be a program with statements $Stmts_p$ and values \val$_p$. The function
+    \begin{center}
+        $def: $\val$_p \longrightarrow Stmts_p$
+    \end{center}
+    returns for every $v \in$ \val$_p$ the statement $s \in Stmts$, where the value $v$ is defined.
+\end{definition}
+
+\begin{definition}[Bit vector]
+    The function
+    \begin{center}
+        $bv_k: \mathbb{Z} \longrightarrow \{0, 1\}^k$
+    \end{center}
+    maps integers to bit vectors of a fixed length $k$, where $bv_k(n)$ is the two's complement representation of the integer $n$.
+    The returned value $bv_k(n)$ is subject to possible over- or underflows, should the number $n$ not be representable as a $k$-bit two's complement number.
+
+    Throughout this thesis, we will use bit vectors of length $w$ and simply write $bv(\cdot)$ to mean $bv_w(\cdot)$. We write $bv(n)^i$ to mean the i-th bit of $bv(n)$.
+\end{definition}
+
+\paragraph{Propositional Logic}
+Propositional formulas are made up of boolean constants \\ \bool = $\{ \mttt, \mfff \}$, boolean variables $b_i \in $\textsc{Var}$_\mbool$ and the standard boolean operators \\$\{ \lnot, \land, \lor, \implies, \iff \}$. \bform is set of all boolean formulas over \textsc{Var}$_\mbool$.
+
+\begin{definition}[Ternary Operator]
+    We define the ternary operator $\mathbb{IF}(\cdot, \cdot, \cdot)$ as:
+    \begin{center}
+        $\mathbb{IF}: \mbform \times \mbform \times \mbform \longrightarrow \mbform$\\
+        $\mathbb{IF}(c, x, y) := (c \implies x) \land (\lnot c \implies y)$
+    \end{center}
+    We canonically extend the definition to include propositional vectors:
+    \begin{center}
+        $\mathbb{IF}: \mbform \times \mbform^k \times \mbform^k \longrightarrow \mbform^k$\\
+        $\mathbb{IF}(c, x, y) := [\mathbb{IF}(c, x^i, y^i)]_{i = 0}^k$
+    \end{center}
+\end{definition}
+
 \section{Input Programs}\label{sec:inputLang}
 
 Input programs are written in a variant of the \texttt{while}-language with functions, that contains the following control structures, using their standard semantics:
@@ -24,28 +73,14 @@ Input programs are written in a variant of the \texttt{while}-language with func
 \end{itemize}
 All variables are signed integers of a fixed width $w$. The right hand side of an assignment is an expression that uses the standard arithmetic and bitwise boolean operators. Boolean expressions used in \texttt{while}- and \texttt{if}-statements are defined in the standard way.
 
-We will denote secret inputs as $h_i$, constant values as $n_i$ and other program variables as $x_i$. The set of all input variables for a program will be denoted as \In and the set of all possible input sets is written as \allIn. A variable can be leaked to a public output channel via the special function \texttt{print}. We assume that all program executions terminate. More specifically, we assume that they terminate normally, without throwing any exceptions.
-
-To analyze the input program \p, we use the program's functions' control flow graphs (CFG) in static single assignment (SSA) form.
-
-\begin{itemize}
-    \item \note{execution values: represent actual value during execution}
-    \item \note{represented as bit vectors (two's complement}
-    \begin{itemize}
-        \item integers: width n
-        \item booleans: width 1
-    \end{itemize}
-    \item \com{specify relationship between valueDeps and execVal}
-\end{itemize}
+We will denote secret inputs as $h_i$, constant values as $n_i$ and other program variables as $x_i$. The set of all input variables for a program will be denoted as \In and the set of all possible input sets is written as \allIn. A variable can be leaked to a public output channel via the special function \texttt{leak}. We assume that all program executions terminate. More specifically, we assume that they terminate normally, without throwing any exceptions.
 
 \begin{definition}[Execution Value]
-The function maps a program value to the number that was assigned during a particular execution. If in this execution, the value remains undefined, because the corresponding assignment instruction wasn't executed, the function will return $\bot$.
+For every program p and input $\mIn \in \mathcal{H}$ for $p$, the function $\llbracket p \rrbracket_\mIn$ maps a program value to the numerical value that was assigned during a particular execution. If in this execution, the value remains undefined, because the corresponding assignment instruction wasn't executed, the function will return $\bot$.
     \begin{center}
-        $exec_{\mI, p}: \val_p \longrightarrow \{0, 1\}^n \cup \{\bot\}$
+        $\llbracket p \rrbracket_\mIn: \val_p \longrightarrow \{0, 1\}^n \cup \{\bot\}$
     \end{center}
-The function is parameterized by the input \p and the set of program inputs \I, which determine the particular execution of \p that is evaluated.
 \end{definition}
-
 
 \section{Basic Analysis Design}
 
