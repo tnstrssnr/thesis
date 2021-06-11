@@ -131,7 +131,7 @@ We use $\mbb_p$ for the set of all basic blocks of a program \p and $b_1, b_2, .
     We assume for $pred(b)$ that the returned set of predecessors for $b$ is ordered and that the order corresponds to the arguments of any $\phi$-functions that might be present in $b$.
 \end{definition}
 
-\subsection{Program Dependence Graphs}
+\paragraph{Program Dependence Graphs}
 A program dependence graph (PDG) is an intermediate representation of a program that makes explicit the programs data and control dependencies. Its nodes are the programs statements and expressions and the edges represent the dependencies that exist between those \cite{ferrante87}. The Program Dependence Graph of \ref{fig:ifEx} is shown in figure \ref{fig:pdg}.
 
 A data dependency edge between nodes $x$ and $y$ exists, if $x$ assigns a value that is used in the statement $y$.
@@ -185,7 +185,59 @@ Thus, a path $x \stackrel{*}{\rightsquigarrow } y$ between two nodes exists, if 
     \caption{Different graph representations for the program snippet in \ref{fig:ifEx}}
 \end{figure}
 
+\com{put in new section: static techniques? could also include some stuff about what nildumu does}
 \section{Program Slicing}
+Slicing is a technique used to find those sections of a program, that are influenced by or in other cases influence a given location in the program \cite{weiser81}.
+This location is called the \emph{slicing criterion} and is a tuple $\langle s, v \rangle$ of a program statement $s$ and a variable $v$.
+A \emph{backward slice} contains all statements that the slicing criterion has data or control dependencies to, i.e. statements that influence the behaviour of the program at point $s$. Figure \ref{fig:slice} shows an example of a backward slice.
+A \emph{forward slice} is the subset of program statements that are influenced by the slicing criterion.
+
+Computing a program slice can be efficiently done using the PDG of the given program. Since all dependencies are explicitly represented as edges, the computation of a program slice is reduced to a reachability problem \cite{ottenstein84}. Horwitz \cite{horwitz88sdg} noted that interprocedural slices could be computed similarly using system dependence graphs.
+
+Tools like JOANA use slicing techniques on system dependence graphs to analyse the information flow in programs and give non-interference guarantees where possible \cite{hammer09}.
+
+\begin{figure}
+    \label{fig:slice}
+    \centering
+    \begin{minipage}{.4\textwidth}
+        \begin{algorithm}[H]
+            \hspace*{\algorithmicindent} \textbf{Input} h: int \\
+            \hspace*{1em}
+            \begin{algorithmic}
+                \State $i: int \leftarrow 0$
+                \State $sum: int \leftarrow 0$
+                \State $product: int \leftarrow 1$
+                \While{$i \leq h$}
+                    \State $sum \leftarrow sum + i$
+                    \State $product \leftarrow product * i$
+                    \State $i++$
+                \EndWhile
+                \State $\mathtt{print}(sum)$
+                \State $\mathtt{print}(product)$
+            \end{algorithmic}
+        \end{algorithm}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{.4\textwidth}
+        \begin{algorithm}[H]
+            \hspace*{\algorithmicindent} \textbf{Input} h: int \\
+            \hspace*{1em}
+            \begin{algorithmic}
+                \State $i: int \leftarrow 0$
+                \State $sum: int \leftarrow 0$
+                \State $\color{white} product: int \leftarrow 1$
+                \While{$i \leq h$}
+                    \State $sum \leftarrow sum + i$
+                    \State $\color{white} product \leftarrow product * i$
+                    \State $i++$
+                \EndWhile
+                \State $\color{blue} \mathtt{print}(sum)$
+                \State $\color{white} \mathtt{print}(product)$
+            \end{algorithmic}
+        \end{algorithm}
+    \end{minipage}
+    \caption{The right side shows a backward slice of the function on the left for the slicing criterion $\langle \mathtt{print}(sum), sum \: \rangle$}
+\end{figure}
 
 \section{Model Counting}
 

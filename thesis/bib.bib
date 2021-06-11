@@ -1,13 +1,13 @@
 %%% QIFC
 
 @inbook{smith07,
-author = {Smith, Geoffrey},
-year = {2007},
-month = {01},
-pages = {291-307},
-title = {Principles of Secure Information Flow Analysis},
-isbn = {978-0-387-32720-4},
-doi = {10.1007/978-0-387-44599-1_13}
+  author = {Smith, Geoffrey},
+  year = {2007},
+  month = {01},
+  pages = {291-307},
+  title = {Principles of Secure Information Flow Analysis},
+  isbn = {978-0-387-32720-4},
+  doi = {10.1007/978-0-387-44599-1_13}
 }
 
 @inproceedings{smith09,
@@ -20,16 +20,25 @@ doi = {10.1007/978-0-387-44599-1_13}
 }
 
 @book{alvim19,
-author = {Alvim, Mário and Chatzikokolakis, Kostas and McIver, Annabelle and Morgan, Carroll and Palamidessi, Catuscia and Smith, Geoffrey},
-year = {2019},
-month = {01},
-pages = {},
-title = {The Science of Quantitative Information Flow}
+  author = {Alvim, Mário and Chatzikokolakis, Kostas and McIver, Annabelle and Morgan, Carroll and Palamidessi, Catuscia and Smith, Geoffrey},
+  year = {2019},
+  month = {01},
+  pages = {},
+  title = {The Science of Quantitative Information Flow}
 }
 
-@INPROCEEDINGS{backes09,  author={Backes, Michael and Köpf, Boris and Rybalchenko, Andrey},  booktitle={2009 30th IEEE Symposium on Security and Privacy},   title={Automatic Discovery and Quantification of Information Leaks},   year={2009},  volume={},  number={},  pages={141-153},  doi={10.1109/SP.2009.18}}
+@INPROCEEDINGS{backes09,  
+  author={Backes, Michael and Köpf, Boris and Rybalchenko, Andrey},
+  booktitle={2009 30th IEEE Symposium on Security and Privacy},
+  title={Automatic Discovery and Quantification of Information Leaks},
+  year={2009},
+  volume={},
+  number={},
+  pages={141-153},
+  doi={10.1109/SP.2009.18}
+}
 
-@InProceedings{klebanov13,
+@INPROCEEDINGS{klebanov13,
   author="Klebanov, Vladimir
     and Manthey, Norbert
     and Muise, Christian",
@@ -43,57 +52,56 @@ title = {The Science of Quantitative Information Flow}
   publisher="Springer Berlin Heidelberg",
   address="Berlin, Heidelberg",
   pages="177--192",
-  abstract="Quantitative information flow analysis (QIF) is a portfolio of security techniques quantifying the flow of confidential information to public ports. In this paper, we advance the state of the art in QIF for imperative programs. We present both an abstract formulation of the analysis in terms of verification condition generation, logical projection and model counting, and an efficient concrete implementation targeting ANSI C programs. The implementation combines various novel and existing SAT-based tools for bounded model checking, {\#}SAT solving in presence of projection, and SAT preprocessing. We evaluate the technique on synthetic and semi-realistic benchmarks.",
   isbn="978-3-642-40196-1"
 }
 
 @InProceedings{biondi18,
-author="Biondi, Fabrizio
-and Enescu, Michael A.
-and Heuser, Annelie
-and Legay, Axel
-and Meel, Kuldeep S.
-and Quilbeuf, Jean",
-editor="Dillig, Isil
-and Palsberg, Jens",
-title="Scalable Approximation of Quantitative Information Flow in Programs",
-booktitle="Verification, Model Checking, and Abstract Interpretation",
-year="2018",
-publisher="Springer International Publishing",
-address="Cham",
-pages="71--93",
-abstract="Quantitative information flow measurement techniques have been proven to be successful in detecting leakage of confidential information from programs. Modern approaches are based on formal methods, relying on program analysis to produce a SAT formula representing the program's behavior, and model counting to measure the possible information flow. However, while program analysis scales to large codebases like the OpenSSL project, the formulas produced are too complex for analysis with precise model counting. In this paper we use the approximate model counter ApproxMC2 to quantify information flow. We show that ApproxMC2 is able to provide a large performance increase for a very small loss of precision, allowing the analysis of SAT formulas produced from complex code. We call the resulting technique ApproxFlow and test it on a large set of benchmarks against the state of the art. Finally, we show that ApproxFlow can evaluate the leakage incurred by the Heartbleed OpenSSL bug, contrarily to the state of the art.",
-isbn="978-3-319-73721-8"
+  author="Biondi, Fabrizio
+  and Enescu, Michael A.
+  and Heuser, Annelie
+  and Legay, Axel
+  and Meel, Kuldeep S.
+  and Quilbeuf, Jean",
+  editor="Dillig, Isil
+  and Palsberg, Jens",
+  title="Scalable Approximation of Quantitative Information Flow in Programs",
+  booktitle="Verification, Model Checking, and Abstract Interpretation",
+  year="2018",
+  publisher="Springer International Publishing",
+  address="Cham",
+  pages="71--93",
+  isbn="978-3-319-73721-8"
 }
 
 @article{denning82,
-author = {Denning, Dorothy},
-year = {1982},
-month = {01},
-pages = {},
-title = {Cryptography and Data Security},
-journal = {SERBIULA (sistema Librum 2.0)}
+  author = {Denning, Dorothy},
+  year = {1982},
+  month = {01},
+  pages = {},
+  title = {Cryptography and Data Security},
+  journal = {SERBIULA (sistema Librum 2.0)}
 }
 
 @inproceedings{lowe02,
-author = {Lowe, Gavin},
-year = {2002},
-month = {02},
-pages = {18 - 31},
-title = {Quantifying information flow},
-isbn = {0-7695-1689-0},
-doi = {10.1109/CSFW.2002.1021804}
+  author = {Lowe, Gavin},
+  year = {2002},
+  month = {02},
+  pages = {18 - 31},
+  title = {Quantifying information flow},
+  isbn = {0-7695-1689-0},
+  doi = {10.1109/CSFW.2002.1021804}
 }
 
 @INPROCEEDINGS{enescu16,
-author={Val, Celina G. and Enescu, Michael A. and Bayless, Sam and Aiello, William and Hu, Alan J.},
-booktitle={2016 IEEE European Symposium on Security and Privacy (EuroS P)}, 
-title={Precisely Measuring Quantitative Information Flow: 10K Lines of Code and Beyond}, 
-year={2016},
-volume={},
-number={},
-pages={31-46},
-doi={10.1109/EuroSP.2016.15}}
+  author={Val, Celina G. and Enescu, Michael A. and Bayless, Sam and Aiello, William and Hu, Alan J.},
+  booktitle={2016 IEEE European Symposium on Security and Privacy (EuroS P)}, 
+  title={Precisely Measuring Quantitative Information Flow: 10K Lines of Code and Beyond}, 
+  year={2016},
+  volume={},
+  number={},
+  pages={31-46},
+  doi={10.1109/EuroSP.2016.15}
+}
 
 @inproceedings{newsome09,
 author = {Newsome, James and McCamant, Stephen and Song, Dawn},
@@ -104,7 +112,6 @@ publisher = {Association for Computing Machinery},
 address = {New York, NY, USA},
 url = {https://doi.org/10.1145/1554339.1554349},
 doi = {10.1145/1554339.1554349},
-abstract = {The channel capacity of a program is a quantitative measure of the amount of control that the inputs to a program have over its outputs. Because it corresponds to worst-case assumptions about the probability distribution over those inputs, it is particularly appropriate for security applications where the inputs are under the control of an adversary. We introduce a family of complementary techniques for measuring channel capacity automatically using a decision procedure (SAT or #SAT solver), which give either exact or narrow probabilistic bounds.We then apply these techniques to the problem of analyzing false positives produced by dynamic taint analysis used to detect control-flow hijacking in commodity software. Dynamic taint analysis is based on the principle that an attacker should not be able to control values such as function pointers and return addresses, but it uses a simple binary approximation of control that commonly leads to both false positive and false negative errors. Based on channel capacity, we propose a more refined quantitative measure of influence, which can effectively distinguish between true attacks and false positives. We use a practical implementation of our influence measuring techniques, integrated with a dynamic taint analysis operating on x86 binaries, to classify tainting warnings produced by vulnerable network servers, such as those attacked by the Blaster and SQL Slammer worms. Influence measurement correctly distinguishes real attacks from tainting false positives, a task that would otherwise need to be done manually.},
 booktitle = {Proceedings of the ACM SIGPLAN Fourth Workshop on Programming Languages and Analysis for Security},
 pages = {73–85},
 numpages = {13},
@@ -153,7 +160,6 @@ year = {2009},
 isbn = {1586039296},
 publisher = {IOS Press},
 address = {NLD},
-abstract = { 'Satisfiability (SAT) related topics have attracted researchers from various disciplines: logic, applied areas such as planning, scheduling, operations research and combinatorial optimization, but also theoretical issues on the theme of complexity and much more, they all are connected through SAT. My personal interest in SAT stems from actual solving: The increase in power of modern SAT solvers over the past 15 years has been phenomenal. It has become the key enabling technology in automated verification of both computer hardware and software. Bounded Model Checking (BMC) of computer hardware is now probably the most widely used model checking technique. The counterexamples that it finds are just satisfying instances of a Boolean formula obtained by unwinding to some fixed depth a sequential circuit and its specification in linear temporal logic. Extending model checking to software verification is a much more difficult problem on the frontier of current research. One promising approach for languages like C with finite word-length integers is to use the same idea as in BMC but with a decision procedure for the theory of bit-vectors instead of SAT. All decision procedures for bit-vectors that I am familiar with ultimately make use of a fast SAT solver to handle complex formulas. Decision procedures for more complicated theories, like linear real and integer arithmetic, are also used in program verification. Most of them use powerful SAT solvers in an essential way. Clearly, efficient SAT solving is a key technology for 21st century computer science. I expect this collection of papers on all theoretical and practical aspects of SAT solving will be extremely useful to both students and researchers and will lead to many further advances in the field.' Edmund Clarke (FORE Systems University Professor of Computer Science and Professor of Electrical and Computer Engineering at Carnegie Mellon University)}
 }
 
 @article{valiant79,
@@ -187,11 +193,8 @@ year="2005",
 publisher="Springer Berlin Heidelberg",
 address="Berlin, Heidelberg",
 pages="324--339",
-abstract="We introduce ApproxCount, an algorithm that approximates the number of satisfying assignments or models of a formula in propositional logic. Many AI tasks, such as calculating degree of belief and reasoning in Bayesian networks, are computationally equivalent to model counting. It has been shown that model counting in even the most restrictive logics, such as Horn logic, monotone CNF and 2CNF, is intractable in the worst-case. Moreover, even approximate model counting remains a worst-case intractable problem. So far, most practical model counting algorithms are based on backtrack style algorithms such as the DPLL procedure. These algorithms typically yield exact counts but are limited to relatively small formulas. Our ApproxCount algorithm is based on SampleSat, a new algorithm that samples from the solution space of a propositional logic formula near-uniformly. We provide experimental results for formulas from a variety of domains. The algorithm produces good estimates for formulas much larger than those that can be handled by existing algorithms.",
 isbn="978-3-540-31679-4"
 }
-
-
 
 @article{birnbaum99,
    title={The Good Old Davis-Putnam Procedure Helps Counting Models},
@@ -217,7 +220,6 @@ year="2006",
 publisher="Springer Berlin Heidelberg",
 address="Berlin, Heidelberg",
 pages="424--429",
-abstract="We introduce sharpSAT, a new {\#}SAT solver that is based on the well known DPLL algorithm and techniques from SAT and {\#}SAT solvers. Most importantly, we introduce an entirely new approach of coding components, which reduces the cache size by at least one order of magnitude, and a new cache management scheme. Furthermore, we apply a well known look ahead based on BCP in a manner that is well suited for {\#}SAT solving. We show that these techniques are highly beneficial, especially on large structured instances, such that our solver performs significantly better than other {\#}SAT solvers.",
 isbn="978-3-540-37207-3"
 }
 
@@ -238,8 +240,6 @@ year = {2004},
 isbn = {9781586034528},
 publisher = {IOS Press},
 address = {NLD},
-abstract = {We describe a new algorithm for compiling conjunctive normal form (CNF) into Deterministic Decomposable Negation Normal (d-DNNF), which is a tractable logical form that permits model counting in polynomial time. The new implementation is based on latest techniques from both the SAT and OBDD literatures, and appears to be orders of magnitude more efficient than previous algorithms for this purpose. We compare our compiler experimentally to state of the art model counters, OBDD compilers, and previous CNF2dDNNF compilers.},
-booktitle = {Proceedings of the 16th European Conference on Artificial Intelligence},
 pages = {318–322},
 numpages = {5},
 location = {Valencia, Spain},
@@ -257,7 +257,6 @@ issn = {0196-6774},
 doi = {https://doi.org/10.1016/0196-6774(89)90038-2},
 url = {https://www.sciencedirect.com/science/article/pii/0196677489900382},
 author = {Richard M Karp and Michael Luby and Neal Madras},
-abstract = {We develop polynomial time Monte-Carlo algorithms which produce good approximate solutions to enumeration problems for which it is known that the computation of the exact solution is very hard. We start by developing a Monte-Carlo approximation algorithm for the DNF counting problem, which is the problem of counting the number of satisfying truth assignments to a formula in disjunctive normal form. The input to the algorithm is the formula and two parameters ε and δ. The algorithm produces an estimate which is between 1 − ϵ and 1 + ϵ times the number of satisfying truth assignments with probability at least 1 − δ. The running time of the algorithm is linear in the length of the formula times 1ϵ2 times ln(1δ). On the other hand, the problem of computing the exact answer for the DNF counting problem is known to be #P-complete, which implies that there is no polynomial time algorithm for the exact solution if P ≠ NP. This paper improves and gives new applications of some of the work previously reported. Variants of an ϵ, δ approximation algorithm for the DNF counting problem have been highly tailored to be especially efficient for the network reliability problems to which they are applied. In this paper the emphasis is on the development and analysis of a much more efficient ϵ, δ approximation algorithm for the DNF counting problem. The running time of the algorithm presented here substantially improves the running time of versions of this algorithm given previously. We give a new application of the algorithm to a problem which is relevant to physical chemistry and statistical physics. The resulting ϵ, δ approximation algorithm is substantially faster than the fastest known deterministic solution for the problem.}
 }
 
 @misc{aziz15,
@@ -302,7 +301,6 @@ year="2014",
 publisher="Springer Berlin Heidelberg",
 address="Berlin, Heidelberg",
 pages="389--391",
-abstract="CBMC implements bit-precise bounded model checking for C programs and has been developed and maintained for more than ten years. CBMC verifies the absence of violated assertions under a given loop unwinding bound. Other properties, such as SV-COMP's ERROR labels or memory safety properties are reduced to assertions via automated instrumentation. Only recently support for efficiently checking concurrent programs, including support for weak memory models, has been added. Thus, CBMC is now capable of finding counterexamples in all of SV-COMP's categories. As back end, the competition submission of CBMC uses MiniSat 2.2.0.",
 isbn="978-3-642-54862-8"
 }
 
@@ -317,7 +315,6 @@ publisher = {Association for Computing Machinery},
 address = {New York, NY, USA},
 url = {https://doi.org/10.1145/800028.808479},
 doi = {10.1145/800028.808479},
-abstract = {Any static, global analysis of the expression and data relationships in a program requires a knowledge of the control flow of the program. Since one of the primary reasons for doing such a global analysis in a compiler is to produce optimized programs, control flow analysis has been embedded in many compilers and has been described in several papers. An early paper by Prosser [5] described the use of Boolean matrices (or, more particularly, connectivity matrices) in flow analysis. The use of “dominance” relationships in flow analysis was first introduced by Prosser and much expanded by Lowry and Medlock [6]. References [6,8,9] describe compilers which use various forms of control flow analysis for optimization. Some recent developments in the area are reported in [4] and in [7].The underlying motivation in all the different types of control flow analysis is the need to codify the flow relationships in the program. The codification may be in connectivity matrices, in predecessor-successor tables, in dominance lists, etc. Whatever the form, the purpose is to facilitate determining what the flow relationships are; in other words to facilitate answering such questions as: is this an inner loop?, if an expression is removed from the loop where can it be correctly and profitably placed?, which variable definitions can affect this use?In this paper the basic control flow relationships are expressed in a directed graph. Various graph constructs are then found and shown to codify interesting global relationships.},
 booktitle = {Proceedings of a Symposium on Compiler Optimization},
 pages = {1–19},
 numpages = {19},
@@ -325,7 +322,6 @@ location = {Urbana-Champaign, Illinois}
 }
 
 @book{dragoonBook,
-  abstract = {{<P style="MARGIN: 0px"><B></B> This book provides the foundation for understanding the theory and pracitce of compilers. Revised and updated, it reflects the current state of compilation. <B> </B>Every chapter has been completely revised to reflect developments in software engineering, programming languages, and computer architecture that have occurred since 1986, when the last edition published.  The authors, recognizing that few readers will ever go on to construct a compiler, retain their focus on the broader set of problems faced in software design and software development. <B></B> Computer scientists, developers, and aspiring students that want to learn how to build, maintain, and execute a compiler for a major programming language. </P>}},
   added-at = {2009-05-19T18:00:18.000+0200},
   author = {Aho, Alfred V. and Lam, Monica S. and Sethi, Ravi and Ullman, Jeffrey D.},
   biburl = {https://www.bibsonomy.org/bibtex/2c3bc558a481f3cf0445068988a80f1b2/earthfare},
@@ -339,14 +335,12 @@ location = {Urbana-Champaign, Illinois}
   month = {August},
   posted-at = {2009-05-19 16:04:16},
   priority = {2},
-  publisher = {{Addison Wesley}},
+  publisher = {Addison Wesley},
   timestamp = {2009-05-19T18:03:27.000+0200},
   title = {Compilers: Principles, Techniques, and Tools (2nd Edition)},
   url = {http://www.amazon.ca/exec/obidos/redirect?tag=citeulike09-20\&amp;path=ASIN/0321486811},
   year = 2006
 }
-
-
 
 %%% SSA
 
@@ -410,10 +404,63 @@ publisher = {Association for Computing Machinery},
 address = {New York, NY, USA},
 url = {https://doi.org/10.1145/73560.73573},
 doi = {10.1145/73560.73573},
-abstract = {Program dependence graphs were introduced by Kuck as an intermediate program representation well suited for performing optimizations, vectorization, and parallelization. There are also additional applications for them as an internal program representation in program development environments.In this paper we examine the issue of whether a program dependence graph is an adequate structure for representing a program's execution behavior. (This question has apparently never been addressed before in the literature). We answer the question in the affirmative by showing that if the program dependence graphs of two programs are isomorphic then the programs are strongly equivalent.},
 booktitle = {Proceedings of the 15th ACM SIGPLAN-SIGACT Symposium on Principles of Programming Languages},
 pages = {146–157},
 numpages = {12},
 location = {San Diego, California, USA},
 series = {POPL '88}
+}
+
+%%% Slicing
+
+@inproceedings{weiser81,
+author = {Weiser, Mark},
+title = {Program Slicing},
+year = {1981},
+isbn = {0897911466},
+publisher = {IEEE Press},
+booktitle = {Proceedings of the 5th International Conference on Software Engineering},
+pages = {439–449},
+numpages = {11},
+keywords = {Software tools, Data flow analysis, Program maintenance, Program metrics, Debugging, Human factors},
+location = {San Diego, California, USA},
+series = {ICSE '81}
+}
+
+@inproceedings{ottenstein84,
+  title={The Program Dependence Graph in a Software Development Environment},
+  author={K. J. Ottenstein and Linda M. Ottenstein},
+  booktitle={Software Development Environments},
+  year={1984}
+}
+
+@inproceedings{horwitz88sdg,
+author = {Horwitz, S. and Reps, T. and Binkley, D.},
+title = {Interprocedural Slicing Using Dependence Graphs},
+year = {1988},
+isbn = {0897912691},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/53990.53994},
+doi = {10.1145/53990.53994},
+abstract = {A slice of a program with respect to a program point p and variable x consists of all statements of the program that might affect the value of x at point p. This paper concerns the problem of interprocedural slicing — generating a slice of an entire program, where the slice crosses the boundaries of procedure calls. To solve this problem, we introduce a new kind of graph to represent programs, called a system dependence graph, which extends previous dependence representations to incorporate collections of procedures (with procedure calls) rather than just monolithic programs. Our main result is an algorithm for interprocedural slicing that uses the new representation.The chief difficulty in interprocedural slicing is correctly accounting for the calling context of a called procedure. To handle this problem, system dependence graphs include some data-dependence edges that represent transitive dependencies due to the effects of procedure calls, in addition to the conventional direct-dependence edges. These edges are constructed with the aid of an auxiliary structure that represents calling and parameter-linkage relationships. This structure takes the form of an attribute grammar. The step of computing the required transitive-dependence edges is reduced to the construction of the subordinate characteristic graphs for the grammar's nonterminals.},
+booktitle = {Proceedings of the ACM SIGPLAN 1988 Conference on Programming Language Design and Implementation},
+pages = {35–46},
+numpages = {12},
+location = {Atlanta, Georgia, USA},
+series = {PLDI '88}
+}
+
+@article{hammer09,
+  title = {Flow-Sensitive, Context-Sensitive, and Object-sensitive Information
+ Flow Control Based on Program Dependence Graphs},
+  year = {2009},
+  month = dec,
+  publisher = {Springer},
+  volume = {8},
+  number = {6},
+  pages = {399--422},
+  journal = {International Journal of Information Security},
+  author = {Christian Hammer and Gregor Snelting},
+  doi = {10.1007/s10207-009-0086-1},
 }
