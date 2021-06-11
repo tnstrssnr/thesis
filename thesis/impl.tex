@@ -46,10 +46,6 @@ The function maps a program value to the number that was assigned during a parti
 The function is parameterized by the input \p and the set of program inputs \I, which determine the particular execution of \p that is evaluated.
 \end{definition}
 
-\begin{definition}[Value Dependencies]
-
-    
-\end{definition}
 
 \section{Basic Analysis Design}
 
@@ -91,15 +87,125 @@ We use propositional logic to track the way that information about the secret in
 
 % map + semantics for finding implicit leakage
 
-\section{Increasing Efficiency through Static Pre-Processing}
-\begin{itemize}
-    \item "Konstantenfaltung" auf Bitebene
-    \item Backward-Slice des Ausgabewerts, nicht enthaltene Werte müssen nicht analysiert werden
-    \item Backward-Slice von Konstanten Werten --> Werte, die die Ausgabe beeinflussen und Abhängigkeiten dadurch immer durch konstanten Wert fließen müssen nicht analysiert werden
-\begin{itemize}
-    \item kann mitberücksichtigt werden, wenn man vor dem "Ausgabe-Backward-Slice" alle Abhängigkeiten von konstanten Werten entfernt 
-\end{itemize}
-\end{itemize}
+\section{Static Pre-Processing}
+
+\begin{figure}
+    \centering
+    \begin{tikzpicture}
+        \tikzstyle{process} = [rectangle, minimum width=2.3cm, minimum height=.7cm, text centered, draw=black, node distance=2cm]
+        \tikzstyle{io} = [ellipse, minimum height=.7cm, text centered, node distance=1.5cm]
+        \tikzstyle{arrow} = [thick,->,>=stealth]
+
+        \node (p) [io, align=center] {\small Input\\program};
+        \node (nil) [process, below of=p, align=center] {\small Constant Bit\\Analysis};
+        \node (prune) [process, right of=nil, xshift=2cm, align=center] {\small PDG\\Pruning};
+        \node (bs) [process, right of=prune, xshift=2cm, align=center] {\small Backward\\Slicing};
+        \node (done) [io, below of=bs, align=center, yshift=-.5cm] {\small Pre-Processed\\Program};
+
+        \draw [arrow] (p) -- (nil);
+        \draw [arrow] (nil) -- (prune);
+        \draw [arrow] (bs) -- (done);
+        \draw [arrow] (prune) -- (bs);
+    \end{tikzpicture}
+    \caption{Stages of the pre-processing pipeline. The pre-processed program is the input for the following dependency analysis.}
+    \label{fig:pp}
+\end{figure}
+
+To keep the effort of computing the dependency formulas, as well as their evaluation through the model counter, as low as possible, we statically pre-process the input program to identify those statements that do not need to be included in the dependency analysis \td{find better wording than `dependency analysis'}.
+
+The pre-processing consists of three stages, shown in figure \ref{fig:pp}. In the following section we will use the program from \ref{fig:ec} as a running example to demonstrate the effects of the pre-processing.
+
+\paragraph{Constant Bit Analysis}
+We use \emph{Nildumu} \cite{bechberger18} to perform a constant bit analysis on the input program. The goal is to identify values that are \emph{effectively constant}. Effectively constant values have the same execution value in every run of $p$, regardless of the inputs that were used.
+
+\begin{definition}[Effectively constant value]
+    A program value $v$ of the program $p$ is called \emph{effectively constant} iff:
+    \begin{center}
+        $\forall \mIn_1, \mIn_2 \in \mathcal{H}: \llbracket p \rrbracket_{\mIn_1} (v) = \llbracket p \rrbracket_{\mIn_2}(v)$
+    \end{center}
+\end{definition}
+
+If a value is effectively constant, we can safely exclude it from any further analysis and set its dependency vector to a vector of boolean constants that corresponds to its execution value. For values which are not effectively constant, but contain constant bits, we can also reduce the number of dependency formulas we need to compute to those bits that are not constant.
+
+\td{mention handling of arrays (or vars on heap in general)}
+
+\begin{figure}
+    \centering
+    \begin{minipage}{.7\linewidth}
+        \begin{algorithm}[H]
+            \hspace*{\algorithmicindent} \textbf{Input} h: int \\
+            \hspace{1em}
+            \begin{algorithmic}[1]
+                \If{$h < 0$}
+                \State $l_1 \leftarrow 42$
+                \Else
+                \State $l_2 \leftarrow 42$
+                \EndIf
+                \State $l = \phi(l_1, l_2)$
+                \State $\mathtt{leak}(l)$
+            \end{algorithmic}
+        \end{algorithm}
+    \end{minipage}
+    \caption{The value $l$ in this program is \emph{effectively constant}, since its execution value will always be 42.}
+    \label{fig:ec}
+\end{figure}
+
+\paragraph{PDG Pruning}
+If a value is effectively constant, an observer cannot learn anything about the secret inputs of a program by observing the behaviour of that particular value. Since we are only interested in information flow that will help an attacker in learning our secret, the data and control dependencies of effectively constant values can safely be ignored. \question{do i need more explanation of why this is?} We prune the PDG of the analysed program by removing all incoming edges of nodes that define effectively constant values. Figure \ref{fig:prune} shows the original and the pruned version of the PDG of the program in figure \ref{fig:ec}.
+
+\begin{figure}
+    \centering
+    \begin{tikzpicture}
+        \tikzstyle{node} = [ellipse, minimum width=2.5cm, minimum height=.7cm, text centered, draw = black, node distance=1.5cm]
+        \tikzstyle{arrow} = [thick,->,>=stealth]
+
+        \node (if) [node] {$\mathtt{if} \: h < 0$};
+        \node (l1) [node, below of=if, xshift=-2cm] {$l_1 \leftarrow 42$};
+        \node (l2) [node, below of=if, xshift=2cm] {$l_2 \leftarrow 42$};
+        \node (l) [node, below of=l2, xshift=-2cm, draw = blue] {$l = \phi(l_1, l_2)$};
+        \node (print) [node, below of=l, draw = blue] {$\mathtt{leak}(l)$};
+
+        \draw [arrow] (l1) -- (if);
+        \draw [arrow] (l2) -- (if);
+        \draw [arrow, draw = red] (l) -- (l1);
+        \draw [arrow, draw = red] (l) -- (l2);
+        \draw [arrow, draw = blue] (print) -- (l);
+    \end{tikzpicture}
+    \caption{The PDG of the program in figure \ref{fig:ec}. The red highlighted edges are those that were removed by the pruning stage.The blue highlighted subgraph is the backward slice for $\langle \mathtt{leak}(l), l \rangle$ that was computed on the pruned PDG. \com{Better to split into several figures?}}
+    \label{fig:prune}
+\end{figure}
+
+\paragraph{Backward Slicing}
+As a last step, we calculate a backward slice with the slicing criterion $\langle s, v \rangle$ being the value $v$ that is leaked to a public channel combined with the statement $s$ of the leak. If more than one value is leaked, we compute the backward slice for each value and union the results. \com{can union be used as a verb? sounds weird.} For slicing, we use the pruned PDG from the previous stage. In our analysis, we used a static interprocedual backward slicing algorithm via the JOANA framework. \com{more specific? also we slice the sdg, not the pdg-- > correct!}
+The resulting backward slice contains those statements, that are needed for computing the dependency vector for the leaked value. Program statements that are not part of the slice do not have to analysed. Control structures, such as loops or conditional statements can be omitted, if the head of the structure is not contained in the backward slice. In this case, we will also omit them from the computation of the path conditions that keep track of implicit information flows.
+
+Omitting certain statements from the dependency analysis safe, as long as we can guarantee, that we have enough information to determine the dependency vectors of the values defined in the remaining statements. Enough information in this case means that the dependency vectors of all used values of the expression defining the value are known. Each use value falls into one of the following categories:
+\begin{enumerate}
+    \item \emph{Constants: }The dependency vector is constant and corresponds to the constants twos-complement representation.
+    \item \emph{Parameters: }Parameters are unknown values whose dependency vectors are filled with placeholder variables.
+    \item \emph{Effectively Constant Values: }The dependency vector is constant and corresponds to the twos-complement representation of the value determined by the constant bit analysis.
+    \item \emph{Variable Values: }Since an expression containing the value is part of the backward slice, the definition of this value will also be included. Thus, we will have computed the value's dependency vector prior to analysing the current expression.
+\end{enumerate}
+Therefore it is indeed safe to omit statements in our analysis that were not included in the final backward slice of the pre-processing.
+
+By using this pre-processing method we can shrink the propositional formulas that are produced by the dependency analysis. An example of this is shown in figure \ref{fig:ppRes}, where we can eliminate an unnecessary ternary operator. This helps to increase efficiency in two ways: Firstly, the formulas the program needs to handle become smaller and thus take less time to process and secondly, the computation time of ApproxMC decreases with the decrease of the input formula. A more in-depth analysis of the effects of the pre-processing on the cost of the analysis as a whole is given in \ref{sec:eval}. \td{insert reference when evaluation is done}
+
+\begin{figure}
+    \begin{subfigure}[t]{.4\textwidth}
+        \centering
+        $cd(l) : l = \mathbb{IF}(h < 0, l_1, l_2)$ \\ $\land l_1 = 42 \land l_2 = 42$
+        \caption{without pre-processing}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[t]{.4\textwidth}
+        \centering
+        $cd(l) : l = 42$
+        \vspace{\baselineskip}
+        \caption{with pre-processing}
+    \end{subfigure}
+    \caption{The resulting dependency formula for the value $l$ of the example in \ref{fig:ec}. \td{check back for notation etc after completing previous chapter}}
+    \label{fig:ppRes}
+\end{figure}
 
 \section{Handling Loops, Recursion and Function calls}
 

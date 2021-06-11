@@ -185,8 +185,11 @@ Thus, a path $x \stackrel{*}{\rightsquigarrow } y$ between two nodes exists, if 
     \caption{Different graph representations for the program snippet in \ref{fig:ifEx}}
 \end{figure}
 
-\com{put in new section: static techniques? could also include some stuff about what nildumu does}
+
 \section{Program Slicing}
+
+\com{put in new section: static techniques? could also include some stuff about what nildumu does}
+
 Slicing is a technique used to find those sections of a program, that are influenced by or in other cases influence a given location in the program \cite{weiser81}.
 This location is called the \emph{slicing criterion} and is a tuple $\langle s, v \rangle$ of a program statement $s$ and a variable $v$.
 A \emph{backward slice} contains all statements that the slicing criterion has data or control dependencies to, i.e. statements that influence the behaviour of the program at point $s$. Figure \ref{fig:slice} shows an example of a backward slice.
@@ -197,7 +200,6 @@ Computing a program slice can be efficiently done using the PDG of the given pro
 Tools like JOANA use slicing techniques on system dependence graphs to analyse the information flow in programs and give non-interference guarantees where possible \cite{hammer09}.
 
 \begin{figure}
-    \label{fig:slice}
     \centering
     \begin{minipage}{.4\textwidth}
         \begin{algorithm}[H]
@@ -237,6 +239,7 @@ Tools like JOANA use slicing techniques on system dependence graphs to analyse t
         \end{algorithm}
     \end{minipage}
     \caption{The right side shows a backward slice of the function on the left for the slicing criterion $\langle \mathtt{print}(sum), sum \: \rangle$}
+    \label{fig:slice}
 \end{figure}
 
 \section{Model Counting}
@@ -257,8 +260,6 @@ The first approximate \#SAT algorithm for DNF formulas was introduced by Luby an
     \caption{Propositional formula with 2 variables}
     \label{fig:satEx}
 \end{figure}
-
-
 
 \paragraph*{Projected Model Counting}
 Given a set of propositional variables $\mathcal{V}$ and a propositional formula $F$ over $\mathcal{V}$, projected model counting (\#$\exists$SAT) is the problem of finding the number of assignments to a set of priority variables $\mathcal{P} \subseteq \mathcal{V}$, such that the assignment can be extended to an assignment over $\mathcal{V}$ that fulfills $F$. Considering the example from \ref{fig:satEx} and a priority set $\mathcal{P} = \{x\}$, the number of projected models is 2, with both possible assignments of $x$ being extendable to a fulfilling assignment over all variables by setting $y = \mfff$.
