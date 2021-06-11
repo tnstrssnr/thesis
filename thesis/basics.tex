@@ -12,7 +12,7 @@ Qualitative information flow analysis tries to prove the absence of explicit and
 
 We consider the following scenario: Given a program \p, that accepts some input \In and produces some output \Out, how much information can an adversary \A learn about $H$, by observing \p and \Out?
 
-\paragraph{Input program} We assume \p to be a sequential, deterministic program, that receives a set of inputs $\mathtt{H = \{h_1, ..., h_n\}}$ and produces a set of outputs $\mathtt{L = \{l_1, ..., l_m\}}$. We will write the sets of all possible inputs and outputs as $\mathcal{H}$ $\mathcal{L}$ resprectively. Inputs are chosen based on a publicly known a priori probability distribution. The program text of \p is publicly known. A more detailed description of the input language we used, we refer to \ref{sec:inputLang}.
+\paragraph{Input program} We assume \p to be a sequential, deterministic program, that receives a set of inputs $\mathtt{H = \{h_1, ..., h_n\}}$ and produces a set of outputs $\mathtt{L = \{l_1, ..., l_m\}}$. We will write the sets of all possible inputs and outputs as $\mathcal{H}$ $\mathcal{L}$ respectively. Inputs are chosen based on a publicly known a priori probability distribution. The program text of \p is publicly known. A more detailed description of the input language we used, we refer to \ref{sec:inputLang}.
 
 \paragraph{Security Lattice} Each element of \In and \Out is associated with an element of a security lattice, describing its confidentiality level. We use a lattice with two elements $\hat{l}$, for public values and $\hat{h}$ for secret values. If not otherwise specified, we consider all inputs to be high and all outputs to be low.
 % Schneider -- nur high und low
@@ -101,26 +101,26 @@ A widely used measure for information leakage is \emph{vulnerability} and \emph{
 \begin{definition}[Min-Entropy]
     Using the same definitions as in \ref{def:vul}, the min-entropy of $X$ is given bx
     \begin{center}
-        $H_\infty (X) := \log \frac{1}{V(X)}$ \footnote{we use the notation `$\log$' for the logarithm of base 2.}
+        $H_\infty (X) := \log_2 \frac{1}{V(X)}$
     \end{center}
 \end{definition}
 
 \begin{definition}[Channel Capacity]
-    Piven a program $p$, the channel capacity of $p$ is the number of distinct outputs $|\mathcal{L}|$ than can be produced by $p$
+    
+    Given a program $p$, the channel capacity of $p$ is the number of distinct outputs $|\mathcal{L}|$ than can be produced by $p$
 \end{definition}
 
 \td{finish}
 
 \section{Program Representation}
 
-\subsection{Static Single Assignment}
-Static single assignment (SSA) is a representation of the program, where every value is assigned exactly once. If in the original program, a variable is written to more than once, a copy of the variable is created, that replaces the original one from that point in the program \cite{cytron91}. \com{zitat?} We will throughout this thesis refer to variables and their copies in the SSA form as values, to differentiate them from the variables used in the original input program. We write \val$_p$ to denote the set of all values of a program and $v_0, v_1, ...$ to denote single values.
+\paragraph{Static Single Assignment}
+Static single assignment (SSA) is a representation of the program, where every variable is assigned exactly once. If in the original program, a variable is written to more than once, a copy of the variable is created, that replaces the original one from that point in the program \cite{rosen88}.
 
-
-\subsection{Control Flow Graphs}
+\paragraph{Control Flow Graphs}
 A control flow graph (CFG) is a graph, that represents all possible program execution traces via paths in the graph \cite{allen70}. They are widely used in compiler optimizations and static program analyses. The nodes of a CFG are a function's basic blocks, plus two special blocks \texttt{start} and \texttt{end}, that mark the single entry- and exit point of the function. An edge is inserted for every possible jump from one block to another. An example graph for the program from figure \ref{fig:ifEx} can be seen in \ref{fig:cfg}.
 
-We use $\mbb_p$ for the set of all basic blocks of a program \p and $b_1, b_2, ...$ for the blocks themselves. With exception of the \texttt{start}- and \texttt{end}-block, every block in the CFG has at minimum one predecessor and one successor. In \ref{def:succPred} we define functions to access the predecessors and successors of a basic block, that we will use throughout this thesis. We assume all CFGs to have no critical edges (see \cite{dragoonBook}). This property can be assured by splitting critcal edges with empty basic blocks, should they occur. 
+We use $\mbb_p$ for the set of all basic blocks of a program \p and $b_1, b_2, ...$ for the blocks themselves. With exception of the \texttt{start}- and \texttt{end}-block, every block in the CFG has at minimum one predecessor and one successor. In \ref{def:succPred} we define functions to access the predecessors and successors of a basic block, that we will use throughout this thesis. We assume all CFGs to have no critical edges (see \cite{dragoonBook}). This property can be assured by splitting critical edges with empty basic blocks, should they occur. 
 
 \begin{definition}[CFG predecessors and successors]\label{def:succPred}
     The functions will return the set of predecessor and successor blocks respectively for the given basic block.
@@ -131,7 +131,7 @@ We use $\mbb_p$ for the set of all basic blocks of a program \p and $b_1, b_2, .
     We assume for $pred(b)$ that the returned set of predecessors for $b$ is ordered and that the order corresponds to the arguments of any $\phi$-functions that might be present in $b$.
 \end{definition}
 
-\subsection{Program Dependence Graphs}
+\paragraph{Program Dependence Graphs}
 A program dependence graph (PDG) is an intermediate representation of a program that makes explicit the programs data and control dependencies \cite{ferrante87}.  
 
 \begin{figure}

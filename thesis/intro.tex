@@ -6,11 +6,9 @@ In February 2017, the American web services and web security company Cloudflare 
 
 Qualitative information flow control aims to guarantee, that a program's public outputs are not influenced by secret its secret inputs, thus a malicious attacker has no possibility of obtaining secret information, by merely observing the program's outputs. This property is called \emph{non-interference}. 
 
-For non-interferent programs, the secret inputs are guaranteed to have no influece on the public outputs, so unintentional data leaks are impossible. However, often this requirement is too strict for practical use. Consider the program shown in figure \ref{fig:pwChecker}. While the secret password is not leaked in its entirety, an attacker can gather some information by observing whether their guess was correct. Hence, non-interference is not given, however for most practical purposes, the information leakage from the password checker example would be fully acceptable and often also inevitable for the program's intended usage.
+For non-interferent programs, the secret inputs are guaranteed to have no influence on the public outputs, so unintentional data leaks are impossible. However, often this requirement is too strict for practical use. Consider the program shown in figure \ref{fig:pwChecker}. While the secret password is not leaked in its entirety, an attacker can gather some information by observing whether their guess was correct. Hence, non-interference is not given, however for most practical purposes, the information leakage from the password checker example would be fully acceptable and often also inevitable for the program's intended usage.
 
 The desire to make information flow control applicable to more practical applications gave rise to the notion of quantitative information flow control (QIFC), where the amount of leakage in a program is measured in bits and compared to a predetermined limit. The amount of leakage in the password checker example is one bit.
-
-\note{Difference: IF control vs IF security}
 
 \begin{figure}
 \centering
@@ -34,7 +32,7 @@ The desire to make information flow control applicable to more practical applica
 
 QIFC analyses can typically be divided into 2 categories: \emph{Static} analyses are performed without executing the program and rely solely on examination of the source code. Such analyses are sound in that they deliver an upper bound for the amount of information a program might leak. However, depending on the program, the upper bound the analysis is able to compute might be much larger than the actual leakage, due to the lack of knowledge about concrete control and data flows in the program. Contrarily, \emph{dynamic} analyses compute a program's leakage by simulating one or more program executions. For these executions, dynamic analyses can compute a more precise estimation of the leakage than static analyses, however these estimations might not be a sound upper bound, since it is infeasible to analyse every possible input combination for the program.
 
-Many modern dynamic QIF analyses are based on symbolic execution and SAT solving techniques (see \ref{sec:relWork}). These naturally suffer the same difficulties as the underlying program analysis tools themselves, primarily dealing with path explosion and propositional formulas that are too big to handle for state-of-the-art SAT solvers. This thesis introduces a model counting-based dynamic QIFC analysis, that is combined with a static analysis to overcome the problems that similar dynamic approaches exhibit. 
+Many modern dynamic QIF analyses are based on symbolic execution and SAT solving techniques (see \ref{sec:relWork}). These naturally suffer the same difficulties as the underlying program analysis tools themselves, primarily dealing with path explosion and propositional formulas that are too big to handle for state-of-the-art SAT solvers. This thesis introduces a model counting-based dynamic QIFC analysis, that is combined with a static analysis to overcome the problems that similar model counting approaches exhibit. 
 
 \section{Related Work}\label{sec:relWork}
 
@@ -54,3 +52,7 @@ A previous attempt at combining static and dynamic techniques has been made by M
 
 % hybrid monitors in qualitative IFC?
 % static methods?
+
+As outlined in section \ref{sec:relWork}, there have been attempts at using symbolic execution and model counting to measure how much information a program can leak. In many of these works, there have been attempts to mitigate the problems that are caused by path explosion in input programs and the computational limits of state of the art model counters. These attempts include using approximate model counting instead of a precise calculation (\cite{biondi18, chu19}) or transformations of SAT formulas into easier to handle representations (\cite{klebanov13}). We have not yet seen an attempt to use static (Q)IFC techniques to reduce complexity at the time of formula creation.
+
+\td{re-work this part}
