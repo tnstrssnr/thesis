@@ -1,7 +1,5 @@
 \chapter{Design and Implementation}\label{sec:impl}
 
-As outlined in section \ref{sec:relWork}, there have been attempts at using symbolic execution and model counting to measure how much information a program can leak. In many of these works, there have been attempts to mitigate the problems that are caused by path explosion in input programs and the computational limits of state of the art model counters. These attempts include using approximate model counting instead of a precise calculation (\cite{biondi18, chu19}) or transformations of SAT formulas into easier to handle representations (\cite{klebanov13}). We have not yet seen an attempt to use static (Q)IFC techniques to reduce complexity at the time of formula creation. \com{besser in related work? oder sogar intro?}
-
 The analysis we will present in the following chapter combines static and dynamic approaches to the QIFC problem. 
 
 We will run a static pre-processing to identify program parts that are critical to the flow of information and restrict the subsequent dynamic analysis to those parts.
@@ -13,13 +11,9 @@ The analysis is integrated in an interpreter that will execute the program for a
 
 \td{which guarantees does our analysis give?}
 
-% input program:
-% - javac --> bytecode
-% working on CFG + SSA form
+\section{Input Programs}\label{sec:inputLang}
 
-\section{Input Programs and Program Representation}\label{sec:inputLang}
-
-Input programs are written in a variant of the \texttt{while}-language with Java-like syntax, that contains the following control structures, using their standard semantics:
+Input programs are written in a variant of the \texttt{while}-language with functions, that contains the following control structures, using their standard semantics:
 \begin{itemize}
     \setlength\itemsep{0em}
     \item sequential composition
@@ -27,7 +21,6 @@ Input programs are written in a variant of the \texttt{while}-language with Java
     \item \texttt{if}-statements
     \item \texttt{while}-statements
     \item \texttt{break}-statements
-    \item function calls (with return values)
 \end{itemize}
 All variables are signed integers of a fixed width $w$. The right hand side of an assignment is an expression that uses the standard arithmetic and bitwise boolean operators. Boolean expressions used in \texttt{while}- and \texttt{if}-statements are defined in the standard way.
 
