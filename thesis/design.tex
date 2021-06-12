@@ -1,0 +1,258 @@
+\chapter{Basic Analysis Design}\label{sec:impl}
+
+The analysis we will present in the following chapter combines static and dynamic approaches to the QIFC problem. 
+
+We will run a static pre-processing to identify program parts that are critical to the flow of information and restrict the subsequent dynamic analysis to those parts.
+
+The dynamic analysis finds and examines possible execution paths using symbolic execution and evaluates and information flow along these paths through an approximate model counter, similar to the techniques we have seen in \cite{klebanov13, biondi18, chu19}.
+If during the analysis, the generated boolean predicates are still too complex to be evaluated by a model counter, out tool will split the program into segments and separately, either statically or dynamically, analyze each segment and combine the results for an overall estimation of the programs channel capacity.
+
+The analysis is integrated in an interpreter that will execute the program for a given input and, additionally to the channel capacity, will give estimations for the size of the indistinguishability class of the given input.
+
+\td{which guarantees does our analysis give?}
+
+\section{Notation Conventions}
+\com{so far mainly stuff that i don't know where to put yet...}
+
+\paragraph{Program Representation}
+In our analysis we work with the inputs CFG as well as the PDG, both in SSA form. Throughout we will use the following notations:
+
+\begin{definition}
+    Let $p$ be a program with statements $Stmts_p$ and basic blocks $\mbb_p$. The function
+    \begin{center}
+        $BB_p: Stmts \longrightarrow \mbb_p$
+    \end{center}
+    returns for every statement $s \in Stmts$ the basic block $b \in \mbb_p$ that contains the statement $s$.
+\end{definition}
+
+\begin{definition}
+    Let $p$ be a program with statements $Stmts_p$ and values \val$_p$. The function
+    \begin{center}
+        $def: $\val$_p \longrightarrow Stmts_p$
+    \end{center}
+    returns for every $v \in$ \val$_p$ the statement $s \in Stmts$, where the value $v$ is defined.
+\end{definition}
+
+\begin{definition}[Bit vector]
+    The function
+    \begin{center}
+        $bv_k: \mathbb{Z} \longrightarrow \{0, 1\}^k$
+    \end{center}
+    maps integers to bit vectors of a fixed length $k$, where $bv_k(n)$ is the two's complement representation of the integer $n$.
+    The returned value $bv_k(n)$ is subject to possible over- or underflows, should the number $n$ not be representable as a $k$-bit two's complement number.
+
+    Throughout this thesis, we will use bit vectors of length $w$ and simply write $bv(\cdot)$ to mean $bv_w(\cdot)$. We write $bv(n)^i$ to mean the i-th bit of $bv(n)$.
+\end{definition}
+
+\paragraph{Propositional Logic}
+Propositional formulas are made up of boolean constants \\ \bool = $\{ \mttt, \mfff \}$, boolean variables $b_i \in $\textsc{Var}$_\mbool$ and the standard boolean operators \\$\{ \lnot, \land, \lor, \implies, \iff \}$. \bform is set of all boolean formulas over \textsc{Var}$_\mbool$.
+
+\begin{definition}[Ternary Operator]
+    We define the ternary operator $\mathbb{IF}(\cdot, \cdot, \cdot)$ as:
+    \begin{center}
+        $\mathbb{IF}: \mbform \times \mbform \times \mbform \longrightarrow \mbform$\\
+        $\mathbb{IF}(c, x, y) := (c \implies x) \land (\lnot c \implies y)$
+    \end{center}
+    We canonically extend the definition to include propositional vectors:
+    \begin{center}
+        $\mathbb{IF}: \mbform \times \mbform^k \times \mbform^k \longrightarrow \mbform^k$\\
+        $\mathbb{IF}(c, x, y) := [\mathbb{IF}(c, x^i, y^i)]_{i = 0}^k$
+    \end{center}
+\end{definition}
+
+\section{Input Programs}\label{sec:inputLang}
+
+Input programs are written in a variant of the \texttt{while}-language with functions, that contains the following control structures, using their standard semantics:
+\begin{itemize}
+    \setlength\itemsep{0em}
+    \item sequential composition
+    \item assignments
+    \item \texttt{if}-statements
+    \item \texttt{while}-statements
+    \item \texttt{break}-statements
+\end{itemize}
+All variables are signed integers of a fixed width $w$. The right hand side of an assignment is an expression that uses the standard arithmetic and bitwise boolean operators. Boolean expressions used in \texttt{while}- and \texttt{if}-statements are defined in the standard way.
+
+We will denote secret inputs as $h_i$, constant values as $n_i$ and other program variables as $x_i$. The set of all input variables for a program will be denoted as \In and the set of all possible input sets is written as \allIn. A variable can be leaked to a public output channel via the special function \texttt{leak}. We assume that all program executions terminate. More specifically, we assume that they terminate normally, without throwing any exceptions.
+
+\begin{definition}[Execution Value]
+For every program p and input $\mIn \in \mathcal{H}$ for $p$, the function $\llbracket p \rrbracket_\mIn$ maps a program value to the numerical value that was assigned during a particular execution. If in this execution, the value remains undefined, because the corresponding assignment instruction wasn't executed, the function will return $\bot$.
+    \begin{center}
+        $\llbracket p \rrbracket_\mIn: \val_p \longrightarrow \{0, 1\}^n \cup \{\bot\}$
+    \end{center}
+\end{definition}
+
+During the next sections, we will temporarily restrict the scope input programs and exclude loops and functions. How those structures are handled will be explained separately in \td{references}.
+
+\section{Basic Analysis Design}
+
+\begin{itemize}
+    \item \note{approach: symbolic execution}
+    \item \note{data + cf dependencies represented as boolean formulas}
+    \item \com{define set of boolean formulas, \ttt, \fff, operators etc.}
+\end{itemize}
+
+We use propositional logic to track the way that information about the secret inputs flows through the program. Each program value is interpreted as a bit vector, where each bit is associated with a propositional formula that encodes how the state of the bit is dependent on the secret inputs. We will use subscript indices to access the i-th bit of a program value or the i-th element of a vector respectively. The bitwidth of a value \texttt{x} will be denoted as $width(\mathtt{x})$.
+
+\begin{definition}[Independent Set]
+    Let \texttt{H} be the set of input values of \pp.
+    \begin{center}
+        $\var_p := \bigcup\limits_{\mathtt{h} \in \mathtt{H}} \{h^j | 0 \leq j \leq width(\mathtt{h})\}$
+    \end{center}
+    The values of a program's input parameters are not dependent on any other value in the program. We define the set $\var_p$, that contains a propositional variable for each input bit. Every other value of \p is either constant or can be described by a propositional formula over $\var_p$.
+\end{definition}
+
+
+\paragraph{Implicit Information Flow}
+Implicit information flow occurs, when an attacker can draw conclusions about the secret inputs by reconstructing the  execution path of a program path by observing the values of the public outputs. To include implicit information flow in our further analysis, we will begin in this section by developing a function $exec: \mbb_p \longrightarrow \mbform$, that assigns each basic block $b$ of a program a propositional formula $exec(b)$, where ....
+
+\begin{definition}[Jump Condition]
+    \begin{center}
+        $jumpCond: \mbb_p \longrightarrow \mbform$
+    \end{center}
+    For every basic block $b \in \mbb_p$, we define its jump condition $jumpCond(b)$ as the propositional formula of the expression that that decides, which basic block will be executed next. For the \texttt{exit}-block and blocks that end in an unconditional jump, the jump condition is simply $\mttt$.
+
+    How the expression of a conditional jump is converted to a propositional formula is explained in section \ref{sec:prop}.
+\end{definition}
+
+\begin{definition}[Jump Target]
+    The two maps
+    \begin{center}
+        $succ_t : \mbb_p \longrightarrow \mbb_p$\\
+        $succ_f : \mbb_p \longrightarrow \mbb_p$\\
+    \end{center}
+    return for each basic block $b$ one of its successors, depending on the truth value of $jumpCond(b)$. $succ_t(b)$ is the successor that is executed if $jumpCond(b) = \mttt$, $succ_f(b)$ is the successor that is executed if $jumoCond(b) = \mfff$. For $|succ(b)| = 1$, both maps return the single successor and for $|succ(b)| = 0$, both maps return $\bot$.
+\end{definition}
+
+\begin{definition}
+    
+\end{definition}
+
+% TODO: better description for the case conditions
+% TODO: check if this is even correct lol
+% TODO: is knowledge the right word to use here?
+% TODO: find better name for function than Phi
+
+\paragraph{Explicit Knowledge Function}\label{sec:prop}
+
+% map + semantics for finding implicit leakage
+
+\section{Static Pre-Processing}
+
+\begin{figure}
+    \centering
+    \begin{tikzpicture}
+        \tikzstyle{process} = [rectangle, minimum width=2.3cm, minimum height=.7cm, text centered, draw=black, node distance=2cm]
+        \tikzstyle{io} = [ellipse, minimum height=.7cm, text centered, node distance=1.5cm]
+        \tikzstyle{arrow} = [thick,->,>=stealth]
+
+        \node (p) [io, align=center] {\small Input\\program};
+        \node (nil) [process, below of=p, align=center] {\small Constant Bit\\Analysis};
+        \node (prune) [process, right of=nil, xshift=2cm, align=center] {\small PDG\\Pruning};
+        \node (bs) [process, right of=prune, xshift=2cm, align=center] {\small Backward\\Slicing};
+        \node (done) [io, below of=bs, align=center, yshift=-.5cm] {\small Pre-Processed\\Program};
+
+        \draw [arrow] (p) -- (nil);
+        \draw [arrow] (nil) -- (prune);
+        \draw [arrow] (bs) -- (done);
+        \draw [arrow] (prune) -- (bs);
+    \end{tikzpicture}
+    \caption{Stages of the pre-processing pipeline. The pre-processed program is the input for the following dependency analysis.}
+    \label{fig:pp}
+\end{figure}
+
+To keep the effort of computing the dependency formulas, as well as their evaluation through the model counter, as low as possible, we statically pre-process the input program to identify those statements that do not need to be included in the dependency analysis \td{find better wording than `dependency analysis'}.
+
+The pre-processing consists of three stages, shown in figure \ref{fig:pp}. In the following section we will use the program from \ref{fig:ec} as a running example to demonstrate the effects of the pre-processing.
+
+\paragraph{Constant Bit Analysis}
+We use \emph{Nildumu} \cite{bechberger18} to perform a constant bit analysis on the input program. The goal is to identify values that are \emph{effectively constant}. Effectively constant values have the same execution value in every run of $p$, regardless of the inputs that were used.
+
+\begin{definition}[Effectively constant value]
+    A program value $v$ of the program $p$ is called \emph{effectively constant} iff:
+    \begin{center}
+        $\forall \mIn_1, \mIn_2 \in \mathcal{H}: \llbracket p \rrbracket_{\mIn_1} (v) = \llbracket p \rrbracket_{\mIn_2}(v)$
+    \end{center}
+\end{definition}
+
+If a value is effectively constant, we can safely exclude it from any further analysis and set its dependency vector to a vector of boolean constants that corresponds to its execution value. For values which are not effectively constant, but contain constant bits, we can also reduce the number of dependency formulas we need to compute to those bits that are not constant.
+
+\td{mention handling of arrays (or vars on heap in general)}
+
+\begin{figure}
+    \centering
+    \begin{minipage}{.7\linewidth}
+        \begin{algorithm}[H]
+            \hspace*{\algorithmicindent} \textbf{Input} h: int \\
+            \hspace{1em}
+            \begin{algorithmic}[1]
+                \If{$h < 0$}
+                \State $l_1 \leftarrow 42$
+                \Else
+                \State $l_2 \leftarrow 42$
+                \EndIf
+                \State $l = \phi(l_1, l_2)$
+                \State $\mathtt{leak}(l)$
+            \end{algorithmic}
+        \end{algorithm}
+    \end{minipage}
+    \caption{The value $l$ in this program is \emph{effectively constant}, since its execution value will always be 42.}
+    \label{fig:ec}
+\end{figure}
+
+\paragraph{PDG Pruning}
+If a value is effectively constant, an observer cannot learn anything about the secret inputs of a program by observing the behaviour of that particular value. Since we are only interested in information flow that will help an attacker in learning our secret, the data and control dependencies of effectively constant values can safely be ignored. \question{do i need more explanation of why this is?} We prune the PDG of the analysed program by removing all incoming edges of nodes that define effectively constant values. Figure \ref{fig:prune} shows the original and the pruned version of the PDG of the program in figure \ref{fig:ec}.
+
+\begin{figure}
+    \centering
+    \begin{tikzpicture}
+        \tikzstyle{node} = [ellipse, minimum width=2.5cm, minimum height=.7cm, text centered, draw = black, node distance=1.5cm]
+        \tikzstyle{arrow} = [thick,->,>=stealth]
+
+        \node (if) [node] {$\mathtt{if} \: h < 0$};
+        \node (l1) [node, below of=if, xshift=-2cm] {$l_1 \leftarrow 42$};
+        \node (l2) [node, below of=if, xshift=2cm] {$l_2 \leftarrow 42$};
+        \node (l) [node, below of=l2, xshift=-2cm, draw = blue] {$l = \phi(l_1, l_2)$};
+        \node (print) [node, below of=l, draw = blue] {$\mathtt{leak}(l)$};
+
+        \draw [arrow] (l1) -- (if);
+        \draw [arrow] (l2) -- (if);
+        \draw [arrow, draw = red] (l) -- (l1);
+        \draw [arrow, draw = red] (l) -- (l2);
+        \draw [arrow, draw = blue] (print) -- (l);
+    \end{tikzpicture}
+    \caption{The PDG of the program in figure \ref{fig:ec}. The red highlighted edges are those that were removed by the pruning stage.The blue highlighted subgraph is the backward slice for $\langle \mathtt{leak}(l), l \rangle$ that was computed on the pruned PDG. \com{Better to split into several figures?}}
+    \label{fig:prune}
+\end{figure}
+
+\paragraph{Backward Slicing}
+As a last step, we calculate a backward slice with the slicing criterion $\langle s, v \rangle$ being the value $v$ that is leaked to a public channel combined with the statement $s$ of the leak. If more than one value is leaked, we compute the backward slice for each value and union the results. \com{can union be used as a verb? sounds weird.} For slicing, we use the pruned PDG from the previous stage. In our analysis, we used a static interprocedual backward slicing algorithm via the JOANA framework. \com{more specific? also we slice the sdg, not the pdg-- > correct!}
+The resulting backward slice contains those statements, that are needed for computing the dependency vector for the leaked value. Program statements that are not part of the slice do not have to analysed. Control structures, such as loops or conditional statements can be omitted, if the head of the structure is not contained in the backward slice. In this case, we will also omit them from the computation of the path conditions that keep track of implicit information flows.
+
+Omitting certain statements from the dependency analysis safe, as long as we can guarantee, that we have enough information to determine the dependency vectors of the values defined in the remaining statements. Enough information in this case means that the dependency vectors of all used values of the expression defining the value are known. Each use value falls into one of the following categories:
+\begin{enumerate}
+    \item \emph{Constants: }The dependency vector is constant and corresponds to the constants twos-complement representation.
+    \item \emph{Parameters: }Parameters are unknown values whose dependency vectors are filled with placeholder variables.
+    \item \emph{Effectively Constant Values: }The dependency vector is constant and corresponds to the twos-complement representation of the value determined by the constant bit analysis.
+    \item \emph{Variable Values: }Since an expression containing the value is part of the backward slice, the definition of this value will also be included. Thus, we will have computed the value's dependency vector prior to analysing the current expression.
+\end{enumerate}
+Therefore it is indeed safe to omit statements in our analysis that were not included in the final backward slice of the pre-processing.
+
+By using this pre-processing method we can shrink the propositional formulas that are produced by the dependency analysis. An example of this is shown in figure \ref{fig:ppRes}, where we can eliminate an unnecessary ternary operator. This helps to increase efficiency in two ways: Firstly, the formulas the program needs to handle become smaller and thus take less time to process and secondly, the computation time of ApproxMC decreases with the decrease of the input formula. A more in-depth analysis of the effects of the pre-processing on the cost of the analysis as a whole is given in \ref{sec:eval}. \td{insert reference when evaluation is done}
+
+\begin{figure}
+    \begin{subfigure}[t]{.4\textwidth}
+        \centering
+        $cd(l) : l = \mathbb{IF}(h < 0, l_1, l_2)$ \\ $\land l_1 = 42 \land l_2 = 42$
+        \caption{without pre-processing}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[t]{.4\textwidth}
+        \centering
+        $cd(l) : l = 42$
+        \vspace{\baselineskip}
+        \caption{with pre-processing}
+    \end{subfigure}
+    \caption{The resulting dependency formula for the value $l$ of the example in \ref{fig:ec}. \td{check back for notation etc after completing previous chapter}}
+    \label{fig:ppRes}
+\end{figure}
