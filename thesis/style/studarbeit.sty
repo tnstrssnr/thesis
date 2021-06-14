@@ -168,6 +168,9 @@
 %%% packages
 \usepackage{verbatim}
 \usepackage{amsthm}
+
+% line break after theorem label
+
 \usepackage{amssymb}
 \usepackage{amsmath}
 \usepackage{fourier}
@@ -178,9 +181,15 @@
 \setlength{\grammarindent}{12em} % increase separation between LHS/RHS 
 
 %%% environments
-\theoremstyle{definition}
+\newtheoremstyle{break}
+  {\topsep}{\topsep}%
+  {}{}%
+  {\bfseries}{}%
+  {\newline}{}%
+\theoremstyle{break}
 \newtheorem{definition}{Definition}[section]
 \newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
 
 %%% pseudocode settings
 \usepackage{algorithm} 

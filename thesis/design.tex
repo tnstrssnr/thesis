@@ -47,6 +47,20 @@ In our analysis we work with the inputs CFG as well as the PDG, both in SSA form
 \paragraph{Propositional Logic}
 Propositional formulas are made up of boolean constants \\ \bool = $\{ \mttt, \mfff \}$, boolean variables $b_i \in $\textsc{Var}$_\mbool$ and the standard boolean operators \\$\{ \lnot, \land, \lor, \implies, \iff \}$. \bform is set of all boolean formulas over \textsc{Var}$_\mbool$.
 
+\begin{definition}[From bit vector to propositional logic]
+    The map
+    \begin{center}
+        $\mathcal{B}: \{0, 1\}^n \longrightarrow  \mbform^n$
+    \end{center}
+    assigns each bit vectors a corresponding vector of propositional formulas. The value $\mathcal{B}(v)$ is defined as
+    \begin{center}
+        $\mathcal{B}(v) := [b^0, ..., b^{n-1}], \hspace{1em} b^i := \begin{cases}
+            \mttt & v^i = 1 \\
+            \mfff & v^i = 0
+        \end{cases} \hspace{1em} \forall v \in \{0, 1\}^n$
+    \end{center}
+\end{definition}
+
 \begin{definition}[Ternary Operator]
     We define the ternary operator $\mathbb{IF}(\cdot, \cdot, \cdot)$ as:
     \begin{center}
@@ -82,35 +96,21 @@ For every program p and input $\mIn \in \mathcal{H}$ for $p$, the function $\llb
     \end{center}
 \end{definition}
 
-During the next sections, we will temporarily restrict the scope input programs and exclude loops and functions. How those structures are handled will be explained separately in \td{references}.
+During the next sections, we will temporarily restrict the scope input programs and exclude loops and functions. How those structures are handled will be explained separately in \ref{ch:loops}.
 
-\section{Basic Analysis Design}
+\section{Dependency Analysis}\label{sec:prop}
+\td{better than than dependency analysis ???}
 
-\begin{itemize}
-    \item \note{approach: symbolic execution}
-    \item \note{data + cf dependencies represented as boolean formulas}
-    \item \com{define set of boolean formulas, \ttt, \fff, operators etc.}
-\end{itemize}
-
-We use propositional logic to track the way that information about the secret inputs flows through the program. Each program value is interpreted as a bit vector, where each bit is associated with a propositional formula that encodes how the state of the bit is dependent on the secret inputs. We will use subscript indices to access the i-th bit of a program value or the i-th element of a vector respectively. The bitwidth of a value \texttt{x} will be denoted as $width(\mathtt{x})$.
-
-\begin{definition}[Independent Set]
-    Let \texttt{H} be the set of input values of \pp.
-    \begin{center}
-        $\var_p := \bigcup\limits_{\mathtt{h} \in \mathtt{H}} \{h^j | 0 \leq j \leq width(\mathtt{h})\}$
-    \end{center}
-    The values of a program's input parameters are not dependent on any other value in the program. We define the set $\var_p$, that contains a propositional variable for each input bit. Every other value of \p is either constant or can be described by a propositional formula over $\var_p$.
-\end{definition}
-
+We use propositional logic to track the way that information about the secret inputs flows through the program. For each program value, we generate a vector of propositional formulas that describe the state of the corresponding bit as a function the input bits. These formulas encode both, the explicit and implicit information flows that are contained the value of a program variable.
 
 \paragraph{Implicit Information Flow}
-Implicit information flow occurs, when an attacker can draw conclusions about the secret inputs by reconstructing the  execution path of a program path by observing the values of the public outputs. To include implicit information flow in our further analysis, we will begin in this section by developing a function $exec: \mbb_p \longrightarrow \mbform$, that assigns each basic block $b$ of a program a propositional formula $exec(b)$, where ....
+Implicit information flow occurs, when an attacker can draw conclusions about the secret inputs by reconstructing the  execution path of a program path by observing the values of the public outputs. To include implicit information flow in our further analysis, we will begin in this section by developing a function $exec: \mbb_p \longrightarrow \mbform$, that assigns each basic block $b$ of a program a propositional formula $exec(b)$ that expresses the condition that must be fulfilled by the inputs so that the statements of block $b$ will be executed. 
 
 \begin{definition}[Jump Condition]
+    For every basic block $b \in \mbb_p$, we define its jump condition $jumpCond(b)$ as the propositional formula of the expression that decides, which basic block will be executed next. For the \texttt{exit}-block and blocks that end in an unconditional jump, the jump condition is simply $\mttt$.
     \begin{center}
         $jumpCond: \mbb_p \longrightarrow \mbform$
     \end{center}
-    For every basic block $b \in \mbb_p$, we define its jump condition $jumpCond(b)$ as the propositional formula of the expression that that decides, which basic block will be executed next. For the \texttt{exit}-block and blocks that end in an unconditional jump, the jump condition is simply $\mttt$.
 
     How the expression of a conditional jump is converted to a propositional formula is explained in section \ref{sec:prop}.
 \end{definition}
@@ -121,21 +121,150 @@ Implicit information flow occurs, when an attacker can draw conclusions about th
         $succ_t : \mbb_p \longrightarrow \mbb_p$\\
         $succ_f : \mbb_p \longrightarrow \mbb_p$\\
     \end{center}
-    return for each basic block $b$ one of its successors, depending on the truth value of $jumpCond(b)$. $succ_t(b)$ is the successor that is executed if $jumpCond(b) = \mttt$, $succ_f(b)$ is the successor that is executed if $jumoCond(b) = \mfff$. For $|succ(b)| = 1$, both maps return the single successor and for $|succ(b)| = 0$, both maps return $\bot$.
+    return for each basic block $b$ one of its successors, depending on the truth value of $jumpCond(b)$. $succ_t(b)$ is the successor that is executed if $jumpCond(b) = \mttt$, $succ_f(b)$ is the successor that is executed if $jumpCond(b) = \mfff$. For $|succ(b)| = 1$, both maps return the single successor and for $|succ(b)| = 0$, both maps return $\bot$.
+
+    \td{too much text in definitions}
 \end{definition}
 
-\begin{definition}
+A basic block $b$ in a program is executed, if one of its predecessor blocks is executed and if the condition for execution to jump from said predecessor to the block $b$ is fulfilled. A special case is a program's entry block, which is executed in every run. This leads to the following definition: 
+
+\begin{definition}[Execution Condition]
+    For every basic block $b \in \mbb_p$, its \emph{execution condition} is a propositional formula $f_b$, where $\mathcal{V}_\mIn(f_b) = \mttt \iff \text{basic block $b$ is executed in a program run with inputs \In}$. \td{put this in lemma?}
+    \begin{center}
+        $exec: \mbb \longrightarrow \mbform$\\
+        \begin{align*}
+            exec(b) &:= \begin{cases}
+                \mttt &  b = \mathtt{entry}_p\\
+                \bigvee\limits_{p \in pred(b)} j_p \land exec(p) & \text{otherwise}\\
+        \end{cases}, \quad \text{where }\\
+        j_p &:= \begin{cases}
+            jumpCond(p), & \text{for } b = succ_t(p)\\
+        \lnot jumpCond(p), & \text{for } b = succ_f(p)\\
+        \end{cases}
+        \end{align*}
+    \end{center}
+\end{definition}
+
+\paragraph{Explicit Information Flow}
+Having analysed the implicit information flow in the program, we now address the explicit information flows. These occur through assignments in the program. We capture the information contained in a value in its \emph{dependency vector}.
+
+\begin{definition}[Dependency vector]
+    The \emph{dependency vector} function maps each value to a vector of propositional formulas.
+    \begin{center}
+        $dVec: \val_p \longrightarrow \mbform^w$,
+    \end{center}
+    where $w$ is the bit width of the value.
+    We use $dVec(v)^i$ to mean the i-th entry of the vector $dVec(v)$.
+\end{definition}
+
+The values of a program's input parameters are not dependent on any other value in the program. We define the set $\var_p$, that contains a propositional variable for each input bit. Every other value of \p is either constant or can be described by a propositional formula over $\var_p$. 
+
+\begin{definition}[Independent Set]
+    Let $\mIn = \{ h_0, ..., h_m \}$ be the set of input values of \pp.
+    \begin{center}
+        $\var_p := \bigcup\limits_{\mathtt{h_i} \in \mathtt{H}} \{h_i^j | 0 \leq j \leq width(\mathtt{h_i})\}$
+    \end{center}
+    is the set of propositional variables over which the dependency vectors of the program's values are defined.
+\end{definition}
+
+\begin{definition}[Valuation of Dependency Vectors]
+    For every set of inputs $\mIn = \{ h_0, ..., h_m \} \in \mathcal{H}$, we use the truth assignment
+    \begin{center}
+        $\beta: \var_p \longrightarrow \mbool$\\
+        $\beta(h_i^j) = \begin{cases}
+            \mttt & \text{if }bv(h_i)^j = 1\\
+            \mfff & \text{otherwise}
+        \end{cases} \forall h_i^j \in \var_p$
+    \end{center}
+    The valuation of a propositional formula $f$ with respect to the truth assignment induced by the input $\mIn$ will be denoted by $\mathcal{V}_\mIn (f)$
+\end{definition}
+
+The dependency vector of a value $v$ is determined through the expression that is assigned to $v$. How these expressions are evaluated is described in definition \ref{def:expr}.
+
+\begin{definition}[Evaluation function for expressions]\label{def:expr}
+    The function
+    \begin{center}
+        $\mathcal{E}: \mathtt{Expr} \longrightarrow \mbform^w$
+    \end{center}
+    takes an expression and determines the dependency vector of its result. The exact definition of $\mathcal{E}(e)$ is shown in figure \ref{fig:expr}
+\end{definition}
+
+\begin{figure}
     
-\end{definition}
+    \begin{subfigure}{.5\textwidth}
+        \caption{Constant Values}
+        Let $e := n, \quad n \in \mathbb{Z}$\\
+        $\mathcal{E}(e) := \mathcal{B}(bv(n))$
+        
+    \end{subfigure}
 
-% TODO: better description for the case conditions
-% TODO: check if this is even correct lol
-% TODO: is knowledge the right word to use here?
-% TODO: find better name for function than Phi
+    \begin{subfigure}{.5\textwidth}
+        \caption{Input parameters}
+        Let $e := h_i, \quad h_i \in \mIn$\\
+        $\mathcal{E}(e) := [h_i^0, ..., h_i^{w-1}], \quad h_i^j \in \var_p$
+        
+    \end{subfigure}
 
-\paragraph{Explicit Knowledge Function}\label{sec:prop}
+    \begin{subfigure}{1\textwidth}
+        \caption{Unary Operators}
+        Let $e := \thicksim e_0, \quad \thicksim \in \{ \lnot, - \}$\\
+        $\mathcal{E}(e) := [\thicksim b_0^0 , ... , \thicksim b_0^{w-1}], \: \text{where } b_0 := \mathcal{E}(e_0)$
+       
+    \end{subfigure}
 
-% map + semantics for finding implicit leakage
+    \begin{subfigure}{1\textwidth}
+        \caption{Binary Boolean Operators}
+        Let $e := e_0 \circledcirc e_1, \quad \circledcirc \in \{ \land, \lor, \veebar \}$\\
+        $\mathcal{E}(e) := [b_0^0 \circledcirc b_1^0, ... , b_0^{w-1} \circledcirc b_1^{w-1}], \: \text{where } b_0 := \mathcal{E}(e_0), \: b_1 := \mathcal{E}(e_1)$
+        
+    \end{subfigure}
+
+    \begin{subfigure}{1\textwidth}
+        \caption{Arithmetic Operators}
+        Let $e := e_0 \circledcirc e_1, \quad \circledcirc \in \{ \land, \lor, \veebar \}$\\
+        $\mathcal{E}(e) := [b_0^0 \circledcirc b_1^0, ... , b_0^{w-1} \circledcirc b_1^{w-1}], \: \text{where } b_0 := \mathcal{E}(e_0), \: b_1 := \mathcal{E}(e_1)$
+        
+    \end{subfigure}
+
+    \begin{subfigure}{1\textwidth}
+        \caption{Equality Operators}
+        Let $e := e_0 \circledcirc e_1, \quad \circledcirc \in \{ \land, \lor, \veebar \}$\\
+        $\mathcal{E}(e) := [b_0^0 \circledcirc b_1^0, ... , b_0^{w-1} \circledcirc b_1^{w-1}], \: \text{where } b_0 := \mathcal{E}(e_0), \: b_1 := \mathcal{E}(e_1)$
+        
+    \end{subfigure}
+
+    \begin{subfigure}{1\textwidth}
+        \caption{Comparison Operators}
+        Let $e := e_0 \circledcirc e_1, \quad \circledcirc \in \{ \land, \lor, \veebar \}$\\
+        $\mathcal{E}(e) := [b_0^0 \circledcirc b_1^0, ... , b_0^{w-1} \circledcirc b_1^{w-1}], \: \text{where } b_0 := \mathcal{E}(e_0), \: b_1 := \mathcal{E}(e_1)$
+    \end{subfigure}
+
+    \begin{subfigure}{1\textwidth}
+        \caption{Phi Expressions}
+        Let $e := \phi(v_0, v_1), \quad v_0, v_1 \in \val_p$\\
+        $\mathcal{E}(e) := \mathbb{IF}(exec(pred_0(def(e))), dVec(v_0), dVec(v_1))$
+    \end{subfigure}
+    
+    \caption{Definition of $\mathcal{E}(e)$ for different types of expressions $e$ \com{incomplete -- does this need to be that detailed?}}\label{fig:expr}
+\end{figure}
+
+\paragraph{Estimating Channel Capacity and Pre-Image Size through Dependency Vectors}
+
+\begin{theorem}[Execution Value - Dependency Vector Equivalence]
+    For every program $p$ and value $v \in \val_p$ the following property holds:
+    \begin{center}
+        $\forall \mIn \in \mathcal{H}: \llbracket p \rrbracket_\mIn (v) ^i = 1 \iff \mathcal{V}_\mIn(dVec(v)^i) = \mttt$
+    \end{center}
+\end{theorem}
+
+\begin{lemma}[Pre-image Size]
+    Let $p$ be a program with values $\mOut := \{l_0, ..., l_m \}$ being leaked to a public output channel during an execution of $p$ with inputs $\mIn$.
+    The size of $\mOut$'s pre-image in $\mathcal{H}$ is given by:
+    \begin{center}
+        $|\llbracket p \rrbracket_\mIn^{-1} (L)| = mc_{\val_p} ( f_{out})$, where \\
+        $f_out := \bigwedge\limits_{l_i \in \mOut} \bigwedge\limits_{0 \leq j < w} \mathcal{B}(\llbracket p \rrbracket_\mIn(l_i)^j) \iff dVec(l_i)^j$
+    \end{center}
+\end{lemma}
 
 \section{Static Pre-Processing}
 

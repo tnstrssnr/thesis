@@ -106,8 +106,10 @@ A widely used measure for information leakage is \emph{vulnerability} and \emph{
 \end{definition}
 
 \begin{definition}[Channel Capacity]
-    
-    Given a program $p$, the channel capacity of $p$ is the number of distinct outputs $|\mathcal{L}|$ than can be produced by $p$
+    Given a program $p$, the channel capacity of $p$ is the number of distinct outputs than can be produced by $p$.
+    \begin{center}
+        $cc(p) := |\mathcal{L}|$
+    \end{center}
 \end{definition}
 
 \td{finish}
@@ -245,7 +247,7 @@ Tools like JOANA use slicing techniques on system dependence graphs to analyse t
 
 \section{Model Counting}
 
-Given a propositional formula $F$, the model counting problem (\#SAT) is the problem of finding the number of distinct variable assignments for $F$, for which $F$ evaluates to true \cite{biere09}. So the solution for the formula shown in  \ref{fig:satEx} is \#F = 3, with the only non-fulfilling variable assignments being $\{ x = \mttt, y = \mfff\}, \{x = \mttt, y = \mttt\}$ and  $\{x = \mfff, y = \mfff\}$.
+Given a propositional formula $F$, the model counting problem (\#SAT) is the problem of finding the number of distinct variable assignments for $F$, for which $F$ evaluates to true \cite{biere09}. So the solution for the formula shown in  \ref{fig:satEx} is \#F = 3, with the fulfilling variable assignments being $\{ x = \mttt, y = \mfff\}, \{x = \mttt, y = \mttt\}$ and  $\{x = \mfff, y = \mfff\}$. We will denote the model count of a propositional formula $f$ as $mc(f)$.
 
 \#SAT is a generalization of the SAT problem and falls into the \#P-complete complexity class, as demonstrated by Valiant in \cite{valiant79}.
 
@@ -263,7 +265,7 @@ The first approximate \#SAT algorithm for DNF formulas was introduced by Luby an
 \end{figure}
 
 \paragraph*{Projected Model Counting}
-Given a set of propositional variables $\mathcal{V}$ and a propositional formula $F$ over $\mathcal{V}$, projected model counting (\#$\exists$SAT) is the problem of finding the number of assignments to a set of priority variables $\mathcal{P} \subseteq \mathcal{V}$, such that the assignment can be extended to an assignment over $\mathcal{V}$ that fulfills $F$. Considering the example from \ref{fig:satEx} and a priority set $\mathcal{P} = \{x\}$, the number of projected models is 2, with both possible assignments of $x$ being extendable to a fulfilling assignment over all variables by setting $y = \mfff$.
+Given a set of propositional variables $\mathcal{V}$ and a propositional formula $F$ over $\mathcal{V}$, projected model counting (\#$\exists$SAT) is the problem of finding the number of assignments to a set of priority variables $\mathcal{P} \subseteq \mathcal{V}$, such that the assignment can be extended to an assignment over $\mathcal{V}$ that fulfills $F$. Considering the example from \ref{fig:satEx} and a priority set $\mathcal{P} = \{x\}$, the number of projected models is 2, with both possible assignments of $x$ being extendable to a fulfilling assignment over all variables by setting $y = \mfff$. We will denote the projected model count of a propositional formula $f$ over the set of priority variables $\mathcal{P}$ as $mc_\mathcal{P}(f)$.
 
 The problem is introduced by Aziz et.al. in \cite{aziz15}, along with a discussion of approaches to solve \#$\exists$SAT. \td{finish}
 
