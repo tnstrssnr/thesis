@@ -14,7 +14,7 @@ We consider the following scenario: Given a program \p, that accepts some input 
 
 \paragraph{Input program} We assume \p to be a sequential, deterministic program, that receives a set of inputs $\mathtt{H = \{h_1, ..., h_n\}}$ and produces a set of outputs $\mathtt{L = \{l_1, ..., l_m\}}$. We will write the sets of all possible inputs and outputs as $\mathcal{H}$ $\mathcal{L}$ respectively. Inputs are chosen based on a publicly known a priori probability distribution. The program text of \p is publicly known. A more detailed description of the input language we used, we refer to \ref{sec:inputLang}.
 
-\paragraph{Security Lattice} Each element of \In and \Out is associated with an element of a security lattice, describing its confidentiality level. We use a lattice with two elements $\hat{l}$, for public values and $\hat{h}$ for secret values. If not otherwise specified, we consider all inputs to be high and all outputs to be low.
+\paragraph{Security Lattice} Each element of \In and $\mOut$ is associated with an element of a security lattice, describing its confidentiality level. We use a lattice with two elements $\hat{l}$, for public values and $\hat{h}$ for secret values. If not otherwise specified, we consider all inputs to be high and all outputs to be low.
 % Schneider -- nur high und low
 
 \paragraph{Attacker Model} We consider an adversary \A that is able to observe the program text of \p and the resulting outputs on public channels. He or she is also aware of the set of program inputs and its underlying probability distribution. We assume the attacker is not able to extract any information through covert channels. The goal of the attacker is to guess the secret input of the program, using the information they can extract through observing the program's output.
@@ -64,15 +64,66 @@ We consider the following scenario: Given a program \p, that accepts some input 
 \label{fig:ifEx}
 \end{figure}
 
-\subsection{Quantifying Information Flow}
+\paragraph{Information Flow Measures}
+\com{is this part too long to be a paragraph? but it's a bit weird to make it the only subsection}
 
 In \cite{smith09}, Smith characterizes information leakage with the following equation:
 \begin{center}
-    Initial uncertainty = information leaked + remaining uncertainty.
+    \begin{equation}
+        \text{Initial uncertainty} = \text{information leaked} + \text{remaining uncertainty}
+    \end{equation}\label{eq:measure}
+    
 \end{center}
-In our scenario, the unknown value \In is the initial uncertainty, measured by some entropy measure. The remaining uncertainty is the entropy of \In after observing \Out. 
+In our scenario, the unknown value \In is the initial uncertainty, measured by some entropy measure. The remaining uncertainty is the entropy of \In after observing \Out.
 
-Because the programs we consider are deterministic, each program $p$ induces a mapping $\llbracket p \rrbracket: \mathcal{H} \longrightarrow \mathcal{L}$. From this mapping we can define an equivalence relation called the \emph{indistinguishability relation} as shown in definition \ref{def:ir}. The equivalence class of this relation are pre-images of the possible program outputs (see definition \ref{def:is}). When the adversary observes the value \Out, he knows that the secret input must be an element of $\mathcal{H}_mOut$. Thus, the bigger the size of $\mathcal{H}_mOut$, the less likely the adversary is, to guess the secret input in a single try \cite{backes09, smith09, alvim19}. 
+\paragraph*{Measuring Leakage with Vulnerability}
+A widely used measure for information leakage is \emph{vulnerability} and \emph{min-entropy} (\td{citations}). Following the definitions from \cite{smith09}, the vulnerability of a value $X$ describes `the worst case probability, that an adversary could guess the value of $X$ in one try.'
+
+\begin{definition}[Vulnerability]\label{def:vul}
+    Let $X$ be a random variables and $\mathcal{X}$ the set of possible values for $X$. The \emph{vulnerability} $V(X)$ is defined as
+    \begin{center}
+        $V(X) := \max\limits_{x \in \mathcal{X}} P[X = x]$
+    \end{center}
+\end{definition}
+
+\begin{definition}[Min-Entropy]
+    Using the same definitions as in \ref{def:vul}, the min-entropy of $X$ is given by
+    \begin{center}
+        $H_\infty (X) := \log_2 \frac{1}{V(X)}$
+    \end{center}
+\end{definition}
+
+Using these definitions, Smith \cite{smith09} proposes the following definitions for the initial leakage equation in \ref{eq:measure}:
+\begin{itemize}
+    \item \emph{initial uncertainty} is given by the min-entropy of the input value $H_\infty(\mIn)$
+    \item \emph{remaining uncertainty} is given by the conditional min-entropy $H_\infty(\mIn | \mOut)$of $\mIn$, after having observed $\mOut$ as the output. 
+\end{itemize}
+Thus the information leaked by a program is $H_\infty(\mIn) - H_\infty(\mIn | \mOut)$. This quantity can be determined easily with the following definition and theorem:
+
+\begin{definition}[Channel Capacity]
+    Given a program $p$, the channel capacity of $p$ is the number of distinct outputs than can be produced by $p$.
+    \begin{center}
+        $cc(p) := \log_2 |\mathcal{L}|$
+    \end{center}
+    For deterministic programs, the channel capacity is the maximum entropy of $\mOut$ over all distributions of $\mathcal{H}$ \cite{smith09}.
+\end{definition}
+
+\begin{theorem}[Measuring Min-entropy through Channel Capacity]
+    For deterministic programs, the information leaked is equal to the channel capacity of $p$.
+\end{theorem}
+
+This leakage measure, introduced by Smith \cite{smith09}, is also used by Biondi et. al. \cite{biondi18}, Backes et. al. \cite{backes09} and McCamant and Ernst \cite{mccamant08}.
+
+\paragraph{Measuring Leakage for individual program executions}
+While the vulnerability-based approach is appropriate to assess the risk of inadvertent information leakage for the program as a whole, it fails to give realistic measures in the dynamic case. If we consider the output of a single program run, the information an attacker may obtain from the output can be significantly greater than what the channel capacity of the program tells us.
+
+We demonstrate this using the example program from \ref{fig:exEx}. The possible outputs of the program are \texttt{0} and \texttt{1}, so the leakage, measured in bits, using the channel capacity formula is $\log_2 2 = 1$ Assuming integers are 64 bit wide, leaking a single bit seems acceptable in most cases.
+
+Now, let's assume we run the program with the input $h := 42$. The output of the program will be $1$. An attacker that observes this output and has access to the program text will now know that the secret input was $42$. Instead of one single bit, the attacker has gained knowledge about all 64 bit of the secret input. For every other input, the attacker can only conclude that $\mIn \neq 42$. That leaves $2^{64} - 1$ possible inputs that are indistinguishable for the attacker. 
+
+This example shows that relying on min-entropy and channel capacity as a measure of information leakage can be dangerous if we care about the confidentiality of the secret inputs in every run of the program. Therefore, we now introduce measures, that are more suited for the dynamic case.
+
+Because the programs we consider are deterministic, each program $p$ induces a mapping $\llbracket p \rrbracket: \mathcal{H} \longrightarrow \mathcal{L}$. From this mapping we can define an equivalence relation called the \emph{indistinguishability relation} as shown in definition \ref{def:ir}. The equivalence class of this relation are pre-images of the possible program outputs (see definition \ref{def:is}). When the adversary observes the value \Out, he knows that the secret input must be an element of $\mathcal{H}_\mOut$. Thus, the bigger the size of $\mathcal{H}_\mOut$, the less likely the adversary is, to guess the secret input in a single try \cite{backes09, smith09, alvim19}. 
 
 \begin{definition}[Indistinguishability Relation]\label{def:ir}
         For each program $p$, we define the \emph{indistinguishability relation} $\thicksim$ over $\mathcal{H}$ as:
@@ -88,31 +139,50 @@ Because the programs we consider are deterministic, each program $p$ induces a m
     \end{center}
 \end{definition}
 
-\paragraph*{Measuring Leakage with Vulnerability}
-A widely used measure for information leakage is \emph{vulnerability} and \emph{min-entropy} (\td{citations}). Following the definitions from \cite{smith09}, the vulnerability of a value $X$ describes `the worst case probability, that an adversary could guess the value of $X$ in one try.'
+Consequently, in the dynamic case the probability of an attacker guessing the secret in a single try depends on the size of the indistinguishability set for the output for the specific execution that is analyzed.
 
-\begin{definition}[Vulnerability]\label{def:vul}
-    Let $X$ be a random variables and $\mathcal{X}$ the set of possible values for $X$. The \emph{vulnerability} $V(X)$ is defined as
+To reflect this notion in the leakage measure of our analysis, we redefine the \emph{remaining uncertainty} in equation \ref{eq:measure} as the conditional entropy of $\mIn$, given the outcome $\mOut = l$.
+
+\begin{definition}[Conditional Entropy for specific outcomes]
+    Given two random variables $X$ and $Y$ with outcomes $\mathcal{X}$ and $\mathcal{Y}$ and the specific outcome $Y = y$, the conditional entropy $H(X | Y = y)$ is defined as:
     \begin{center}
-        $V(X) := \max\limits_{x \in \mathcal{X}} P[X = x]$
+        $H(X | Y = y) := \sum\limits_{x \in \mathcal{X}} P[X = x | Y = y] \log \frac{1}{P[X = x | Y = y]}$
     \end{center}
 \end{definition}
 
-\begin{definition}[Min-Entropy]
-    Using the same definitions as in \ref{def:vul}, the min-entropy of $X$ is given bx
-    \begin{center}
-        $H_\infty (X) := \log_2 \frac{1}{V(X)}$
-    \end{center}
-\end{definition}
+As mentioned above, the possible values for $\mIn$ are restricted to the elements of $\mathcal{H}_l$, so the probability $P[H = h | L = l] = 0$ for all $h \in \mathcal{H} \setminus \mathcal{H}_l$. Assuming a uniform distribution for the secret input values, we obtain the following leakage measure:
 
-\begin{definition}[Channel Capacity]
-    Given a program $p$, the channel capacity of $p$ is the number of distinct outputs than can be produced by $p$.
-    \begin{center}
-        $cc(p) := |\mathcal{L}|$
-    \end{center}
-\end{definition}
+\begin{align*}
+    H(\mathtt{H} | \mathtt{L} = l) &:= \sum\limits_{h \in \mathcal{H}} P[\mIn = h | \mOut = l] \log_2 \frac{1}{P[\mIn = h | \mOut = l]} \\[1em]
+    &= \sum\limits_{h \in \mathcal{H}_l} \frac{1}{|\mathcal{H}_l|} \log_2 |\mathcal{H}_l| \\[1em]
+    &= \log_2 |\mathcal{H}_l|
+\end{align*}
 
-\td{finish}
+\begin{theorem}[Dynamic leakage]
+    The dynamic leakage of a single program run of a program $p$ with a resulting output $l$ is given by 
+    \begin{align*}
+        L_{dyn}(p, \mOut) &:= H_\infty(\mIn) - H(\mIn | \mOut = l) \\[1em]
+        &= \log_2 |\mathcal{H}| - \log_2 |\mathcal{H}_l|
+    \end{align*}
+\end{theorem}
+
+The table in figure \ref{tab:comp} compares the two leakage measures defined in this section. \td{finish -- clean up some of the definitions + theorems -- citations}
+
+\begin{figure}
+    \centering
+    \begin{tabular}{ |c|c|c| } 
+        \hline
+        observed output & channel capacity & dynamic leakage \\
+        \hline
+        $\mOut = 1$ & $2$ & $64$ \\ 
+        $\mOut = 0$ & $2$ & $7.8 * 10^{-20}$ \\ 
+        \hline
+    \end{tabular}
+    \caption{Comparison of the two leakage measures for example \ref{fig:exEx}. The quantities are measured in bit.}
+    \label{tab:comp}
+\end{figure}
+
+
 
 \section{Program Representation}
 
@@ -199,7 +269,7 @@ A \emph{forward slice} is the subset of program statements that are influenced b
 
 Computing a program slice can be efficiently done using the PDG of the given program. Since all dependencies are explicitly represented as edges, the computation of a program slice is reduced to a reachability problem \cite{ottenstein84}. Horwitz \cite{horwitz88sdg} noted that interprocedural slices could be computed similarly using system dependence graphs.
 
-Tools like JOANA use slicing techniques on system dependence graphs to analyse the information flow in programs and give non-interference guarantees where possible \cite{hammer09}.
+Tools like JOANA use slicing techniques on system dependence graphs to analyse the information flow in programs and give non-interference guarantees where possible \cite{hammer09}. \question{Which paper for Joana? I took the `in-depth' on from the website}.
 
 \begin{figure}
     \centering
@@ -251,7 +321,7 @@ Given a propositional formula $F$, the model counting problem (\#SAT) is the pro
 
 \#SAT is a generalization of the SAT problem and falls into the \#P-complete complexity class, as demonstrated by Valiant in \cite{valiant79}.
 
-Early exact model counting techniques, such as \cite{birnbaum99}, or the well-known tool sharpSAT \cite{thurley06} use a DPLL-style exploration of the solution space. Another class of model counters instead employ complex transformations to turn the given CNF formula into a different representation, which makes model counting a far easier problem. Common are transformations into \emph{binary decision diagrams} (\td{citation!}) or \emph{deterministic, decomposable negation normal form} \cite{darwiche04}.
+Early exact model counting techniques, such as \cite{birnbaum99}, or the well-known tool sharpSAT \cite{thurley06} use a DPLL-style exploration of the solution space. Another class of model counters instead employ complex transformations to turn the given CNF formula into a different representation, which makes model counting a far easier problem. Common are transformations into \emph{binary decision diagrams} \cite{bdd} or \emph{deterministic, decomposable negation normal form} \cite{darwiche01}. An example of such a model counter is the \texttt{c2d} tool by Darwiche \cite{darwiche04}.
 
 \paragraph*{Approximate Model Counting}
 State-of-the-art exact model counters scale to a couple of hundred variables.  This limit can be pushed to around 1,000 variables if we allow approximate solutions \cite{biere09}.
