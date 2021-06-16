@@ -197,7 +197,6 @@ Computing a program slice can be efficiently done using the PDG of the given pro
 Tools like JOANA use slicing techniques on system dependence graphs to analyse the information flow in programs and give non-interference guarantees where possible \cite{hammer09}.
 
 \begin{figure}
-    \label{fig:slice}
     \centering
     \begin{minipage}{.4\textwidth}
         \begin{algorithm}[H]
@@ -237,6 +236,7 @@ Tools like JOANA use slicing techniques on system dependence graphs to analyse t
         \end{algorithm}
     \end{minipage}
     \caption{The right side shows a backward slice of the function on the left for the slicing criterion $\langle \mathtt{print}(sum), sum \: \rangle$}
+     \label{fig:slice}
 \end{figure}
 
 
