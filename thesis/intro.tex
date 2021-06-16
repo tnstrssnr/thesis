@@ -30,9 +30,11 @@ The desire to make information flow control applicable to more practical applica
     \label{fig:pwChecker}
 \end{figure}
 
-QIFC analyses can typically be divided into 2 categories: \emph{Static} analyses are performed without executing the program and rely solely on examination of the source code. Such analyses are sound in that they deliver an upper bound for the amount of information a program might leak. However, depending on the program, the upper bound the analysis is able to compute might be much larger than the actual leakage, due to the lack of knowledge about concrete control and data flows in the program. Contrarily, \emph{dynamic} analyses compute a program's leakage by simulating one or more program executions. For these executions, dynamic analyses can compute a more precise estimation of the leakage than static analyses, however these estimations might not be a sound upper bound, since it is infeasible to analyse every possible input combination for the program.
+QIFC analyses can typically be divided into 2 categories:
 
-Many modern dynamic QIF analyses are based on symbolic execution and SAT solving techniques (see \ref{sec:relWork}). These naturally suffer the same difficulties as the underlying program analysis tools themselves, primarily dealing with path explosion and propositional formulas that are too big to handle for state-of-the-art SAT solvers. This thesis introduces a model counting-based dynamic QIFC analysis, that is combined with a static analysis to overcome the problems that similar model counting approaches exhibit. 
+\emph{Static} analyses are performed without executing the program and rely solely on examination of the source code. Such analyses are sound in that they deliver an upper bound for the amount of information a program might leak. However, depending on the program, the upper bound the analysis is able to compute might be much larger than the actual leakage, due to the lack of knowledge about concrete control and data flows in the program.
+
+Contrarily, \emph{dynamic} analyses compute a program's leakage by simulating one or more program executions. For these executions, dynamic analyses can compute a more precise estimation of the leakage than static analyses, however these estimations might not be a sound upper bound, since it is infeasible to analyse every possible input combination for the program.
 
 \section{Related Work}\label{sec:relWork}
 
@@ -43,16 +45,18 @@ Newsome, McCamant and Song \cite{newsome09} transform their programs into boolea
 
 Klebanov, Manthey and Muise (\cite{klebanov13}) use the bounded model checking tool CBMC (\cite{cbmc}) to generate a boolean predicate and the d-DNNF-based \#SAT tools \textsc{sharp}SAT (\cite{thurley06}) and \textsc{DSHARP} (\cite{muise12}).
 
-A similiar approach is used by Biondi et. al. in \cite{biondi18}. They also use CBMC to create a SAT formula. In order to address scalability issues with overly complex SAT formulas, they are the first use an approximate model counter, in this case ApproxMC (\cite{chakraborty13}).
+A similar approach is used by Biondi et. al. in \cite{biondi18}. They also use CBMC to create a SAT formula. In order to address scalability issues with overly complex SAT formulas, they are the first use an approximate model counter, in this case ApproxMC (\cite{chakraborty13}).
 
 Chu and Hashimoto in \cite{chu19} also combine the CBMC framework with an approximate model counter, however they do not measure channel capacity as the previously mentioned works did, instead they estimate the pre-image size of a certain program output.
 
-% combined
-A previous attempt at combining static and dynamic techniques has been made by McCamant and Ernst \cite{mccamant08}. They transform programs into network graphs with edge capacities corresponding to the amount of Information that might flow between the corresponding program parts. Thus, the maximum leak of information corresponds to the maximum flow in the created network. 
+A previous attempt at combining static and dynamic techniques has been made by McCamant and Ernst \cite{mccamant08}. They transform programs into network graphs with edge capacities corresponding to the amount of Information that might flow between the corresponding program parts. Thus, the maximum leak of information corresponds to the maximum flow in the created network. They use the approach to estimate the leakage of the input program, however their analysis is not sound and might underestimate leakage.
 
-% hybrid monitors in qualitative IFC?
-% static methods?
+\pagebreak
 
-As outlined in section \ref{sec:relWork}, there have been attempts at using symbolic execution and model counting to measure how much information a program can leak. In many of these works, there have been attempts to mitigate the problems that are caused by path explosion in input programs and the computational limits of state of the art model counters. These attempts include using approximate model counting instead of a precise calculation (\cite{biondi18, chu19}) or transformations of SAT formulas into easier to handle representations (\cite{klebanov13}). We have not yet seen an attempt to use static (Q)IFC techniques to reduce complexity at the time of formula creation.
+In this thesis, we define and compare two different measures for information leakage: the first is one based on min-entropy and is used by many of the QIFC tools mentioned above. The second one is based on the notion of dynamic leakage during a single program run. We will present a model-counting based analysis that is able to provide estimations for both quantities.
 
-\td{re-work this part}
+Additionally, we present an integration of static QIF methods into our analysis in order to mitigate the difficulties, that other model counting based tools have.
+
+The analysis will be integrated into an interpreter that provides the possibility of executing a program in an environment that can protect secret information by either aborting execution or masking values before they are leaked to a public channel.
+
+\td{review -- especially last paragraph..}
