@@ -49,16 +49,16 @@ If a value is effectively constant, we can safely exclude it from any further an
     \centering
     \begin{minipage}{.7\linewidth}
         \begin{algorithm}[H]
-            \hspace*{\algorithmicindent} \textbf{Input} h: int \\
+            \hspace*{\algorithmicindent} \textbf{Input} \In: int \\
+            \hspace*{\algorithmicindent} \textbf{Output} \Out: int \\
             \hspace{1em}
             \begin{algorithmic}[1]
-                \If{$h < 0$}
+                \If{$\mIn < 0$}
                 \State $l_1 \leftarrow 42$
                 \Else
                 \State $l_2 \leftarrow 42$
                 \EndIf
-                \State $l = \phi(l_1, l_2)$
-                \State $\mathtt{leak}(l)$
+                \State $\mOut = \phi(l_1, l_2)$
             \end{algorithmic}
         \end{algorithm}
     \end{minipage}
@@ -71,23 +71,55 @@ If a value is effectively constant, an observer cannot learn anything about the 
 
 \begin{figure}
     \centering
-    \begin{tikzpicture}
-        \tikzstyle{node} = [ellipse, minimum width=2.5cm, minimum height=.7cm, text centered, draw = black, node distance=1.5cm]
+    
+    \begin{subfigure}{.33\textwidth}
+        \begin{tikzpicture}
+        \tikzstyle{node} = [ellipse, minimum width=1.5cm, minimum height=.6cm, text centered, draw = black, node distance=1.5cm]
         \tikzstyle{arrow} = [thick,->,>=stealth]
 
-        \node (if) [node] {$\mathtt{if} \: h < 0$};
-        \node (l1) [node, below of=if, xshift=-2cm] {$l_1 \leftarrow 42$};
-        \node (l2) [node, below of=if, xshift=2cm] {$l_2 \leftarrow 42$};
-        \node (l) [node, below of=l2, xshift=-2cm, draw = blue] {$l = \phi(l_1, l_2)$};
-        \node (print) [node, below of=l, draw = blue] {$\mathtt{leak}(l)$};
+        \node (if) [node] {$\mathtt{if} \: \mIn < 0$};
+        \node (l1) [node, below of=if, xshift=-1.2cm] {$\mOut_0 \leftarrow 42$};
+        \node (l2) [node, below of=if, xshift=1.2cm] {$\mOut_1 \leftarrow 42$};
+        \node (l) [node, below of=l2, xshift=-1.2cm] {$\mOut = \phi(\mOut_0, \mOut_1)$};
 
-        \draw [arrow] (l1) -- (if);
-        \draw [arrow] (l2) -- (if);
-        \draw [arrow, draw = red] (l) -- (l1);
-        \draw [arrow, draw = red] (l) -- (l2);
-        \draw [arrow, draw = blue] (print) -- (l);
+        \draw [arrow] (if) -- (l1);
+        \draw [arrow] (if) -- (l2);
+        \draw [arrow] (l1) -- (l);
+        \draw [arrow] (l2) -- (l);
     \end{tikzpicture}
-    \caption{The PDG of the program in figure \ref{fig:ec}. The red highlighted edges are those that were removed by the pruning stage.The blue highlighted subgraph is the backward slice for $\langle \mathtt{leak}(l), l \rangle$ that was computed on the pruned PDG. \com{Better to split into several figures?}}
+    \caption{Before Pre-processing}
+    \end{subfigure}
+       \begin{subfigure}{.32\textwidth}
+        \begin{tikzpicture}
+        \tikzstyle{node} = [ellipse, minimum width=1.5cm, minimum height=.7cm, text centered, draw = black, node distance=1.5cm]
+        \tikzstyle{arrow} = [thick,->,>=stealth]
+
+        \node (if) [node] {$\mathtt{if} \: \mIn < 0$};
+        \node (l1) [node, below of=if, xshift=-1.2cm] {$\mOut_0 \leftarrow 42$};
+        \node (l2) [node, below of=if, xshift=1.2cm] {$\mOut_1 \leftarrow 42$};
+        \node (l) [node, below of=l2, xshift=-1.2cm] {$\mOut = \phi(\mOut_0, \mOut_1)$};
+
+        \draw [arrow] (if) -- (l1);
+        \draw [arrow] (if) -- (l2);
+    \end{tikzpicture}
+    \caption{After Pruning}
+    \end{subfigure}
+       \begin{subfigure}{.33\textwidth}
+        \begin{tikzpicture}
+        \tikzstyle{node} = [ellipse, minimum width=1.5cm, minimum height=.7cm, text centered, draw = black, node distance=1.5cm]
+        \tikzstyle{arrow} = [thick,->,>=stealth]
+
+        \node (if) [node, draw = white] {};
+        \node (l1) [node, below of=if, xshift=-1.2cm, draw = white] {};
+        \node (l2) [node, below of=if, xshift=1.2cm, draw = white] {};
+        \node (l) [node, below of=l2, xshift=-1cm] {$\mOut = \phi(\mOut_0, \mOut_1)$};
+
+    \end{tikzpicture}
+    \caption{After Slicing}
+    \end{subfigure}
+    
+    
+    \caption{The PDG of the program in figure \ref{fig:ec}, at different stages during the pre-processing. The right-most graph shows the result of the whole pipeline: the backward slice for the criterion $\langle \mOut = \phi(\mOut_0, \mOut_1), l \rangle$ is the result of the pre-processing}
     \label{fig:prune}
 \end{figure}
 

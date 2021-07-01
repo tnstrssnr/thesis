@@ -2,61 +2,62 @@
 
 \section{Motivation}
 
-In February 2017, the American web services and web security company Cloudflare made headlines, when a security bug was discovered in an HTML parser. A buffer overrun caused the servers to leak sensitive data, such as browser cookies, authentication tokens or HTTP post bodies. The so-called `Cloudbleed' bug is one of many examples of software revealing secret data to unauthorized users, a security threat that has become more severe, as more and more software is used in the handling of sensitive data \cite{cloudbleedIssue, cloudbleedReport}. 
+In February 2017, the American web services and web security company Cloudflare made headlines when a security bug was discovered in an HTML parser. A buffer overrun caused the servers to leak sensitive data, such as browser cookies, authentication tokens or HTTP post bodies. The so-called \enquote{Cloudbleed} bug is one of many examples of software revealing secret data to unauthorized users, a security threat whose severity increases, the more software is used in the handling of sensitive data \cite{cloudbleedIssue, cloudbleedReport}. 
 
-Qualitative information flow control aims to guarantee, that a program's public outputs are not influenced by secret its secret inputs, thus a malicious attacker has no possibility of obtaining secret information, by merely observing the program's outputs. This property is called \emph{non-interference}. 
+\paragraph{Qualitative Information Flow Control}
+Qualitative information flow control aims to guarantee that a program's public outputs are not influenced by its secret inputs, thus a malicious attacker has no possibility of obtaining secret information by merely observing the program's outputs. This property is called \emph{non-interference}. 
 
-For non-interferent programs, the secret inputs are guaranteed to have no influence on the public outputs, so unintentional data leaks are impossible. However, often this requirement is too strict for practical use. Consider the program shown in figure \ref{fig:pwChecker}. While the secret password is not leaked in its entirety, an attacker can gather some information by observing whether their guess was correct. Hence, non-interference is not given, however for most practical purposes, the information leakage from the password checker example would be fully acceptable and often also inevitable for the program's intended usage.
+For non-interferent programs, the secret inputs are guaranteed to have no influence on the public outputs, so unintentional data leaks are impossible. However, often this requirement is too strict for practical use. Consider the program shown in figure \ref{fig:pwChecker}. While the secret password is not leaked in its entirety, an attacker can gather some information by observing whether their guess was correct. Hence, the non-interference property is violated. However for most practical purposes, some information leakage is fully acceptable or even inevitable for the program's intended usage, like in the password checker example.
 
-The desire to make information flow control applicable to more practical applications gave rise to the notion of quantitative information flow control (QIFC), where the amount of leakage in a program is measured in bits and compared to a predetermined limit. The amount of leakage in the password checker example is one bit.
+\paragraph{Quantitative Information Flow Control}
+The desire to make information flow control applicable to more practical applications gave rise to the notion of quantitative information flow control (QIFC), where the amount of information leaked by a program is measured in bits and compared to a predetermined limit. The amount of leakage in the password checker example is one bit.
 
 \begin{figure}
 \centering
 \begin{minipage}{.7\linewidth}
     \begin{algorithm}[H]
+        \hspace*{\algorithmicindent} \textbf{Input} password, guess: int \\
+        \hspace*{\algorithmicindent} \textbf{Output} match: int
         \begin{algorithmic}[1]
-    \Procedure{check_password}{guess: int}
             \If{$guess == password$}
                 \State $match \leftarrow 1$
             \Else
                 \State $match \leftarrow 0$
-            \EndIf\\
-            \Return match
-            \EndProcedure
+            \EndIf
     \end{algorithmic} 
     \end{algorithm}
     \end{minipage}
-    \caption{Password Checker}
+    \caption{Program that checks if the public input \texttt{guess} matches the secret input \texttt{password} and reveals the result of the check to the user.}
     \label{fig:pwChecker}
 \end{figure}
 
 QIFC analyses can typically be divided into 2 categories:
 
-\emph{Static} analyses are performed without executing the program and rely solely on examination of the source code. Such analyses are sound in that they deliver an upper bound for the amount of information a program might leak. However, depending on the program, the upper bound the analysis is able to compute might be much larger than the actual leakage, due to the lack of knowledge about concrete control and data flows in the program.
+\emph{Static} analyses are performed without executing the program and rely solely on examination of the source code. Such analyses usually deliver an upper bound for the amount of information a program might leak. However, depending on the program, the upper bound the analysis is able to compute might be much larger than the actual leakage, due to the lack of knowledge about concrete control and data flows in the program.
 
-Contrarily, \emph{dynamic} analyses compute a program's leakage by simulating one or more program executions. For these executions, dynamic analyses can compute a more precise estimation of the leakage than static analyses, however these estimations might not be a sound upper bound, since it is infeasible to analyse every possible input combination for the program.
+Contrarily, \emph{dynamic} analyses compute a program's leakage by simulating one or more program executions. For these executions, dynamic analyses might be able to deliver a more precise estimation of the leakage than static analyses, however these estimations might not be a sound upper bound, since it is infeasible to analyse every possible input combination for the program.
 
 \section{Related Work}\label{sec:relWork}
 
 While early mentions of quantifying information flow have been made, for example by Denning \cite{denning82}, a formal definition and theoretical groundwork for the QIF problem are given more recently by Lowe \cite{lowe02} and Smith \cite{smith09}. A recent publication by Alvim et. al \cite{alvim19} gives a comprehensive overview over the theory behind quantitative information flow.
 
-QIFC analyses based on model counting have previously been introduced by several people.
-Newsome, McCamant and Song \cite{newsome09} transform their programs into boolean predicates that accurately models its semantics. Using SAT techniques they then measure the program's channel capacity. The results are used to find false positives in a dynamic taint analysis in order to more accurately determine the amount of influence of an attacker over the program.
+Numerous QIFC analyses based on model counting have previously been introduced.
+Newsome, McCamant and Song \cite{newsome09} transform their programs into boolean predicates that accurately model its semantics. Using SAT-based techniques they then measure the program's channel capacity. The results are used to find false positives in a dynamic taint analysis in order to more accurately determine the amount of influence of an attacker over the program. 
 
-Klebanov, Manthey and Muise (\cite{klebanov13}) use the bounded model checking tool CBMC (\cite{cbmc}) to generate a boolean predicate and the d-DNNF-based \#SAT tools \textsc{sharp}SAT (\cite{thurley06}) and \textsc{DSHARP} (\cite{muise12}).
-
-A similar approach is used by Biondi et. al. in \cite{biondi18}. They also use CBMC to create a SAT formula. In order to address scalability issues with overly complex SAT formulas, they are the first use an approximate model counter, in this case ApproxMC (\cite{chakraborty13}).
-
-Chu and Hashimoto in \cite{chu19} also combine the CBMC framework with an approximate model counter, however they do not measure channel capacity as the previously mentioned works did, instead they estimate the pre-image size of a certain program output.
+Klebanov, Manthey and Muise \cite{klebanov13} use the bounded model checker CBMC \cite{cbmc} to generate a boolean predicate and the d-DNNF-based \#SAT tools \textsc{sharp}SAT \cite{thurley06} and \textsc{Dsharp} \cite{muise12} to find the number of models of these predicates. A similar approach is used by Biondi et. al. in \cite{biondi18}. They also use CBMC to create a SAT formula. In order to address scalability issues with overly complex SAT formulas, they use an approximate model counter, in this case ApproxMC (\cite{chakraborty13}). Chu and Hashimoto in \cite{chu19} also combine the CBMC framework with an approximate model counter, however they do not measure channel capacity as the previously mentioned works did, instead they estimate the pre-image size of a certain program output.
 
 A previous attempt at combining static and dynamic techniques has been made by McCamant and Ernst \cite{mccamant08}. They transform programs into network graphs with edge capacities corresponding to the amount of Information that might flow between the corresponding program parts. Thus, the maximum leak of information corresponds to the maximum flow in the created network. They use the approach to estimate the leakage of the input program, however their analysis is not sound and might underestimate leakage.
 
-\pagebreak
+\td{nildumu + joana}
 
+\section{Contributions and Overview}
 In this thesis, we define and compare two different measures for information leakage: the first is one based on min-entropy and is used by many of the QIFC tools mentioned above. The second one is based on the notion of dynamic leakage during a single program run. We will present a model-counting based analysis that is able to provide estimations for both quantities.
 
-Additionally, we present an integration of static QIF methods into our analysis in order to mitigate the difficulties, that other model counting based tools have.
+Additionally, we present an integration of static QIF methods into our analysis in order to mitigate the difficulties that other model counting based tools have.
 
 The analysis will be integrated into an interpreter that provides the possibility of executing a program in an environment that can protect secret information by either aborting execution or masking values before they are leaked to a public channel.
 
-\td{review -- especially last paragraph..}
+This thesis will be structured as follows: We begin by introducing the theoretical concepts that our work is based on in section \ref{sec:basics}. In section \ref{sec:design}, we introduce the basic design and theoretical foundations of the interpreter. We give more details about the analysis in the sections that follow.
+
+In section \ref{sec:eval} we evaluate our tool and compare it to others, regarding different aspects, such as precision or scalability.
+\td{re-do this section properly when strucutre and content of sections is more finalized than now}

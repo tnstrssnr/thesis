@@ -1,3 +1,18 @@
+\chapter{Proof for Equation \ref{eq:ev}}\label{ch:evProof}
+
+Let $p$ be a deterministic program, with input \In and output \Out. Let $\mathcal{L}$ be the set of possible outputs.
+
+\begin{align*}
+    cc(p) &:= H_\infty(\mIn) - H_\infty(\mIn \: | \: \mOut) \\
+    &= H_\infty(\mIn) - \sum\limits_{l \in \mathcal{L}} P[L = l]\: H_\infty(\mIn \: | \: \mOut = l) \\
+    &= H_\infty(\mIn) - \sum\limits_{l \in \mathcal{L}} P[L = l]\: (-L_{dyn}(p, l) + H_\infty(\mIn)) \\
+    &= H_\infty(\mIn) - \sum\limits_{l \in \mathcal{L}} P[L = l]\: H_\infty(\mIn) + \sum\limits_{l \in \mathcal{L}} P[L = l]\: L_{dyn}(p, l) \\
+    &= \sum\limits_{l \in \mathcal{L}} P[L = l] \: L_{dyn}(p, l) \\
+    &= \mathbb{E}(L_{dyn}(p,l))
+\end{align*}
+
+The equality in the second line results from the definition of $H( \mIn \: |\: \mOut)$, which is given in \cite{smith09}. All other steps in the proof use the definitions given in chapter \ref{ch:measures}.
+
 \chapter{Sonstiges}
 \section{Colors}
 
