@@ -13,34 +13,37 @@ Let $p$ be a deterministic program, with input \In and output \Out. Let $\mathca
 
 The equality in the second line results from the definition of $H( \mIn \: |\: \mOut)$, which is given in \cite{smith09}. All other steps in the proof use the definitions given in chapter \ref{ch:measures}.
 
-\chapter{Sonstiges}
-\section{Colors}
+\chapter{Proof of Theorem \ref{thm:equiv}}\label{ch:proofEquiv}
 
-\question{Frage:}  \begin{verbatim}\question{}\end{verbatim}
-\note{Notiz} \begin{verbatim}\note{}\end{verbatim}
-\com{Kommentar} \begin{verbatim}\com{}\end{verbatim}
-\section{Naming Conventions}
-\subsection{Identifiers used throughout the thesis:}
-\begin{table}
-    \centering
-    \begin{tabular}{lll}
-        \textbf{Identifier} & \textbf{Meaning / Definition} & \textbf{Custom Command} \\
-        \A & Adversary & \verb_\A_ \\
-        \In & Secret input value & \verb_\In_ \verb_\mIn_\\
-        \Out & Public output value & \verb_\Out_ \verb_\mOut_\\
-        \p & input program & \verb_\p_ \\
-        \bool & $\{\mttt, \mfff\}$ & \verb_\bool_ \verb_\mbool_ \\
-        \ttt & Boolean constant true & \verb_\ttt_ \verb_\mtt_ \\
-        \fff & Boolean constant true & \verb_\fff_ \verb_\mfff_ \\
-        \bform & Set of Boolean formulas & \verb_\bform_ \\
-        \bb$_p$ & Set of Basic Blocks for program \p & \verb_\bb_ \\
-        \val$_p$ & Set of Values for program \p $\:$ in SSA form & \verb_\val_ \\
-        $\mathtt{start}_p$ & start block of \p's CFG & - \\
-        $\mathtt{end}_p$ & end block of \p's CFG & - \\
-        \I & Set of input values for a program & \verb_\I_ \\
-        
-    \end{tabular}
-\end{table}
+In this chapter we present a proof for the correctness of theorem \ref{thm:equiv}. We prove the correctness of the theorem for the programs addressed in section \ref{sec:design}, i.e. programs without loops, function calls and arrays.
 
-% set of Basic Blocks in a program
-% set of values in a program
+The proof is presented in the following steps:
+\begin{enumerate}
+    \setlength\itemsep{0em}
+    \item We show that theorem \ref{thm:equiv} holds for programs without diverging control flow
+    \item proof correctness of edge annotations $follow(e)$
+    \item proof correctness of $exec(b)$
+    \item proof correctness of cf stuff
+\end{enumerate}
+
+\paragraph{Linear Programs}
+Let $p$ be a program with linear control flow and let $v \in \val_p$ be an arbitrary value in $p$, that is defined by the statement $v \leftarrow e$.
+
+Let $v_h := \llbracket p \rrbracket_h(v)$ be the bit vector of the execution value of $v$ for the execution with input an arbitrary but fixed input $h$. The dependency vector of $v$ is defined as $dVec(v) := \mathcal{E}(e)$. We show that $\forall 0 \leq i < w: \mathcal{V}_h(\mathcal{E}(e))^i \iff v_h^i$.
+
+Distinction of cases for $e$:
+\begin{enumerate}
+    \item $e := n, \quad n \in \mathbb{Z} \implies v_h = bv(n)$\\
+    Per definition $\mathcal{E}(e) = bv(n)$. Thus $\forall 0 \leq i < w: \mathcal{V}_h(\mathcal{E}(e))^i \iff v_h^i$
+    
+    
+    \item $e := \mIn \implies v_h = bv(h)$\\
+    Per definition $\mathcal{E}(e) = \var(h)$ and $\mathcal{V}_h(\var(h)) = bv(h)$. Thus\\ $\forall 0 \leq i < w: \mathcal{V}_h(\mathcal{E}(e))^i \iff v_h^i$
+    
+    
+    \item $e := v', \quad v' \in \val_p \implies v_h = \llbracket p \rrbracket_h (v')$\\
+    Assumption: Behauptung erfüllt für $v' \implies$ Behauptung gilt nach Voraussetzung
+    
+    \item 
+    
+\end{enumerate}

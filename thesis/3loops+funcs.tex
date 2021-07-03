@@ -5,7 +5,7 @@ Chapter \ref{sec:design} introduced the basic principles of the dependency analy
 In this chapter we will extend the dependency analysis to include the handling of arrays as well as more complex control flow structures, namely loops and (recursive) function calls.
 
 \paragraph{Sequential Execution Value}
-So far, we used the execution value $\llbracket p \rrbracket_h (v)$ to get the actual value of $v$ during the execution with input $h$. Allowing loops and function calls to our input programs means, that a value $v$ can now have more than one execution value during an execution, because it is possible for the statement where $v$ is defined to be executed multiple times.
+So far, we used the execution value $\llbracket p \rrbracket_h (v)$ to get the actual value of $v$ during the execution with input $h$. Allowing loops and function calls in our input programs means, that it is possible for statements to be executed multiple times. A value $v$ can thereby have more than one execution value during an execution.
 To ensure that the execution value of a value is still well defined, we add a parameter $i$ that signifies, which of the possible execution values we want to refer to.
 
 \begin{definition}[Sequential Execution Value]
@@ -18,9 +18,9 @@ To ensure that the execution value of a value is still well defined, we add a pa
 The definition of $\llbracket p \rrbracket_h(\cdot)$ used in the previous chapter corresponds to the value $\llbracket p \rrbracket_h (\cdot, 1)$ of the new definition. We continue to use $\llbracket p \rrbracket_h(\cdot)$ for $\llbracket p \rrbracket_h (\cdot, 1)$. 
 
 \section{Loops}
-Loops are handled during the dependency analysis in the following steps:
+Loops are handled during the dependency analysis with the following steps:
 
-First, we isolate the loop from the rest of the program and analyse the loop body as a separate function with distinct inputs and outputs. Second, we generate the dependency vectors for loop output values for each iteration by recursively applying the mapping from loop iteration inputs to iteration outputs to itself. Finally, we combine the iteration results into dependency vectors that represent the loop computations as a whole.
+First, we isolate the loop from the rest of the program and analyse the loop body as a separate function. Second, we generate the dependency vectors for loop output values. These dependency vectors act as a map from the loop inputs to the loop outputs. For each iteration we recursively apply this mapping outputs to itself. Finally, we combine the iteration results into dependency vectors that represent the effect of the loop during the execution as a whole.
 
 Because all three steps refer to the same program values at times, we use the following notations to differentiate them:
 
@@ -41,7 +41,7 @@ For a program value $v$ that is defined inside a loop $l$:
         \begin{algorithmic}[1]
         \State $\mOut: int \leftarrow 0$
         \State $i: int \leftarrow 1$
-            \While{$\mOut \neq -1$}
+            \While{$i \neq 0$}
                 \State $\mOut \leftarrow \mOut \: | \: i$
                 \State $i \leftarrow i << 1$
             \EndWhile
@@ -59,8 +59,8 @@ For a program value $v$ that is defined inside a loop $l$:
                 
                 \node (entry) [node, xshift=1cm] {Entry};
                 \node (b1) [node, below of=entry, align=center] {$L_0 \leftarrow 0$\\$i_0 \leftarrow 1$};
-                \node (b2) [node, below of=b1, align=center] {$L_1 \leftarrow \phi(L_0, L_2)$ \\ $i_1 \leftarrow \phi(i_0, i_2)$\\ $\mathtt{if} (L_1 \neq -1)$};
-                \node (b3) [node, below of=b2, align=center] {$L_2 \leftarrow L_1 \: \lor \: i_1$ \\ $i_2 \leftarrow i_1 << 2$};
+                \node (b2) [node, below of=b1, align=center] {$L_1 \leftarrow \phi(L_0, L_2)$ \\ $i_1 \leftarrow \phi(i_0, i_2)$\\ $\mathtt{if} (i \neq 0)$};
+                \node (b3) [node, below of=b2, align=center] {$L_2 \leftarrow L_1 \: \mid \: i_1$ \\ $i_2 \leftarrow i_1 << 2$};
                 \node (exit) [node, below of=b3] {Exit};
                 
                 \draw[arrow] (entry) -- (b1);
@@ -72,7 +72,7 @@ For a program value $v$ that is defined inside a loop $l$:
     \caption{CFG of the example program}\label{fig:loopEx}
     \label{fig:whilegraph}
 \end{subfigure}
-\caption{Example program for Loop Analysis. The program doesn't have a secret input and always returns $-1$.}
+\caption{Example program for Loop Analysis. The program doesn't have a secret input and always returns $111_2$.}
 \end{figure}
 
 \paragraph{General Loop Body Analysis}
@@ -89,7 +89,7 @@ The first group of values represent the inputs of a loop iteration, while the se
 \begin{definition}[Loop Inputs and Outputs]
     Let $l$ be a loop in program $p$.
     \begin{itemize}
-        \item[(a)] We define the set $in[l]$ of inputs of the loop as the set of values defined by $\phi$-functions in $l$.
+        \item[(a)] We define the set $in[l]$ of inputs of the loop as the set of values defined by $\phi$-functions in the header of the loop $l$.
         \item[(b)] We define the set $out[l]$ of outputs of the loop as the set of values that are defined inside the loop \emph{and} appear as arguments in a $\phi$-function in $l$.
     \end{itemize}
 \end{definition}
@@ -109,7 +109,7 @@ The dependency vectors of the loop outputs $out[l]$ are made up of formulas that
     \item Variables that represent program input bits
 \end{enumerate}
 
-Additional to the inputs and outputs, we define a propositional formula $exit[l]$ for the $l$, that represents the condition that must be fulfilled to jump out of the loop. The  condition $exit[l]$ is given by the condition $follow(e)$ that belongs to the edge $e$ that connects the loop header of $l$ to its outside-loop successor. Like the formulas for values in $out[l]$, $exit_l$ depends on variables from the loop inputs as well as the program inputs. 
+Additional to the inputs and outputs, we define a propositional formula $exit[l]$ for the $l$, that represents the condition that must be fulfilled to jump out of the loop. Like the formulas for values in $out[l]$, $exit_l$ depends on variables from the loop inputs as well as the program inputs. 
 
 \paragraph{Example}
 Figure \ref{fig:loopEx} shows an example of a program containing a loop $l$.
@@ -124,14 +124,14 @@ The dependency vectors of those values are:
     dVec(i_2[l]) &= [i_1^1, i_1^0, 0] \\
 \end{align*}
 
-The loop condition is $enter_l = (L_1[l] \neq -1)$.
+The loop condition is $exit[l] = i == 0$.
 
 \paragraph{Computing Iterations}
 In the previous paragraph, we computed dependency vectors that represent the output values of the loop using abstract values as the inputs.
 
 In this paragraph, we use this general result, to obtain dependency vectors that represent the loop outputs after a specific iteration. The formulas in these vectors will then only depend on the program input variables and not the loop variables.
 
-Input and output values of specific loop iterations are collected in the sets $in[l(i)]$ and $out[l(i)]$, where $i$ is the iteration count. The special case $i = 0$ refers to the program state before the loop is entered. Here we define $in[l(0)]$ as $\emptyset$ and $out[l(0)]$ as the values that computed before the loop and then used inside the loop during the first iteration. For $i > 0$ we have $out[l(i)] = in[l(i + 1)]$.
+Input and output values of specific loop iterations are collected in the sets $in[l(i)]$ and $out[l(i)]$, where $i$ is the iteration count. The special case $i = 0$ refers to the program state before the loop is entered. Here we define $in[l(0)]$ as $\emptyset$ and $out[l(0)]$ as the values that are computed before the loop and then used inside the loop during the first iteration. For $i > 0$ we have $in[l(i + 1)] = out[l(i)]$.
 
 Given the dependency vectors for values in $in[l(i)]$ for some value of $i$, we can compute the dependency vectors for values in $out[l(i)]$, by substituting the variables representing values in $in[l]$ by the corresponding formula of the value in $in[l(i)]$.
 
@@ -193,14 +193,15 @@ If the loop is executed exactly $i$ times, the results are equal to the outputs 
         \While{$\mttt$}
             \State $dVec(v) \leftarrow dVec(v).replace(\bot, \mathbb{IF}(iterate(i), \: dVec(v[i]), \bot))$
         \EndWhile
-        \State The function \texttt{o.replace(x, y))} replaces each occurrence of \texttt{x} in the expression \texttt{o} by \texttt{y}
+        \State The function \texttt{o.replace(x, y))} replaces each occurrence of \texttt{x} in the expression \texttt{o} with \texttt{y}
         \end{algorithmic} 
 \caption{Loop Result Computation}\label{alg:loop}
 \end{algorithm}
 
+
 \paragraph{Approximation: Limiting Loop Iterations}
 Algorithm \ref{alg:loop} is correct but doesn't terminate. To terminate the algorithm, we have to limit the number of loop iterations it computes to an upper bound $loopMax$, by replacing the condition in the while loop with $i < loopMax$.
-Limiting the number of loop iterations means, that we exclude certain program inputs $h$ from the analysis, namely those that need more than $loopMax$ iterations. If such an input is used to evaluate the dependency vector of a loop output value $v$, $dVec(v)$ will evaluate to $\bot$. We interpret $\bot$ as an invalid execution and disregard the value in the following analysis.
+Limiting the number of loop iterations means, that we exclude certain program inputs $h$ from the analysis, namely those that need more than $loopMax$ iterations. If such an input is used to evaluate the dependency vector of a loop output value $v$, $dVec(v)$ will evaluate to $\bot$. We interpret $\bot$ as an invalid execution and disregard the value in the following analysis. If the dependency vector $dVec(v) = \bot$ is used in the computation of the dependency vector for another value $v'$, $dVec(v')$ will also be set to $\bot$.
 
 The exclusion of certain input values means, we have to adjust the equivalence from theorem \ref{thm:equiv}:
 
@@ -209,11 +210,24 @@ The exclusion of certain input values means, we have to adjust the equivalence f
     \begin{center}
         $\forall 0 \leq i < w: \mathcal{V}_h(dVec(v)^i) \implies \llbracket p \rrbracket_h (v)^i$
     \end{center}
-\end{theorem}
+\end{theorem} 
 
-Let $p$ be a program that contains a loop. We consider an execution that produces the output value $l$. We analyse the indistinguishability set of the execution using the formula $F_{dyn}$ as defined in \ref{lemma:dyn}, however, the dependency vectors used in the formula contain the approximation described above. The indistinguishability set will therefore also be an approximation. To differentiate this from the exact result, we write $\mathcal{H}_l^{approx}$
-From theorem \ref{thm:weak} follows that, every model that fulfills the condition $F_{dyn}$, still induces an input value $h$, whose execution will result in the output $l$. Therefore the input value $h$ is an element of $\mathcal{H}_l$. On the other hand, there might be input values $h'$, whose execution would produce the output $l$, but who are not identified as a model of $F_{dyn}$ because the execution would need more than $loopMax$ iterations and is therefore regarded as invalid.
-Therefore $\mathcal{H}_l^{approx} \subseteq \mathcal{H}_l$ and $|\mathcal{H}_l^{approx}| < |\mathcal{H}_l|$, i.e. we under-approximate the size of $\mathcal{H}_l$. Under-approximation is sound, because the knowledge gained by the attacker increases as the size of $\mathcal{H}_l$ decreases. Therefore the approximated dynamic leakage is a safe upper bound for the information leaked by the execution.
+Let $p$ be a program that contains a loop. We consider an execution that produces the output value $l$.
+To compute the dynamic leakage of the execution and the channel capacity, we must adjust the method from section \ref{sec:leak} to take into account the weakened equivalence theorem.
+
+\paragraph{Dynamic Leakage}
+Any input value $h$ for which $\mathcal{V}_h(dVec(\mOut))$ doesn't evaluate to $\bot$ still fulfills theorem \ref{thm:equiv}. That means we can correctly decide if $h \in \mathcal{H}_l$. If for an input value $h'$ $\mathcal{V}_{h'}(dVec(\mOut)) = \bot$, our analysis is not able to decide whether $h' \in \mathcal{H}_l$. However, we can safely approximate the set $\mathcal{H}_l$, by not adding any inputs with invalid executions to $\mathcal{H}_l$. Under-approximation is sound, because the knowledge gained by the attacker increases as the size of $\mathcal{H}_l$ decreases. Therefore the approximated dynamic leakage is a safe upper bound for the information leaked by the execution.
+
+\paragraph{Channel Capacity}
+
+
+------
+We analyse the indistinguishability set of the execution using the formula $F_{dyn}$ as defined in \ref{lemma:dyn}, however, the dependency vectors used in the formula contain the approximation described above. The indistinguishability set will therefore also be an approximation. To differentiate this from the exact result, we write $\mathcal{H}_l^{approx}$
+From theorem \ref{thm:weak} follows that, every input value $h$ for which the $dVec(\mOut)$ doesn't evaluate to $\bot$ and that fulfills the condition $F_{dyn}$ is an element of $\mathcal{H}_l$.
+
+On the other hand, there might be input values $h'$, whose execution would produce the output $l$, but who are not identified as a model of $F_{dyn}$ because the execution would need more than $loopMax$ iterations and is therefore regarded as invalid.
+Therefore $\mathcal{H}_l^{approx} \subseteq \mathcal{H}_l$ and $|\mathcal{H}_l^{approx}| < |\mathcal{H}_l|$, i.e. we under-approximate the size of $\mathcal{H}_l$. 
+------
 
 
 \paragraph{Example (cont'd)}
@@ -225,10 +239,10 @@ Applying algorithm \ref{alg:loop} to the values $L_2$ and $i_2$ from example \re
 \section{Functions}
 We assume that all functions that are part of the input program are pure, i.e. they have no side effects. This means, the only way for information to flow into and out of the function is through the input parameters and the return value.
 
-We write $\func$ for the set of functions that belong to a program $p$ and for $f \in \func$. For the analysis of the function $f$, we treat $f$ as its own program, where the parameters correspond to the input $\mIn$ and the return value corresponds the output $\mOut$.
+We write $\func$ for the set of functions that belong to a program $p$ and for $f \in \func$. For the analysis of the function $f$, we treat $f$ as its own program, where the parameters correspond to the input $\mIn$ and the return value corresponds to the output $\mOut$.
 
 \paragraph{Function Analysis}
-In this paragraph we only consider the analysis of non-recursive functions with a single return statement. Independent of any call sites of the function, we use the standard dependency analysis algorithm to compute dependency vectors for all values inside the function.
+In the following we only consider the analysis of non-recursive functions with a single return statement. Independent of any call sites of the function, we use the standard dependency analysis algorithm to compute dependency vectors for all values inside the function.
 
 The dependency vectors computed for values of this function are defined over the variables created to represent the function's parameters. They do not contain variables representing bits of values from outside the function.
 
@@ -254,7 +268,7 @@ The dependency vectors computed for values of this function are defined over the
 \paragraph{Dependency Analysis for \texttt{call}-Statements}
 The statement $v \leftarrow \mathtt{call} f(a)$ calls the function $f$ with the arguments $a := (a_0,..., a_m)$ and assigns the return value of the call to the value $v$. To compute the dependency vector $dVec(v)$, we substitute the variables in $\var_f$ with the dependency vectors of the arguments:
 
-\begin{definition}[Callsite Substitution]
+\begin{definition}[Call Site Substitution]
     Let $f \in \func$ be a function in $p$ that has input parameters $\mathtt{P} := (\mathtt{P}_0,...,\mathtt{P}_m)$ and let the expression $\mathtt{call} f(a)$ be a call to $f$ with the arguments $a := (a_0,..., a_m)$.
     
     The substitution $\sigma_{f(a)}$, defined as
@@ -277,4 +291,33 @@ Using the extended definition of $\mathcal{E}$ including call-expressions, theor
 \section{Break-Statements}
 
 \section{Arrays}
-The analysis can support fixed-size arrays. For fixed-size arrays, the length must be known at the time of instantiation.
+The analysis can support fixed-size arrays with value semantics. For fixed-size arrays, the length must be known at compile time.
+
+Before the dependency analysis begins, arrays are turned into a set of variables that each represent an array element. The variables have to be transformed into SSA-form. New array variable copies are introduced at the instantiation of the array as well at every \texttt{write} instruction. Even though a only modifies a single array element, we generate new variable copies for all array elements. This is necessary, because in general it is not possible to know which array element is modified.
+
+For notation we use superscript indices ($a^0, a^1, ...$) for the values representing the elements of the array $a$. Subscript indices ($a^0_0, a^0_1,...$) indicate the copies of those variables created during the SSA-transformation.
+
+The following paragraphs explain, how the dependency vectors for the array variables are computed during the analysis:
+
+\paragraph{Array Instantiation}
+If a new array is instantiated, all values are initialized with \texttt{0}. Their dependency vectors are constant vectors containing the value $\mfff$.
+
+\paragraph{Array Write}
+Consider the expression $a[k] \leftarrow e$, where we write the result of the expression $e$ to the k-th element of the array $a$.
+
+Let $a$ be an array of length $m$. The values $a_i^0, a_i^1,..., a_i^{m-1}$ represent the array entries before the write instruction, the values $a_{i+1}^0, a_{i+1}^1,..., a_{i+1}^{m-1}$ represent the array entries after the instruction.
+
+The dependency vectors of the values $a_{i+1}^0, a_{i+1}^1,..., a_{i+1}^{m-1}$ are given by:
+\begin{center}
+    $dVec(a_{i+1}^j) := \mathbb{IF}(j == k, \mathcal{E}(e), a_i^j), \quad i = 0...m-1$
+\end{center}
+The expression assigns the array entry value the propositional vector $\mathcal{E}(e)$, if the index $j$ of the entry corresponds to the write-index $k$. Otherwise the array entry is not changed.
+
+\paragraph{Array Read}
+Consider the expression $v \leftarrow a[i]$, where we assign the value of the i-th element of the array $a$ to the value $v$.
+Let $a := [a^0, ..., a^m]$ be the array entry values that represent the array $a$ at the read instruction.
+
+We define a function $select(\cdot, \cdot): \mathbb{N} \times 2^{\val_p} \to \val_p$ that accepts an integer $i$ and an ordered set $S$ of values as inputs and returns the $i$-th element of $S$. Using this function we define the dependency vector for the value $v$ as:
+\begin{center}
+    $dVec(v) := select(i, a)$
+\end{center}

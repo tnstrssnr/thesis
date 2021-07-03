@@ -67,9 +67,8 @@ In our analysis, we view all values as bit vectors. All values are signed intege
     The returned value $bv_w(n)$ is subject to possible over- or underflows, should the number $n$ not be representable as a $k$-bit two's complement number.
 \end{definition}
 
-\begin{definition}[Execution Value]
-We extend the definition of $\llbracket p \rrbracket_h: \{L\} \to \mathcal{L}$ to a function $\llbracket p \rrbracket_h: \val_p \to \{0, 1\}^w \cup \{\bot\}$ that takes any program value as an argument and returns the numerical value that was assigned to the value during the execution with input $h$. The numerical value is given as a bit vector of the number's two's complement. If in this execution, the value remains undefined, because the corresponding assignment instruction wasn't executed, the function will return $\bot$.
-\end{definition}
+\paragraph{Execution Value}
+We alter the definition of $\llbracket p \rrbracket_h: \{L\} \to \mathcal{L}$ to  $\llbracket p \rrbracket_h: \val_p \to \{0, 1\}^w \cup \{\bot\}$ that takes any program value as an argument and returns the numerical value that was assigned to the value during the execution with input $h$. The numerical value is given as a bit vector of the number's two's complement. If in this execution, the value remains undefined, because the corresponding assignment instruction wasn't executed, the function will return $\bot$.
 
 \section{Foundations of Dependency Analysis}\label{sec:prop}
 \td{better than than dependency analysis ???}
@@ -77,7 +76,7 @@ We extend the definition of $\llbracket p \rrbracket_h: \{L\} \to \mathcal{L}$ t
 This chapter will describe the dependency analysis. The aim of the dependency analysis is to generate for each program value a vector of propositional formulas that we call the \emph{dependency vector}. This vector contains a formula for each bit of the value, that encodes the state of the bit depending on the bits of the input value.
 
 \paragraph{Introductory example}\label{p:intro}
-Before giving a detailed explanation of our analysis, this paragraph will demonstrate the basic principles in a short example. The program we want to analyse is shown in figure \ref{fig:introEx}. The program takes an input value, performs two bitwise operations on the value and then leaks the result. 
+Before giving a detailed explanation of our analysis, we will demonstrate the basic principles in a short example. The program we want to analyse is shown in figure \ref{fig:introEx}. The program takes an input value, performs two bitwise operations on the value and then leaks the result. 
 
 \begin{figure}
     \centering
@@ -151,7 +150,7 @@ In the introductory example \ref{p:intro} we introduced the idea of the \emph{de
     \begin{center}
         $\mathcal{E}: \expr \to \mbform^w$
     \end{center}
-    evaluates program expressions and computes a vector of propositional formulas that represent the expression result . The computation of $\mathcal{E}(e)$ is shown in figure \ref{fig:expr}.
+    evaluates program expressions and computes a vector of propositional formulas that represent the expression result. The computation of $\mathcal{E}(e)$ is shown in figure \ref{fig:expr}.
     
     The \emph{dependency vector} function maps each value to a vector of propositional formulas. For a value $v$ that is defined in a statement as $v := e$, we define:
     \begin{center}
@@ -181,34 +180,20 @@ In the introductory example \ref{p:intro} we introduced the idea of the \emph{de
         \centering
         Let $e := v, \quad v \in \val_p$\\
         $\mathcal{E}(e) := dVec(v)$
-        \caption{Variable acesses are evaluated to the dependency vector of te accessed variable.}
+        \caption{Variable accesses are evaluated to the dependency vector of the accessed variable.}
     \end{subfigure}
     \bigskip
     \begin{subfigure}{1\textwidth}
     \centering
-        Let $e := \thicksim e_0, \quad \thicksim \in \{ \lnot, - \}$\\
-        $\mathcal{E}(e) := [\lnot b_0^0 , ... , \lnot b_0^{w-1}], \: \text{where } b_0 := \mathcal{E}(e_0)$
-       \caption{Dependency vectors of unary expressions are computed by negating the entries of the dependency vector of the expression $e_o$. Negating an integer value is the same as bitwise inversion of its two's complement representation.}
+    Let $e := e_0 \oplus e_1$ or $e := \oplus e_0$
+       \caption{Dependency vectors of unary or binary arithmetic expressions and unary or binary bitwise boolean expressions are computed using the combinatorial logic of the two's complement. Even though this logic normally operates on bits (either \texttt{0} or \texttt{1}), we can apply the boolean operations also to propositional formulas, without changing their semantics.}
     \end{subfigure}
-    \bigskip
-    \begin{subfigure}{1\textwidth}
-        \centering
-        Let $e := e_0 \oplus e_1, \quad \oplus \in \{ +, -, *, \div, \% \, \&, |, \wedge \}$\\
-        \caption{The dependency vector for binary operations are generated using the combinatorial logic of two's complement arithmetic. The exact mapping rules are given in \td{citation}}
-    \end{subfigure}
-    \bigskip
-    \begin{subfigure}{1\textwidth}
-        \centering
-        Let $e := e_0 \simeq e_1, \quad \simeq \in \{ =, \neq, \leq, <, \geq, > \}$\\
-        \caption{The result vector of equality and Comparison operators is also defined according to the definitions in \td{citation}. While for all other expression types, the resulting dependency vector had the length $w$, for equality and comparison operators the dependency vector consists of a single formula.}
-    \end{subfigure}
-
     \caption{Definition of $\mathcal{E}(e)$ for different types of expressions $e$}\label{fig:expr}
 \end{figure}
 
 To assign each value its dependency vector, we compute $\mathcal{E}(e)$, for the expression $e$ that defines the value in question. For accesses to input variables and constants, the evaluation of $\mathcal{\cdot}$ is straightforward. For other expressions, the evaluation of $\mathcal{E}(e)$ might depend on the dependency vectors of use-values of $e$. We can guarantee that the needed dependency values have previously been computed, if we evaluate the dependency vectors of program values in the order in which the values are defined in the program.
 
-\section{Measuring Information Leakage with Dependency Vectors}
+\section{Measuring Information Leakage with Dependency Vectors}\label{sec:leak}
 
 The entries of a value's dependency vector describe on a bit level, which execution value will be assigned to the value for a certain input value. They take into account all data dependencies in the program. Therefore, we are able to capture all explicit information flows using the dependency vectors.
 
@@ -221,11 +206,12 @@ To demonstrate the connection between a value's dependency vector and its execut
 
 Using the truth assignment induced by a particular input $h \in \mathcal{H}$, the dependency vectors fulfill the following theorem:
 
-\begin{theorem}\label{thm:equiv}
+\begin{theorem}[Equivalence Theorem]\label{thm:equiv}
     Given an input value $h \in \mathcal{H}$ for the program $p$, let $v$ be an arbitrary value in the program $p$. The relation between the dependency vector and the execution value of v is given by:
     \begin{center}
         $\forall 0 \leq i < w: \mathcal{V}_h(dVec(v)^i) \iff \llbracket p \rrbracket_h (v)^i$
     \end{center}
+    A proof for the theorem is given in appendix \ref{ch:proofEquiv}.
 \end{theorem}
 
 Using theorem \ref{thm:equiv}, we can compute both leakage measures with the following lemmata:
@@ -234,7 +220,7 @@ Using theorem \ref{thm:equiv}, we can compute both leakage measures with the fol
     Let $p$ be a program with the concrete value $l$ of the output variable \Out being leaked to a public output channel during an execution of $p$ with input $h$.
     The size of $l$'s indistinguishability set $\mathcal{H}_l$ is given by the number of models of the formula:
     \begin{center}
-        $F_{dyn} : \bigwedge\limits_{0 \leq j < w} (\mathcal{B}(\llbracket p \rrbracket_h(l)^j) \iff dVec(\mOut)^j)$
+        $F_{dyn} : \bigwedge\limits_{0 \leq j < w} \llbracket p \rrbracket_h(l)^j \iff \mathcal{V}_h(dVec(\mOut))^j$
     \end{center}
 \end{lemma}
 
@@ -450,7 +436,7 @@ The execution conditions introduced in the previous section can be used to evalu
 
 The implicit and explicit information flows, that so far we have analysed separately, are combined when a value is assigned the result of a $\phi$-function. Let the value $v_0$ be defined via $v_0 := \phi(v_1, v_2), \: v_1, v_2 \in \val_p$ and $e$ is part of basic block $b_0$ with predecessors $\{b_1, b_2\}$. The situation is shown in figure \ref{fig:phi}.
 
-To evaluate the $\phi$-expression and compute the dependency vector for value $v_0$, we use the following defined in \ref{fig:exprPhi}.
+To evaluate the $\phi$-expression and compute the dependency vector for value $v_0$, we use the ternary operator $\mathbb{IF}(\cdot, \cdot, \cdot)$:
 
 \begin{definition}[Ternary Operator]
     We define the ternary operator $\mathbb{IF}(\cdot, \cdot, \cdot)$ as:
@@ -464,6 +450,8 @@ To evaluate the $\phi$-expression and compute the dependency vector for value $v
         $\mathbb{IF}(c, x, y) := [\mathbb{IF}(c, x^i, y^i)]_{i = 0}^k$
     \end{center}
 \end{definition}
+
+The dependency vector of the value $v_0$ can then be computed using the definition of $\mathcal{E}(\cdot)$ for $\phi$-functions given in figure \ref{fig:phi}.
 
 The correctness of this definition follows from the following considerations:
 
