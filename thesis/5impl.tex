@@ -1,11 +1,32 @@
 \chapter{Implementation}
 
-Inhalt?
+For the implementation, we integrated the analysis into an interpreter and built our tool on top of JOANA \cite{joana}. JOANA is an IFC tool for Java programs that includes various program analysis techniques that work on PDGs and SDGs. We used Java 8 for the implementation of our tool.
 
-- Java 8
-- on top of JOANA
-- uses nildumu
-- syntax of input programs --> java programs w/ restricted features
+\paragraph{Input Programs}
+The tool deals with input programs written in Java syntax. The programs can include the language features specified in sections \ref{sec:design} and \ref{ch:loops}.
 
-% (potential for) parallelization
-% pre-compute dVec and only do mc for executions
+The user can mark a function as the entrypoint of the analysis by calling it from the main function of the Java file. The parameters of the entrypoint function are taken as the secret inputs.
+
+Variables can be leaked to a public output channel by using the special function \texttt{Out.print($\cdot$)}.
+
+\paragraph{Interpreter Integration}
+One of the main ideas of our analysis is to compute the dynamic leakage of a single program execution.
+
+We integrated our analysis into an interpreter that executes the input program for an input supplied by the user and simultaneously computes the channel capacity for the input program and the dynamic leakage for the execution.
+
+\paragraph{Analysis Pipeline}
+The analysis is executed in a pipeline with different stages:
+\begin{itemize}
+    \item The \emph{Build} stage: The input program is first compiled using \texttt{javac} and then transformed into the necessary program representations for the analysis.
+    \item The pre-processing stage (\emph{PP}): See \ref{sec:pre}.
+    \item The dependency analysis stage (\emph{DA}): In this stage the dependency vectors of the program value are generated.
+    \item The hybrid analysis stage (\emph{HA}): This part of the analysis computes the channel capacity of the program using the hybrid approach outlined in section \ref{sec:hybridcc}.
+    \item The execution stage (\emph{exec}): The interpreter executes the input program using the user-supplied arguments. This stage includes the computation of the dynamic leakage at the point where a value is leaked during the execution.
+\end{itemize}
+Our tool allows the user to choose whether to use the static pre-processing and the hybrid analysis or not.
+
+
+\paragraph{Tools}
+Our analysis and interpreter uses several tools:
+
+JOANA is used for the generation of the needed program representations (CFGs + PDGs) as well as for the slicing operations during the pre-processing stage. The static analysis used during the pre-processing and the hybrid analysis is done by Nildumu \cite{bechberger18}. We used the stand-alone implementation For the model counting we use ApproxMC \cite{chakraborty13}.

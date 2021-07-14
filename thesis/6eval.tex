@@ -11,7 +11,7 @@ In this evaluation we use synthetic benchmarks taken from \td{cite benchmark sou
 \section{Tools}
 
 \paragraph{QIFC Interpreter}
-We use an integer width of 32 bit. The analysis limit for loop iterations $maxIter$ as well as the recusrion bound $recBound$ are set to \td{complete settings used for analysis}.
+We use an integer width of 16 bit. The analysis limit for loop iterations $maxIter$ as well as the recursion bound $recBound$ are set to \td{complete settings used for analysis}.
 
 \paragraph{Nildumu}
 Nildumu provides two implementations. We used the stand-alone implementation in this evaluation, since it is more matured compared to the JOANA-based implementation. Integers are set to a width of 32 bit.
@@ -26,3 +26,58 @@ For each tool, we ran each benchmark a total of 10 times and report the average 
 We use \texttt{perf} to analyze the performances of the executions.
 
 \section{Comparing Hybrid Analysis and Pure Dependency Analysis}
+\begin{center}
+\begin{table}[]
+    \begin{tabular}{|l|c|l|l|l|}
+    \hline
+    \textbf{Benchmark}               & \multicolumn{1}{l|}{}      & DA & DA + PP & DA + PP + HA \\ \hline
+    \multirow{2}{*}{PasswordChecker} & \multicolumn{1}{l|}{t (s)} &    &         &               \\ \cline{2-5} 
+                                     & cc                         &    &         &               \\ \hline
+    \multirow{2}{*}{Sanity Check}    & \multicolumn{1}{l|}{t (s)} &    &         &               \\ \cline{2-5} 
+                                     & cc                         &    &         &               \\ \hline
+    \multirow{2}{*}{Mask}            & t (s)                      &    &         &               \\ \cline{2-5} 
+                                     & cc                         &    &         &               \\ \hline
+    \multirow{2}{*}{Parity}          & t (s)                      &    &         &               \\ \cline{2-5} 
+                                     & cc                         &    &         &               \\ \hline
+    \multirow{2}{*}{Laundry}         & t (s)                      &    &         &               \\ \cline{2-5} 
+                                     & cc                         &    &         &               \\ \hline
+    \multirow{2}{*}{MaskedLaundry}   & t (s)                      &    &         &               \\ \cline{2-5} 
+                                     & cc                         &    &         &               \\ \hline
+    \multirow{2}{*}{IteratedLaundry} & t (s)                      &    &         &               \\ \cline{2-5} 
+                                     & cc                         &    &         &               \\ \hline
+    \multirow{2}{*}{SumAndProduct}   & \multicolumn{1}{l|}{t (s)} &    &         &               \\ \cline{2-5} 
+                                     & cc                         &    &         &               \\ \hline
+    \multirow{2}{*}{TableLookUp}     & \multicolumn{1}{l|}{t (s)} &    &         &               \\ \cline{2-5} 
+                                     & cc                         &    &         &               \\ \hline
+    \end{tabular}
+    \end{table}
+\end{center}
+
+\begin{center}
+    \begin{table}
+        \centering
+        \begin{tabular}{|l|l|l|l|l|l|l|l|l|l|l|l|l|l|} 
+        \hline
+        \textbf{Benchmark} & \multicolumn{2}{l|}{Build} & \multicolumn{2}{l|}{PP} & \multicolumn{2}{l|}{DA} & \multicolumn{2}{l|}{CC} & \multicolumn{2}{l|}{Exec} & \multicolumn{2}{l|}{DL} & \textbf{Total}  \\ 
+        \hline
+        PasswordChecker    &  &                         &  &                                  &  &                                       &  &                                    &  &                             &  &                                   &                 \\ 
+        \hline
+        SanityCheck        &  &                         &  &                                  &  &                                       &  &                                    &  &                             &  &                                   &                 \\ 
+        \hline
+        Mask               &  &                         &  &                                  &  &                                       &  &                                    &  &                             &  &                                   &                 \\ 
+        \hline
+        Parity             &  &                         &  &                                  &  &                                       &  &                                    &  &                             &  &                                   &                 \\ 
+        \hline
+        Laundry            &  &                         &  &                                  &  &                                       &  &                                    &  &                             &  &                                   &                 \\ 
+        \hline
+        MaskedLaundry      &  &                         &  &                                  &  &                                       &  &                                    &  &                             &  &                                   &                 \\ 
+        \hline
+        IteratedLaundry    &  &                         &  &                                  &  &                                       &  &                                    &  &                             &  &                                   &                 \\ 
+        \hline
+        SumAndProduct      &  &                         &  &                                  &  &                                       &  &                                    &  &                             &  &                                   &                 \\ 
+        \hline
+        TableLookUp        &  &                         &  &                                  &  &                                       &  &                                    &  &                             &  &                                   &                 \\
+        \hline
+        \end{tabular}
+        \end{table}
+\end{center}
