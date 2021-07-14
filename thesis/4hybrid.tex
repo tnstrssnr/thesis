@@ -2,7 +2,7 @@
 
 Using the methods from the previous chapters, we are able to measure a program's channel capacity, as well as the leakage of a single program run.
 
-In this section, we will introduce techniques to integrate static analyses (in our case taken from Nildumu \cite{bechberger18} and JOANA \cite{hammer09})into the algorithm in order to decrease the computational load that is necessary to obtain the final leakage measures.
+In this section, we will introduce techniques to integrate static analyses (Nildumu \cite{bechberger18} and JOANA \cite{hammer09}) into the algorithm in order to decrease the computational load that is necessary to obtain the final leakage.
 
 \section{Static Pre-Processing}
 \begin{figure}
@@ -16,7 +16,7 @@ In this section, we will introduce techniques to integrate static analyses (in o
         \node (nil) [process, below of=p, align=center] {\small Constant Bit\\Analysis};
         \node (prune) [process, right of=nil, xshift=2cm, align=center] {\small PDG\\Pruning};
         \node (bs) [process, right of=prune, xshift=2cm, align=center] {\small Backward\\Slicing};
-        \node (done) [io, below of=bs, align=center, yshift=-.5cm] {\small Pre-Processed\\Program};
+        \node (done) [io, below of=bs, align=center, yshift=-.5cm] {\small Pre-Processed\\ \small Program};
 
         \draw [arrow] (p) -- (nil);
         \draw [arrow] (nil) -- (prune);
@@ -125,9 +125,9 @@ If a value is effectively constant, an observer cannot learn anything about the 
 
 \paragraph{Backward Slicing}
 As a last step, we calculate a backward slice with the slicing criterion $\langle s, v \rangle$ being the value $v$ that is leaked to a public channel combined with the statement $s$ of the leak. If more than one value is leaked, we compute the backward slice for each value and union the results. \com{can union be used as a verb? sounds weird.} For slicing, we use the pruned PDG from the previous stage. In our analysis, we used a static interprocedual backward slicing algorithm via the JOANA framework. \com{more specific? also we slice the sdg, not the pdg-- > correct!}
-The resulting backward slice contains those statements, that are needed for computing the dependency vector for the leaked value. Program statements that are not part of the slice do not have to analysed. Control structures, such as loops or conditional statements can be omitted, if the head of the structure is not contained in the backward slice. In this case, we will also omit them from the computation of the path conditions that keep track of implicit information flows.
+The resulting backward slice contains those statements, that are needed for computing the dependency vector for the leaked value. Program statements that are not part of the slice do not have to analysed. Control structures, such as loops or conditional statements can be omitted, if the head of the structure is not contained in the backward slice: If the head is not part of the backward slice, the resulting output value does not depend on the truth value of the expression. Therefore it also doesn't depend on any computations that are contained in the control structure. In this case, we will also omit them from the computation of the path conditions that keep track of implicit information flows.
 
-Omitting certain statements from the dependency analysis safe, as long as we can guarantee, that we have enough information to determine the dependency vectors of the values defined in the remaining statements. Enough information in this case means that the dependency vectors of all used values of the expression defining the value are known. Each use value falls into one of the following categories:
+Omitting certain statements from the dependency analysis is safe, as long as we can guarantee, that we have enough information to determine the dependency vectors of the values defined in the remaining statements. Enough information in this case means that the dependency vectors of all used values of the expression defining the value are known. Each use value falls into one of the following categories:
 \begin{enumerate}
     \item \emph{Constants: }The dependency vector is constant and corresponds to the constants twos-complement representation.
     \item \emph{Parameters: }Parameters are unknown values whose dependency vectors are filled with placeholder variables.
@@ -136,7 +136,7 @@ Omitting certain statements from the dependency analysis safe, as long as we can
 \end{enumerate}
 Therefore it is indeed safe to omit statements in our analysis that were not included in the final backward slice of the pre-processing.
 
-By using this pre-processing method we can shrink the propositional formulas that are produced by the dependency analysis. An example of this is shown in figure \ref{fig:ppRes}, where we can eliminate an unnecessary ternary operator. This helps to increase efficiency in two ways: Firstly, the formulas the program needs to handle become smaller and thus take less time to process and secondly, the computation time of ApproxMC decreases with the decrease of the input formula. A more in-depth analysis of the effects of the pre-processing on the cost of the analysis as a whole is given in \ref{sec:eval}. \td{insert reference when evaluation is done}
+By using this pre-processing method we can shrink the propositional formulas that are produced by the dependency analysis. An example of this is shown in figure \ref{fig:ppRes}, where we can eliminate an unnecessary ternary operator. This helps to increase efficiency in two ways: Firstly, the formulas the program needs to handle become smaller and thus take less time to process and secondly, the computation time of ApproxMC decreases with the decrease of the size of the input formula. A more in-depth analysis of the effects of the pre-processing on the cost of the analysis as a whole is given in \ref{sec:eval}. \td{insert reference when evaluation is done}
 
 \begin{figure}
     \begin{subfigure}[t]{.4\textwidth}
@@ -144,7 +144,6 @@ By using this pre-processing method we can shrink the propositional formulas tha
         $cd(l) : l = \mathbb{IF}(h < 0, l_1, l_2)$ \\ $\land l_1 = 42 \land l_2 = 42$
         \caption{without pre-processing}
     \end{subfigure}
-    \hfill
     \begin{subfigure}[t]{.4\textwidth}
         \centering
         $cd(l) : l = 42$
