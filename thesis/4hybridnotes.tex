@@ -155,54 +155,158 @@ By using this pre-processing method we can shrink the propositional formulas tha
     \label{fig:ppRes}
 \end{figure}
 
-\section{Hybrid Analysis for Channel Capacity}\label{sec:hybridcc}
-The channel capacity measures the number of distinct program outputs. Measuring the channel capacity exactly is however not always feasible. For example, if the program contains a loop, there might be too many possible program paths for the analysis to consider.
-
-In this case, the analysis will disregard certain program paths estimate the channel capacity based on the program paths it did consider.
-
-With the goal of increasing the efficiency of the analysis in terms of computation time, while maintaining or even increasing the precision of the channel capacity estimation, we combine the static analysis of the tool Nildumu \cite{bechberger18} with our dependency analysis.
-
-The basic idea of this hybrid analysis is, to divide the program into segments. Each segment's channel capacity will be determined separately. For this purpose, we identify those segments that are infeasible for a precise and efficient dependency analysis. These segments will instead be analysed by Nildumu. After every segment's channel capacity is analysed, we combine the results for an overall estimation that applies to the whole program.
-
-\paragraph{Program Segmentation and Segment Analysis}
-The program is divided according to the control flow structures it contains. The structures that are isolated are:
+\section{Hybrid Analysis for Channel Capacity}
+\textbf{Goal:}
 \begin{itemize}
-    \item loops
-    \item conditional statements together with their branches
-    \item functions
-    \item linear program segments.
+    \item channel capacity c := number of distinct program outputs
+    \item c large --> much leakage
+    \item c small --> little leakage
+\end{itemize}
+Consider program w/ single loop. Precisely computing channel capacity might be infeasible due to too many possible execution paths through the loop
+
+\begin{itemize}
+    \item Define unrolling limit n
+    \item Compute SAT formula $cond_n$ where $cond_n(h) == true$ iff input h leads to more than n loop iterations
+    \item if $SAT(cond_n)$ we cannot analyze the loop in a purely dynamic manner
+    \item \textbf{Switch to an analysis in parts}
 \end{itemize}
 
-For each segment, we compute its channel capacity. We begin by identifying the input and output values of each segment. Input values are values that are used in at least one expression, but were not defined inside the segment. Output values are values that are defined inside the segment and are used in locations outside the segment.
-For each segment, the computation of the channel capacity is handled in one of the following three ways:
-\begin{enumerate}
-    \item The segment is analysed using the dependency analysis from chapter \ref{sec:design}.
-    \item The segment is analysed using Nildumu.
-    \item The segment is recursively analysed using the hybrid analysis.
-\end{enumerate}
+\textbf{Analysis in parts:}
+\begin{itemize}
+    \item Let c = true channel capacity of the program
+    \item divide program into 3 parts: $p_b$ - before loop, $p_l$ - loop body, $p_a$ - after loop
+    \item compute channel capacities for all 3 parts separately: $k_b, k_l, k_a$
+    
+    \begin{itemize}
+        \item take into account constant bits in result from previous program part for inputs for next part
+        \item for loop part: only analyze a single loop iteration
+        \item \com{Could be done with dynamic or static analysis}
+    \end{itemize}
+    
+    \item each analysis (except the first) overapproximates the possible inputs for the program section --> computed channel capacities possibly larger than they actually are --> sound upper limit for leakage
+    \item $c \leq k_b, k_l, k_a \implies c \leq \min{k_b, k_l, k_a}$
+    \item \com{Correction: Implicitly assumes that loop is executed at least once}
+    \begin{itemize}
+        \item Use model counter to estimate number of inputs that would not enter the loop --> $k_n$
+        \item worst case: these are all different to what the loop outputs are
+        \item update $k_l += k_n$
+        \item instead of $p_l$, estimate channel capacity of if (cond) $p_l$ else skip --> all inputs that don't enter the loop (produce outputs that are accounted for in $k_n$ will lead to the same output in $p_l$; avoid counting them double)
+        \item \com{instead of $p_l$ directly, compute channel capacity of \\ \texttt{if (cond) res = loopBody else res = h return res}}
+        \item set p := $loopBody^n$ if (loop cond) loopBody else return $\bot$ to find channel capacity for program runs that execute loop more than n times
+        \item for executions that execute loop less than n times: count loop iterations as part of $p_b$
+    \end{itemize}
+    \item \com{all partial analyses could be done either statically or dynamically}
+        \begin{itemize}
+        \item \question{when to use what?}
+        \item \question{shouldn't purely dynamic analysis be feasible for all program parts here since we `eliminated' the many loop iterations?}
+        \item \note{might still not be possible bc loop might contain another loop, or recursive function, etc. --> further segmentation necessary}
+        \item number of segments that need to be analysed separately explodes
+        \item switch to static analysis when num. of segments gets too large, before then do everything dynamically to get more precise estimations
+        \item \textbf{How to decide when to do what?}
+        \begin{itemize}
+            \item for each segment: keep track of `segmentation depth' $s$
+            \item define segmentation limit $\hat{s}$
+            \item if $s >= \hat{s}$, but segment can still not be feasibly analysed in a dynamic manner, switch to static 
+        \end{itemize}
+    \end{itemize}
+    
+    
+    \item \question{How do we know, when to further partition the program?}
+    \begin{itemize}
+        \item number of loop iterations that possibly happen
+        \item width of SAT formulas generated up until this point --> number of operands, number of nodes, number of literals
+        
+    \end{itemize}
+     \item \com{\textbf{Alternative approach:}}
+    \begin{itemize}
+        \item use same method as for estimation of indistinguishability set
+    \end{itemize}
+    
+\end{itemize}
 
-In general, using the dependency analysis yields the most precise results, however it is also the most costly approach in terms of computation time. The decision, which analysis approach should be taken for a given program segment depends on the following factors:
-
-If the size of the propositional formulas becomes too large, they cannot be handled in a timely fashion by the model counter. Large formulas are mainly the result of loops, where many iterations have to be taken into account, or nested and/or recursive function calls. Very long linear programs might become problematic even without loops and function calls.
-
-The second factor is the number of segments we divided the program into: Each segment will incur a certain amount of overhead time, needed to prepare the segment for the analysis and invoke the tools used in the analysis (Nildumu, ApproxMC, further dependencies).
-
-In our analysis, we  decided to use the Nildumu analysis for all loops and function calls that are nested inside another loop or function call. Control structures containing statically analysed segments have to be analysed in a hybrid analysis. All other segments are analysed using the dependency analysis.
-
-
-\paragraph{Consolidation of Segment Results}
-Assume we are given a program containing a loop. We split the program into 3 segments: The part before the loop $p_b$, the loop itself $p_l$ and the part after the loop $p_a$.
-We compute the channel capacities for all three parts separately: $k_b, k_l, k_a$.
-
-In each segment analysis we over-approximate the possible inputs for the program section. Thus, the computed channel capacities possibly larger than they actually are. Because the attacker knowledge increases as the channel capacity increases, this is a sound upper limit for the information leakage of the program segment.
-
-Because the programs we examine are deterministic, the number of outputs is always less or equal to the number of inputs of a program. Furthermore, the number of outputs of a segment is equal to the number of inputs of the following segment. Thus, we can obtain an overall estimation of the channel capacity for the program as a whole by taking the minimum of $k_b, k_l, k_a$.
-
-The approach can be generalized to an arbitrary number of segments.
+\note{while (i < secret) { if (i > 64) {i = 100; break;} i++}}
 
 \section{Hybrid Analysis for Pre-image Size}
-In \ref{sec:hybridcc}, we presented an analysis that can combine the two different apporaches of our tool and Nildumu to compute the channel capacity. Naturally the question arises whether this approach can be used for computing the dynamic leakage as well. They main idea of the approach is the segmentation of the program, which reduces size of the programs that have to be analysed.
+\textbf{Goal: }estimate cardinality of indistinguishability set -- size of equivalence class $\mathcal{H}_l$ for output $l$.
 
-We have found it is not possible to efficiently compute the dynamic leakage with the approach of dividing the program for the following reason:
+\textbf{Given: } Program p, which is divided into 3 sequential segments: $S_1, S_2, S_3$
+\begin{itemize}
+    \item Segments $S_1$ and $S_3$ can be analysed dynamically, for segments $S_2$ this is infeasible
+    \item tools in our analysis: dynamic analysis that can measure $|\mathcal{H}_l|$ and static analysis that can measure channel capacity
+    \item Let $\sigma_i$ be the state of the store after Segment $S_i$ finished executing, $\Sigma$ set of all possible stores
+    \item Process of estimating $|\mathcal{H}_l$:
+    \begin{enumerate}
+        \item using dynamic analysis, $d_3 := |{\sigma \in \Sigma: \llbracket S_3 \rrbracket (\sigma) = l}|$
+        \begin{itemize}
+            \item Set of all `Segments 2 results' that will lead to the output $l$
+        \end{itemize}
+        \item How to get an estimation for runs that use more iterations / need greater recursion depth?
+        \item $S_2$ to be statically analysed
+        \item Set S' := S_2 ; if ($\sigma == \sigma_2$) leak(h) else leak(0)
+        \item number of distinct outputs = number of inputs that will have same behaviour after the segment as the analysed inputs + 1 --> indistinguuishable
+        \item \com{Problem: static analysis will overestimate, we are only allowed to underestimate} --> instead of $\sigma == \sigma_2$, test $\sigma \neq \sigma_2$ and subtract from total number inputs
+    \end{enumerate}
+    \item \com{Problem: can each of those a valid output from $S_2$?}
+            \item \com{Instead: use whole program formulas and restrict \# loop iterations and recursion depth for static analysis}
+            \item \com{analyse whole program with static analysis and make sure all loops are executed at least \emph{recLimit} times}
+            \begin{itemize}
+                \item need possibility to throw exception / jump to end of program at any point
+                \item wrap everything in a function and call return?
+                \item use indicator variable, check if set at the end to find which valid program runs 
+            \end{itemize}
+            \item analyses each only takes into account executions that the other one doesn't --> adding values up should be ok
+            \item 
+\end{itemize}
 
-While for the channel capacity it was enough to know how many different values could potentially be transmitted between two adjacent segments, for the dynamic leakage it is essential to know which values might be transmitted. Thus, we cannot separate the segments from one another by treating the transmitted values as fresh inputs.
+\section{Integration with Interpreter}
+\begin{itemize}
+    \item channel capacity --> measures leakage in terms of the number of different outputs a program can produce
+    \item even if there are only 2 different outputs, if one of those outputs can only be the result of one input, then the attacker will learn the whole secret
+    \item interesting for user to know the number of inputs to the program that will produce the same output as the user's execution did --> `indistinguishability set' D
+    \item D large --> leakage small
+    \item D small --> leakage big
+    \item precise computation of $|D|$ infeasible, we need to estimate
+    \begin{itemize}
+        \item Problem: loops + recursive calls produce SAT formulas that are too big to handle efficiently
+    \end{itemize}
+\end{itemize}
+
+\textbf{Underapproximation of $|D|$ --> finding max amount of leakage for this run}\\
+Consider program that contains a loop
+\begin{itemize}
+    \item not feasible to precisely analyse all possible numbers of loop iterations
+    \item choose unrolling limit $n$
+    \item get SAT formula $cond_n: cond_n == true$ iff input needs less than n iterations
+    \item only seek candidates for $D$ among inputs that require less than $n$ loop iterations by adding $\land cond_n$ to Model Count formula --> $D_u$
+    \item definitely $D_u \subseteq D$, so $|D_u|$ is sound upper bound for leakage
+\end{itemize}
+More precise approximation? So far we haven't considered executions ith $>n$ loop iterations at all
+\begin{itemize}
+    \item 
+\end{itemize}
+
+\textbf{Overapproximation of $D$ --> finding min amount of leakage for this run}
+Consider program that contains a loop
+\begin{itemize}
+    \item not feasible to precisely analyse all possible numbers of loop iterations
+    \item choose unrolling limit $n$
+    \item get SAT formula $cond_n: cond_n == true$ iff input needs less than n iterations (same as above)
+    \item formula that describes result of loop for $< n$ iterations: $b_{<}$
+    \item introduce new vars: $v_>$
+    \item set loop result as $cond_n ? b_{<} : v_>$ --> use that for model counting to find set $D_o$
+    \item allows inputs with more than n iterations to produce arbitrary results from the loop
+    \item every result that might actually occur is contained, but also one's that are not actually possible --> $D \subseteq D_o$, so $|D_o|$ is sound lower bound for leakage
+\end{itemize}
+
+\com{Possible to use a form of static analysis for estimation of indistinguishability set?}
+
+\begin{itemize}
+    \item static analyses determine the number of distinct outputs, not the size of the indistinguishability set
+    \item \question{can we manipulate the program s.t. the number of distinct outputs is the same as the size of $D$?}
+    \item desired output: $o$
+    \item set $p_new(h)$ := res = p(h) if (res == o) return h else return $\bot$
+    \item every input that is not part of $D$ gets mapped to the same output
+    \item result will be overestimation of $|D|$ --> gives us \textbf{lower bound of leakage}
+    \item can only work on the whole program, not on segments (would be a possible underapproximation of $D$ for middle segments) --> under- and overapproximating at the same time is not good...
+    \item \com{underapproximation if we change (res == o) to (res != o) ??}
+\end{itemize}
