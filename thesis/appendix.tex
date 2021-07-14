@@ -15,35 +15,72 @@ The equality in the second line results from the definition of $H( \mIn \: |\: \
 
 \chapter{Proof of Theorem \ref{thm:equiv}}\label{ch:proofEquiv}
 
-In this chapter we present a proof for the correctness of theorem \ref{thm:equiv}. We prove the correctness of the theorem for the programs addressed in section \ref{sec:design}, i.e. programs without loops, function calls and arrays.
+\com{Beweisskelett: In großen Teilen ungenau, aber Aufbau hoffentlich erkennbar}
+
+In this chapter we present a proof for the correctness of theorem \ref{thm:equiv}. We prove the correctness of the theorem for the class of programs addressed in section \ref{sec:design}, i.e. programs without loops, function calls and arrays.
 
 The proof is presented in the following steps:
 \begin{enumerate}
     \setlength\itemsep{0em}
     \item We show that theorem \ref{thm:equiv} holds for programs without diverging control flow
-    \item proof correctness of edge annotations $follow(e)$
-    \item proof correctness of $exec(b)$
-    \item proof correctness of cf stuff
+    \item proof of correctness of edge annotations $follow(e)$
+    \item proof of correctness of $exec(b)$
+    \item proof of correctness of cf stuff
 \end{enumerate}
 
 \paragraph{Linear Programs}
 Let $p$ be a program with linear control flow and let $v \in \val_p$ be an arbitrary value in $p$, that is defined by the statement $v \leftarrow e$.
 
-Let $v_h := \llbracket p \rrbracket_h(v)$ be the bit vector of the execution value of $v$ for the execution with input an arbitrary but fixed input $h$. The dependency vector of $v$ is defined as $dVec(v) := \mathcal{E}(e)$. We show that $\forall 0 \leq i < w: \mathcal{V}_h(\mathcal{E}(e))^i \iff v_h^i$.
+Let $v_h := \llbracket p \rrbracket_h(v)$ be the bit vector of the execution value of $v$ for the execution with input an arbitrary but fixed input $h$. The dependency vector of $v$ is defined as $dVec(v) := \mathcal{E}(e)$. We show that 
 
-Distinction of cases for $e$:
-\begin{enumerate}
+\begin{equation}\label{eq:0}
+    \forall 0 \leq i < w: \mathcal{V}_h(\mathcal{E}(e))^i \iff v_h^i
+\end{equation}
+
+
+\textbf{Beweis durch Induktion über Struktur von $e$:}
+
+\textbf{Induktionsanfang:}
+\begin{itemize}
     \item $e := n, \quad n \in \mathbb{Z} \implies v_h = bv(n)$\\
     Per definition $\mathcal{E}(e) = bv(n)$. Thus $\forall 0 \leq i < w: \mathcal{V}_h(\mathcal{E}(e))^i \iff v_h^i$
     
-    
     \item $e := \mIn \implies v_h = bv(h)$\\
     Per definition $\mathcal{E}(e) = \var(h)$ and $\mathcal{V}_h(\var(h)) = bv(h)$. Thus\\ $\forall 0 \leq i < w: \mathcal{V}_h(\mathcal{E}(e))^i \iff v_h^i$
-    
-    
+\end{itemize}
+
+\textbf{Induktionsannahme:}
+Let for all values $\hat{v} \in \val_p$ that are defined before the value $v$ the hypothesis \ref{eq:0} be fulfilled.
+
+\textbf{Induktionsschritt:}
+\begin{itemize}
     \item $e := v', \quad v' \in \val_p \implies v_h = \llbracket p \rrbracket_h (v')$\\
-    Assumption: Behauptung erfüllt für $v' \implies$ Behauptung gilt nach Voraussetzung
-    
-    \item 
-    
-\end{enumerate}
+    Because expression $e$ references value $v'$, $v'$ is defined before the value $v$, thereby fulfilling equation \ref{eq:0}. Because $v \leftarrow v'$, the equation is also fulfilled by $v$.
+    \item $e := \hat{e} \oplus \tilde{e}$ / $ e := \oplus \hat{e}$ for bitwise, arithmetic, comparison operators
+\end{itemize}
+
+\paragraph{Correctness of $follow(e)$}
+follows from induction above
+
+\paragraph{Correctness of $exec(\cdot)$}
+Let $h \in \mathcal{H}$ be an arbitrary but fixed input for the program $p$ and let $b \in \mbb_p$. We show:
+\begin{center}
+    Basic block $b$ is executed $\iff \mathcal{V}_h(exec(b)) = \mttt$ 
+\end{center}
+
+$\implies$: Induktion über Ausführungspfad
+
+\subparagraph{Base Case:} The entry block of a function is executed for every $h \in \mathcal{H}$. Per definition $exec(\mathtt{entry}) = \mttt$. Thus the hypothesis holds for $b = \mathtt{entry}$
+
+\subparagraph{Induction Hypothesis:} Assume all predecessors of an arbitrary but fixed basic block $b \in \mbb_p$ fulfill the hypothesis.
+
+\subparagraph{Induction Step:} Let $h \in \mathcal{H}$ be an arbitrary input for which the block $b$ is executed.
+
+Per definition $exec(b) := \bigvee\limits_{p \in pred(b)} follow((p, b)) \land exec(p)$. For the control flow to be transferred to $b$, one of its predecessors must be executed. Let $b'$ be this predecessor. Per induction hypothesis $\mathcal{V}_h(exec(b')) = true$. Furthermore $\mathcal{V}_h(follow((b', b))) = true$, because the control flow is transferred along the edge $(b', b)$. Thus the implicant $follow((b', b)) \land exec(b')$ evaluates to true under $h$ and the hypothesis is fulfilled.
+
+
+
+$\Longleftarrow$: Induktion über Def von $exec(\cdot)$
+
+\paragraph{Correctness of $\mathcal{E}(\phi(e_0, e_1))$}
+follows from correctness of $\mathcal{E}(e_0)$ and $\mathcal{E}(e_1)$ together with the correctness of $exec()$

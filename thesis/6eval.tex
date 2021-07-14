@@ -1,6 +1,28 @@
 \chapter{Evaluation}\label{sec:eval}
+We test the implementation of our analysis in two ways:
 
-\begin{itemize}
-    \item \note{compare execution time with and without static preprocessing}
-    \item \note{compare size of mc formula with and without static preprocessing}
-\end{itemize}
+We compare the analysis using the hybrid method to the analysis using only the dependency analysis to examine whether it is possible to achieve a decrease in computation time and to determine the loss in precision of the results that might occur.
+
+Secondly, we compare out tool to three other comparable tools: Nildumu \cite{bechberger18}, ApproxFlow \cite{biondi18} and Flowcheck \cite{mccamant08}.
+
+\section{Benchmarks}
+In this evaluation we use synthetic benchmarks taken from \td{cite benchmark sources}. All benchmark programs are given in \td{add benchmarks in appendix}. The following gives a quick overview over the benchmark programs with respect to their information leakage:
+
+\section{Tools}
+
+\paragraph{QIFC Interpreter}
+We use an integer width of 32 bit. The analysis limit for loop iterations $maxIter$ as well as the recusrion bound $recBound$ are set to \td{complete settings used for analysis}.
+
+\paragraph{Nildumu}
+Nildumu provides two implementations. We used the stand-alone implementation in this evaluation, since it is more matured compared to the JOANA-based implementation. Integers are set to a width of 32 bit.
+
+\section{Evaluation Setup}
+
+\paragraph{Environment}
+The evaluation was performed on a machine with a 4-core Intel Core i7-7500U CPU and 24GiB of RAM, running a Manjaro Linux operating system.
+
+\paragraph{Benchmarking}
+For each tool, we ran each benchmark a total of 10 times and report the average run time over all 10 executions. To minimize potential interferences of other processes running in the background, we used the command line tool \texttt{chrt} to switch to a FIFO scheduling policy and set the executions's priority to the maximum value.
+We use \texttt{perf} to analyze the performances of the executions.
+
+\section{Comparing Hybrid Analysis and Pure Dependency Analysis}

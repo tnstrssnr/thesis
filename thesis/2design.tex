@@ -379,14 +379,14 @@ Figure \ref{ex:ec} shows the CFG of the example program \ref{fig:doubleIf} with 
 \paragraph{Execution Conditions for Basic Blocks}
 A basic block $b$ in a program is executed, if one of its predecessor blocks is executed and if the condition for execution to jump from said predecessor to the block $b$ is fulfilled. A special case is a program's entry block, which is executed in every run. This leads to the following definition: 
 
-\begin{definition}[Execution Condition]
+\begin{definition}[Execution Condition]\label{def:exec}
     For every basic block $b \in \mbb_p$, its \emph{execution condition} is a propositional formula $f_b$, where $\mathcal{V}_\mIn(f_b) = \mttt \iff \text{basic block $b$ is executed in a program run with inputs \In}$. \td{put this in lemma?}
     \begin{center}
         $exec: \mbb_p \to \mbform$\\
         \begin{align*}
             exec(b) &:= \begin{cases}
                 \mttt &  b = \mathtt{entry}\\
-                \bigvee\limits_{p \in pred(b)} follow((p, b)) \land exec(p) & \text{otherwise}\\
+                \bigvee\limits_{p \in pred(b)} follow((p, b) \land exec(p)) & \text{otherwise}\\
         \end{cases}\\
         \end{align*}
     \end{center}
