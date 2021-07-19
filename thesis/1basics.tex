@@ -127,10 +127,8 @@ Thus the information leaked by a program is $H_\infty(\mIn) - H_\infty(\mIn \: |
     For deterministic programs $p$, with $\mathcal{H}$ being uniformly distributed, the information leaked is equal to the channel capacity of $p$.
 \end{theorem}
 
-This leakage measure, introduced by Smith \cite{smith09}, is also used by Biondi et. al. \cite{biondi18}, Backes et. al. \cite{backes09} and McCamant and Ernst \cite{mccamant08}.
-
 \paragraph{Measuring Leakage for Individual Program Executions}
-While the vulnerability-based approach is appropriate to assess the risk of inadvertent information leakage for the program as a whole, it fails to give realistic measures in the dynamic case. If we consider the output of a single program run, the information an attacker may obtain from the output can be significantly greater than what the channel capacity of the program tells us.
+While the vulnerability-based approach is appropriate to assess the risk of inadvertent information leakage for the program as a whole, it fails to give realistic measures in the dynamic case. If we consider the output of a single program run, the information an attacker may obtain from the output can be significantly greater than what the channel capacity of the program tells us  \cite{bielova16}.
 
 We demonstrate this using the example program from \ref{fig:ifEx}. The possible outputs of the program are \texttt{0} and \texttt{1}, so the leakage, measured in bits, using the channel capacity formula is $\log_2 2 = 1$ Assuming integers are 64 bit wide, leaking a single bit seems acceptable in most cases.
 
