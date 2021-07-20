@@ -2,7 +2,7 @@
 
 Chapter \ref{sec:design} introduced the basic principles of the dependency analysis and how the results of the dependency analysis can be used to measure the amount of leaked information for a given program.
 
-In this chapter we will extend the dependency analysis to include the handling of arrays as well as more complex control flow structures, namely loops and (recursive) function calls.
+In this chapter we will extend the dependency analysis to include the handling of arrays and more complex control flow structures.
 
 \paragraph{Sequential Execution Value}
 So far, we used the execution value $\llbracket p \rrbracket_h (v)$ to get the actual value of $v$ during the execution with input $h$. Allowing loops and function calls in our input programs means, that it is possible for statements to be executed multiple times. A value $v$ can thereby have more than one execution value during an execution.
@@ -17,7 +17,7 @@ To ensure that the execution value of a value is still well defined, we add a pa
 \end{definition}
 
 \paragraph{Execution Condition $exec(\cdot)$ in Loops}
-In our analysis we treat loops as if they were separate functions that are called. Therefore, when computing the execution condition $exec(\cdot)$ for the basic blocks, we need a special handling of the blocks inside a loop:
+In our analysis we treat loops as if they were separate functions. Therefore, when computing the execution condition $exec(\cdot)$ for the basic blocks, we need a special handling of the blocks inside a loop:
 
 The execution condition for the loop header will be computed in the standard way.
 
@@ -30,7 +30,7 @@ Loops are handled during the dependency analysis with the following steps:
 
 First, we isolate the loop from the rest of the program and analyse the loop body as a separate function. Second, we generate the dependency vectors for loop output values. These dependency vectors act as a map from the loop inputs to the loop outputs. For each iteration we recursively apply this mapping outputs to itself. Finally, we combine the iteration results into dependency vectors that represent the effect of the loop during the execution as a whole.
 
-Because all three steps refer to the same program values at times, we use different notations to differentiate between then. The notations represent the value as an element of $\val_p$ and are used as alternative names for the values during different stages of the analysis.
+Because all three steps refer to the same program values in a different context, we use different notations to differentiate between them. The notations represent the value as an element of $\val_p$ and are used as alternative names for the values during different stages of the analysis.
 
 For a program value $v$ that is defined inside a loop $l$:
 \begin{itemize}
@@ -67,8 +67,8 @@ For a program value $v$ that is defined inside a loop $l$:
                 
                 \node (entry) [node, xshift=1cm] {Entry};
                 \node (b1) [node, below of=entry, align=center] {$L_0 \leftarrow 0$\\$j_0 \leftarrow 1$};
-                \node (b2) [node, below of=b1, align=center] {$L_1 \leftarrow \phi(L_0, L_2)$ \\ $j_1 \leftarrow \phi(j_0, j_2)$\\ $\mathtt{if} (j \neq 0)$};
-                \node (b3) [node, below of=b2, align=center] {$L_2 \leftarrow L_1 \: \mid \: j_1$ \\ $j_2 \leftarrow j_1 << 2$};
+                \node (b2) [node, below of=b1, align=center] {$L_1 \leftarrow \phi(L_0, L_2)$ \\ $j_1 \leftarrow \phi(j_0, j_2)$\\ $\mathtt{if} (j_1 \neq 0)$};
+                \node (b3) [node, below of=b2, align=center] {$L_2 \leftarrow L_1 \: \mid \: j_1$ \\ $j_2 \leftarrow j_1 << 1$};
                 \node (exit) [node, below of=b3] {Exit};
                 
                 \draw[arrow] (entry) -- (b1);
@@ -77,10 +77,10 @@ For a program value $v$ that is defined inside a loop $l$:
                 \draw[arrow] (b3.east) -- ++(1,0) |- (b2.east);
                 \draw[arrow] (b2.west) -- ++(-1,0) |-(exit.west);
     \end{tikzpicture}
-    \caption{CFG of the example program}\label{fig:loopEx}
+    \caption{CFG of the example program}
     \label{fig:whilegraph}
 \end{subfigure}
-\caption{Example program for Loop Analysis. The program doesn't have a secret input and always returns $111_2$.}
+\caption{Example program for Loop Analysis. The program doesn't have a secret input and always returns $111_2$.}\label{fig:loopEx}
 \end{figure}
 
 \paragraph{General Loop Body Analysis}
@@ -88,7 +88,7 @@ We begin the analysis by defining input and output values for a single loop iter
 
 The set of values that are used inside a loop can be divided into two categories:
 \begin{enumerate}
-    \item Values, that might change with each iteration. These are values that are defined inside the loop (or before the loop in the case of the first loop iteration) and then get passed to the next iteration via a $\phi$-function in the loop head.
+    \item Values, that might change with each iteration. These are values that are defined inside the loop (or before the loop in the case of the first loop iteration) and then get passed to the next iteration via a $\phi$-function in the loop header.
     \item Values, that are constant for every loop iteration.
 \end{enumerate}
 
@@ -102,13 +102,11 @@ The first group of values represent the inputs of a loop iteration, while the se
     \end{itemize}
 \end{definition}
 
-Analogous to the notation for values, $in[l]$ and $out[l]$ refer to the input and output sets during the general loop body analysis. The in- and outputs for a specific iteration $i$ are then called $in[l, i]$ and $out[l, i]$.
+Analogous to the notation for values, $in[l]$ and $out[l]$ refer to the input and output sets during the general loop body analysis. The input and output sets for a specific iteration $i$ are called $in[l, i]$ and $out[l, i]$.
 
-Using the defined inputs and outputs, we can apply the principles of the dependency analysis for linear programs to the loop $l$:
+Using the defined inputs and outputs, we can apply the principles of the basic dependency analysis to the loop $l$:
 
-We set $dVec(v[l]) = \var(v[l])$ for $v[l] \in in[l]$, i.e. we represent the values of the inputs as vectors of fresh boolean variables.
-
-Next, we compute the dependency vectors of all values defined inside the loop. To do that we analyse the blocks $l$ in topological order.
+We set $dVec(v[l]) = \var(v[l])$ for $v[l] \in in[l]$, i.e. we represent the values of the inputs as vectors of fresh boolean variables. Next, we compute the dependency vectors of all values defined inside the loop.
 
 The dependency vectors of the loop outputs $out[l]$ are made up of formulas that depend on
 \begin{enumerate}
@@ -118,7 +116,7 @@ The dependency vectors of the loop outputs $out[l]$ are made up of formulas that
     \item Variables that represent loop input bits from enclosing loops
 \end{enumerate}
 
-Additional to the inputs and outputs, we define a propositional formula $exit[l]$ for the $l$, that represents the condition that must be fulfilled to jump out of the loop. Like the formulas for values in $out[l]$, $exit_l$ depends on variables from the loop inputs as well as the program inputs. 
+Additional to the inputs and outputs, we define a propositional formula $exit[l]$ for the loop $l$, that represents the condition that must be fulfilled to jump out of the loop. Like the formulas for values in $out[l]$, $exit_l$ depends on variables from the loop inputs as well as the program inputs. 
 
 \paragraph{Example}
 Figure \ref{fig:loopEx} shows an example of a program containing a loop $l$.
@@ -133,12 +131,10 @@ The dependency vectors of those values are:
     dVec(j_2[l]) &= [j_1^1, j_1^0, 0] \\
 \end{align*}
 
-The loop condition is $exit[l] = j == 0$.
+The loop condition is $exit[l] = [j_1^2, j_1^1, j_1^0] == [0, 0, 0]$.
 
 \paragraph{Computing Iterations}
-In the previous paragraph, we computed dependency vectors that represent the output values. We used fresh variables to represent the input values, thereby ignoring any link of the loop to the program.
-
-In this paragraph, we use this general result, to obtain dependency vectors that represent the loop outputs after a specific iteration. The formulas in these vectors will then only depend on the program input variables and not the loop variables.
+We use the dependency vectors from the general loop body analysis, to obtain dependency vectors that represent the loop outputs after a specific iteration. The formulas in these vectors will then only depend on the program input variables and not the loop variables.
 
 Input and output values of specific loop iterations are collected in the sets $in[l, i]$ and $out[l, i]$, where $i$ is the iteration count. The special case $i = 0$ refers to the program state before the loop is entered. We leave $in[l(0)]$ undefined and use $out[l(0)]$ as the values that are computed before the loop and then used inside the loop during the first iteration. For $i > 0$ we have $in[l(i + 1)] = out[l, i]$.
 
@@ -298,7 +294,7 @@ Using the extended definition of $\mathcal{E}$ including call-expressions, theor
 
 \section{Functions with Multiple Return Statements}
 
-A function $f$ may have more than one return statement. Those statements in general return different values $v_1, ... v_k$. Thus it is necessary to combine the dependency vectors of these values into a single vector $return(f)$ that accurately depends the returned value based on the arguments of this function. Figure \ref{fig:mmult} shows a program that contains a function with three return statements. Each return statement returns a different value.
+A function $f$ may have more than one return statement. Those statements in general return different values $v_1, ... v_k$. Thus it is necessary to combine the dependency vectors of these values into a single vector $r_f$ that accurately represents the returned value based on the arguments of this function. Figure \ref{fig:mmult} shows a program that contains a function with three return statements. Each return statement returns a different value. We assume that return statements are not contained in a loop.
 
 The combining of multiple return values requires the following theorem:
 
@@ -410,10 +406,13 @@ The return vector of the function \textsc{isEvenGreaterZero()} is given by \\ $r
 \end{figure}
 
 \section{Recursion}
+We restrict the analysis of recursive functions in this section to functions, that contain at most one recursive call. The analysis we present can be extended to functions with an arbitrary number of recursive calls.
+
 To analyse recursive functions, we begin by applying the standard function analysis described in $\ref{sec:functions}$. However call statements that recursively invoke the function that they are part of are not handled in the standard way. Instead, we use a placeholder value $\bot$ as the return value of the call. Analogous to the placeholder value $\bot$ used in the loop analysis, the value $\bot$ is propagated if other values depend on the value represented by $\bot$.
 
 \iffalse
 \begin{figure}
+\centering
     \begin{subfigure}{.5\textwidth}
         \centering
     \begin{algorithm}[H]
@@ -592,9 +591,7 @@ The propositional vectors for the output values of the loop are finally given by
 \end{table}
 
 \paragraph{Exiting the Loop}
-
-
-
+A loop that contains break statements is exited if the loop condition in the header is unfulfilled or if a break statements is executed. A break statement is executed if the condition $exec(b)$ for the block $b$ that contains the break statement is fulfilled. If $b_0, ..., b_k$ are all blocks in the loop that contain a break statement, the loop is exited if $exit[l] \lor (\bigvee\limits_{0 \leq i \leq k} exec(b_i))$ is fulfilled. This extended exit condition replaces the simple exit condition $exit[l]$ during the loop analysis.
 
 \section{Arrays}
 The analysis can support fixed-size arrays with value semantics. For fixed-size arrays, the length must be known at compile time.

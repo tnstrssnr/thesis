@@ -43,8 +43,6 @@ We use \emph{Nildumu} \cite{bechberger18} to perform a constant bit analysis on 
 
 If a value is effectively constant, we can safely exclude it from any further analysis and set its dependency vector to a vector of boolean constants that corresponds to its execution value. For values which are not effectively constant, but contain constant bits, we can also reduce the number of dependency formulas we need to compute to those bits that are not constant.
 
-\td{mention handling of arrays (or vars on heap in general)}
-
 \begin{figure}
     \centering
     \begin{minipage}{.7\linewidth}
