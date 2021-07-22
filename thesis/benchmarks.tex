@@ -1,91 +1,230 @@
-\chapter{Benchmarks}
-The benchmarks follow the convention from before: secret inputs are called \In, while public outputs are called \Out. All public outputs are leaked at the end of the execution.
+\chapter{Benchmarks}\label{ch:benchmarks}
+The benchmarks follow the follwing conventions: Secret inputs are called h or h1, h2, .. if there is more than one input. Public outputs are called l. All public outputs are leaked at the end of the execution.
+
+%We grouped the benchmark programs into three categories:
+
+%\emph{Small Benchmarks} contain no loops or function calls. The main purposes of the programs is to test the tools' ability to deal with simple operations and implicit flows.
+
+%\emph{Loop Benchmarks} test the tools' ability to analyse loops correctly and efficiently.
+
+%\emph{Function Calls and Recursion Benchmarks} contain function calls and recursive functions.
 
 \section{Small Benchmarks}
-The following set of benchmarks contains no loops or functions. The main purposes of the programs is to test the tools' ability to deal with simple operations and implicit flows.
 
 \paragraph{Masked Copy}
-This benchmark is taken from \cite{meng11}. The program masks the 16 highest value bits from the input and outputs the rest. The channel capacity is 16.
+This benchmark is taken from \cite{meng11} and modified slightly as the QIFCI tool doesn't support numerical values in binary format. Instead we create the bit mask using a shift operation. The program masks the 16 highest value bits from the input and outputs the rest. The channel capacity is 16.
 
 \begin{center}
-    \begin{lstlisting}[language=C, caption=Masked Copy]
-        int l = h & (-1 << 16);
+    \begin{lstlisting}[language=C, caption=Masked Copy, captionpos=b]
+int l = h & (-1 << 16);
     \end{lstlisting}
 \end{center}
 
 
 \paragraph{Sum Query}
-This benchmark is taken from \cite{backes09}. The program adds together and then returns the three secret input values. The channel capacity is 32 bit.
+This benchmark is taken from \cite{backes09}. The program adds together the three secret input values and returns their sum. The channel capacity is 32 bit.
 
 \begin{center}
-    \begin{lstlisting}[language=C, caption=Sum Query]
-        int l = h1 + h2 + h3;
+    \begin{lstlisting}[language=C, caption=Sum Query, captionpos=b]
+int l = h1 + h2 + h3;
     \end{lstlisting}
 \end{center}
 
 \paragraph{Sanity Check}
-The benchmark was taken from \cite{newsome09}. Because our tool is unable to represent unsigned integers, we added the condition $h >= 0$ to the conditional. We initialized the value \texttt{base} with 3. The channel capacity is 4.
+The benchmark was taken from \cite{newsome09}. Because QIFCI and Nildumu are unable to process unsigned integer, we added the condition $0 <= h$ to the conditional. We initialized the value \texttt{base} with 3. The channel capacity is 4.
 
 \begin{center}
-    \begin{lstlisting}[language=C, caption=Sanity Check]
-        int l;
-		if (0 <= h && h < 16) {
-			l = 3 + h;
-		} else {
-			l = 3;
-		}
+    \begin{lstlisting}[language=C, caption=Sanity Check, captionpos=b]
+int l;
+if (0 <= h && h < 16) {
+    l = 3 + h;
+} else {
+    l = 3;
+}
     \end{lstlisting}
 \end{center}
 
 \paragraph{Table LookUp} This is a variant of benchmark found in \cite{newsome09}. If the input is within the right value range, a value from a pre-initialized array is returned. All other inputs return 0. The channel capacity is 3.
 
 \begin{center}
-    \begin{lstlisting}[language=C, caption=Table LookUp]
-        int[] table;
-		table[0] = 0;
-		table[1] = 1;
-		table[2] = 2;
-		table[3] = 3;
-		table[4] = 4;
-		table[5] = 5;
-		table[6] = 6;
-		table[7] = 7;
+    \begin{lstlisting}[language=C, caption=Table LookUp, captionpos=b]
+int[] table;
+table[0] = 0;
+table[1] = 1;
+table[2] = 2;
+table[3] = 3;
+table[4] = 4;
+table[5] = 5;
+table[6] = 6;
+table[7] = 7;
 
-		int l = 0;
+int l = 0;
 
-		if (0 <= h && h < 8) {
-			l = table[h];
-		} else {
-			l = 0;
-		}
+if (0 <= h && h < 8) {
+    l = table[h];
+} else {
+    l= 0;
+}
+    \end{lstlisting}
+\end{center}
+
+\paragraph{Implicit Flow} This benchmark is a shortened version of an example program given in \cite{newsome09}. The information is leaked via branching. Every if-statement leaks information through an implicit information flow, except for the last one, where the output is assigned its initialization value. The program leaks $\log_2 7 \approx 2,8$ bits of information.
+
+\begin{center}
+    \begin{lstlisting}[language=C, caption=Implicit Flow, captionpos=b]
+int l = 0;
+if (h == 1) l = 1;
+if (h == 2) l = 2;
+if (h == 3) l = 3;
+if (h == 4) l = 4;
+if (h == 5) l = 5;
+if (h == 6) l = 6;
+if (h == 7) l = 0;
     \end{lstlisting}
 \end{center}
 
 \section{Loop Benchmarks}
 
-\paragraph{Laundering Attack}
+\paragraph{Parity} The program checks whether the input parity has even parity. The difficulty of this benchmark is, that the assignment to in every loop iteration depends on the high input, however the program can only ever output 0 or 1. The channel capacity is therefore 1.
+
 \begin{center}
-    \begin{lstlisting}[language=C, caption=Laundering Attack]
-        int out = 0;
-		for (int i = 0; i < h; ++i) {
-			++out;
-		}
+    \begin{lstlisting}[language=C, caption=Parity, captionpos=b]
+int parity = 0;
+int bitSet;
+
+for (int j = 0; j != 32; ++j) {
+	bitSet = (h & (1 << j)) != 0 ? 1 : 0;
+	parity = (bitSet != parity) ? 1 : 0;
+}
+int l = parity;
     \end{lstlisting}
 \end{center}
 
-\paragraph{Sum And Product}
-The benchmark is the example program from figure \ref{fig:slice}. It iteratively computes the sum and the product of the two input values and leaks the sum. The program's channel capacity is 32.
+\paragraph{Laundering Attack} The benchmark is taken from \cite{backes09}. It is a standard example of information being leaked through implicit flows in a loop. All 32 bits of input information are leaked by the program
+\begin{center}
+    \begin{lstlisting}[language=C, caption=Laundering Attack, captionpos=b]
+int l = 0;
+while (l != h) {
+    ++l;
+}
+    \end{lstlisting}
+\end{center}
+
+\paragraph{Shift and Launder}
+This benchmark tests how the tools cope with computations that have no influence on the output. The loop computes two values, however only one is eventually leaked. The channel capacity of the program is 32. 
 
 \begin{center}
-    \begin{lstlisting}[language=C, caption=Laundering Attack]
-        int sum = h2;
-		int product = 0;
-		int i = 0;
+    \begin{lstlisting}[language=C, caption=Shift and Launder, captionpos=b]
+int launder = 0;
+int shift = 1;
+int i = 0;
 
-		while (i != h1) {
-			sum += 1;
-			product += h2;
-			i++;
-		}
+while (i != h) {
+	launder += 1;
+	shift = shift << 1;
+	i++;
+}
+int l = launder;
+    \end{lstlisting}
+\end{center}
+
+\paragraph{Masked Laundering} This program first executes a laundering attack, but then masks the lowest value bit of the resulting value. The difficulty in this program is, that in order to recognize that the conditional masks the value, the analysis tool has to correctly identify the relationship between the secret input value and the result of the laundering attack loop. The channel capacity of the program is 31.
+
+\begin{center}
+    \begin{lstlisting}[language=C, caption=Masked Laundering, captionpos=b]
+int l = 0;
+while (l != h) {
+	l++;
+}
+if ((h & 1) != 0) {
+	l = 1;
+}
+    \end{lstlisting}
+\end{center}
+
+\paragraph{Sane Laundering} This program combines the sanity check benchmark with the laundering attack benchmark. The program leaks 4 bit.
+
+\begin{center}
+    \begin{lstlisting}[language=C, caption=Sane Laundering, captionpos=b]
+int x;
+if (0 <= h && h < 16) {
+	x = 3 + h;
+} else {
+	x = 3;
+}
+
+int l = 0;
+for (l != x) {
+	++l;
+}
+    \end{lstlisting}
+\end{center}
+
+\section{Function Calls and Recursion Benchmarks}
+
+\paragraph{Recursive Laundering} The program executes a laundering attack, however not iteratively in a loop, but through recursion. All 32 bits of information are leaked.
+
+\begin{center}
+    \begin{lstlisting}[language=C, caption=Recursive Laundering, captionpos=b]
+int launder(int h, int l) {
+    if (h == l) {
+    	return l;
+    }
+    return launder(h, l + 1);
+}
+
+int l = launder(h, 0);
+    \end{lstlisting}
+\end{center}
+
+\paragraph{Call Mask} The program masks the four least valued bits of the input value through a chain of function calls. The benchmarks tests the ability of the tools to handle nested function calls. The channel capacity of the program is 28.
+
+\begin{center}
+    \begin{lstlisting}[language=C, caption=Call Mask, captionpos=b]
+int mask0(int h) {
+    return h | (1 << 0);
+}
+
+int mask1(int h) {
+    return h | (1 << 1);
+}
+
+int mask2(int h) {
+    return h | (1 << 2);
+}
+
+int mask3(int h) {
+    return h | (1 << 3);
+}
+
+int mask01(int h) {
+    return mask1(mask0(h));
+}
+
+int mask012(int h) {
+    return mask2(mask01(h));
+}
+
+int mask0123(int h) {
+    return mask3(mask012(h));
+}
+
+int l = mask0123(h)
+    \end{lstlisting}
+\end{center}
+
+\paragraph{Dead Recursion} The benchmark from \cite{bechberger18} contains a recursive function that, depending on the input value, requires many recursive calls, however eventually always returns the same value. The channel capacity of the program is 0.
+
+\begin{center}
+    \begin{lstlisting}[language=C, caption=Dead Recursion, captionpos=b]
+int id(int i) {
+    int r = 0;
+    if (i > 0) {
+        r = id(i - 1) + 1;
+    }
+    return 0;
+}
+    
+int l = id(h);
     \end{lstlisting}
 \end{center}

@@ -1,1 +1,41 @@
-\chapter{Fazit und Ausblick}\label{sec:conclusion}
+\chapter{Conclusion and Future Work}\label{sec:conclusion}
+
+The analysis we presented in this thesis is able to safely approximate the channel capacity and the dynamic leakage of a \emph{while}-program. We have shown that it is generally possible to combine static analysis approaches with SAT-based approaches to improve the run time as well as the accuracy of the analysis.
+
+The effects of the hybrid analysis on the accuracy of the analysis is highly dependent on the input program. While there are input programs that benefit from the hybrid analysis, there are also programs for which the accuracy decreases. The hybrid analysis had a positive effect on the computation time of the analysis, which leads to a better scalability of the analysis. Because we tested our analysis on small synthetic benchmarks, it remains open how the hybrid analysis affects the analysis' accuracy for real-world programs.
+
+Additionally to the hybrid analysis of the channel capacity, our tool is able to almost safely approximate the dynamic leakage of a single program execution (under-approximations were minimal if they occurred). We believe this additional data point about the program's information flow is vital in judging the information leakage of a program. It allows the user to identify executions that leak no significant amount of information even if the program would have been deemed as insecure due to a high channel capacity.
+
+Overall we were only able to find a way to combine dynamic and static approaches that benefits a small set of input programs. However, this result can be used as proof, that generally such a combination is possible. The results of this thesis can be used as a basis for more in depth examinations of the topic.
+
+\section{Future Work}
+The analysis and its implementation in their current form leave many areas open for improvements and extensions of the work done so far.
+
+\paragraph{Extending the Analysis Beyond \texttt{while}-Programs}
+The inputs programs of our analysis are currently based on a minimal \texttt{while}-language. In particular, we currently lack support for data types apart from integers as well as object orientation. Memory operations are only minimally supported through the array analysis.
+
+Defining rules for representing these additional program operations as SAT formulas is generally possible, as model checking tools that represent programs as propositional formulas, such as CBMC, already offer support for these features.
+
+Our tool as it is might currently not be scalable enough as especially object orientation and heap operations would require large propositional formulas. Already with the language in its current scope the implementation shows scalability issues for more complex input programs and higher loop iteration / recursion bounds.
+
+\paragraph{Easing Restrictions on Input Programs}
+The current analysis expects input programs to adhere to certain restrictions, especially regarding the value that is leaked to the public.
+
+Currently the program is expected to leak only a single value at the end of the execution. Moving the location of the leak statement to an earlier location in the program does not require any additional work as long as the leak is not contained in a loop or in a function call. Allowing a program to leak more than a single value (this includes programs where the leak statement is inside a loop or a function) requires the output to be modeled as a stream, where every location that have produced the output is taken into consideration.
+
+\paragraph{Increasing Efficiency through Improved Formula Handling}
+The biggest drawback of our implementation compared to the other tools we examined is its scalability problems. With increasing size of the formulas that need to be handled, it suffers from major increases in run time. One major reason for the bad scalability is the implementation of the dependency analysis: The dependency vector of a value includes all information about the previous program operations. The handling of these large formulas slows down the process of the dependency analysis. Breaking up the large formulas by using variables offers the possibility of major improvements in the run time. 
+
+\paragraph{Improving Accuracy Through Flow Bounds}
+The hybrid approach in the analysis cannot improve the accuracy for input programs where the relation between the different input and output values of the program segments are unclear. An example of his is the benchmark \emph{Masked Laundering}, where the masking segment assumes an input of 33 secret bits. The program however only has 32 secret bits.
+
+Flowcheck uses a flow network with edge capacities to limit the flow of information between segments. This prevents the multiplication of input bits as it happens in our tool.
+
+As of now we were not able to find a way to represent these flow bound restrictions as propositional formulas. It is worth exploring, whether a different way of representing these restrictions (such as in a flow network like Flowcheck does) that can be integrated into the analysis.
+
+\paragraph{Adapting Interpreter Actions to Leakage Results}
+Our implementation includes an interpreter that will execute the program and report the dynamic leakage of the execution.
+
+A logical extension would be to adapt the behaviour of the interpreter to the calculated leakage. Other tools presented in \cite{devriese10} and \cite{austin17} adapt the outputs of a program execution based on the estimated leakage.
+
+By adding a shadow execution with dummy values, whose outputs are used instead of the real ones in cases where the leakage is too high, our tool can be used to execute programs in a safe environment, where the information leakage is guaranteed to be below a defined threshold. 
