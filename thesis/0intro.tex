@@ -2,12 +2,12 @@
 
 \section{Motivation}
 
-In February 2017, the American web services and web security company Cloudflare made headlines when a security bug was discovered in an HTML parser. A buffer overrun caused the servers to leak sensitive data, such as browser cookies, authentication tokens or HTTP post bodies. The so-called \enquote{Cloudbleed} bug is one of many examples of software revealing secret data to unauthorized users, a security threat whose severity increases, the more software is used in the handling of sensitive data \cite{cloudbleedIssue, cloudbleedReport}. 
+In February 2017, the American web services and web security company Cloudflare made headlines when a security bug was discovered in an HTML parser. A buffer overrun caused the servers to leak sensitive data, such as browser cookies, authentication tokens, or HTTP post bodies. The so-called \enquote{Cloudbleed} bug is one of many examples of software revealing sensitive data to unauthorized users. Such security threats have become more prominent, as more and more software is used in the handling of sensitive data \cite{cloudbleedIssue, cloudbleedReport}.
 
 \paragraph{Qualitative Information Flow Control}
-Qualitative information flow control aims to guarantee that a program's public outputs are not influenced by its secret inputs, thus a malicious attacker has no possibility of obtaining secret information by merely observing the program's outputs. This property is called \emph{non-interference}. 
+Qualitative information flow control aims to guarantee that a program's secret inputs do not influence its public outputs. Thus a malicious attacker has no possibility of obtaining secret information simply by observing the program's outputs. This property is called \emph{non-interference}. 
 
-For non-interferent programs, the secret inputs are guaranteed to have no influence on the public outputs, so unintentional data leaks are impossible. However, often this requirement is too strict for practical use. Consider the program shown in figure \ref{fig:pwChecker}. While the secret password is not leaked in its entirety, an attacker can gather some information by observing whether their guess was correct. Hence, the non-interference property is violated. However for most practical purposes, some information leakage is fully acceptable or even inevitable for the program's intended usage, like in the password checker example.
+For non-interferent programs, the secret inputs are guaranteed to not influence the public outputs. Unintentional data leaks are impossible. However, often this requirement is too strict for practical use. Consider the program shown in figure \ref{fig:pwChecker}. While the secret password is not leaked in its entirety, an attacker can gather some information by observing whether their guess was correct. Hence, the non-interference property is violated. However, for most practical purposes, some information leakage is fully acceptable or even inevitable for the program's intended usage, like in the password checker example.
 
 \paragraph{Quantitative Information Flow Control}
 The desire to make information flow control applicable to more practical applications gave rise to the notion of quantitative information flow control (QIFC), where the amount of information leaked by a program is measured in bits and compared to a predetermined limit. The amount of leakage in the password checker example is one bit.
@@ -31,38 +31,38 @@ The desire to make information flow control applicable to more practical applica
     \label{fig:pwChecker}
 \end{figure}
 
-QIFC analyses can typically be divided into 2 categories:
+QIFC analyses are typically divided into two categories:
 
-\emph{Static} analyses are performed without executing the program and rely solely on examination of the source code. Such analyses usually deliver an upper bound for the amount of information a program might leak. However, depending on the program, the upper bound the analysis is able to compute might be much larger than the actual leakage, due to the lack of knowledge about concrete control and data flows in the program.
+\emph{Static analyses} are performed without executing the program and rely solely on examination of the source code. Such analyses usually deliver an upper bound for the amount of information a program might leak. However, the upper bound the analysis can compute might be much larger than the actual leakage, due to the lack of knowledge about concrete control and data flows in the program.
 
-Contrarily, \emph{dynamic} analyses compute a program's leakage by simulating one or more program executions. For these executions, dynamic analyses might be able to deliver a more precise estimation of the leakage than static analyses, however these estimations might not be a sound upper bound, since it is infeasible to analyse every possible input combination for the program.
+Contrarily, \emph{dynamic} analyses compute a program's leakage by simulating one or more program executions. For these executions, dynamic analyses might be able to deliver a more precise estimation of the leakage than static analyses. However, these estimations are not guaranteed to be a sound upper bound, since it is infeasible to analyze every possible input combination for the program.
 
 \section{Related Work}\label{sec:relWork}
 
-While early mentions of quantifying information flow have been made, for example by Denning \cite{denning82}, a formal definition and theoretical groundwork for the QIF problem are given more recently by Lowe \cite{lowe02} and Smith \cite{smith09}. A recent publication by Alvim et. al \cite{alvim19} gives a comprehensive overview over the theory behind quantitative information flow.
+While early mentions of quantifying information flow have been made, for example by Denning \cite{denning82}, a formal definition and theoretical groundwork for the QIF problem are given more recently by Lowe \cite{lowe02} and Smith \cite{smith09}. A recent publication by Alvim et al. \cite{alvim19} gives a comprehensive overview of the theory behind quantitative information flow.
 
 Numerous QIFC analyses based on model counting have previously been introduced.
 
-Newsome, McCamant and Song \cite{newsome09} transform their programs into boolean predicates that accurately model its semantics. Using SAT-based techniques they then measure the program's channel capacity. The results are used to find false positives in a dynamic taint analysis in order to more accurately determine the amount of influence of an attacker over the program. 
+Newsome, McCamant, and Song \cite{newsome09} transform their programs into boolean predicates that accurately model its semantics. Using SAT-based techniques they then measure the program's channel capacity. The results are used to find false positives in a dynamic taint analysis to more accurately determine the amount of influence of an attacker over the program. 
 
-Klebanov, Manthey and Muise \cite{klebanov13} use the bounded model checker CBMC \cite{cbmc} to generate a boolean predicate and the d-DNNF-based \#SAT tools \textsc{sharp}SAT \cite{thurley06} and \textsc{Dsharp} \cite{muise12} to find the number of models of these predicates. A similar approach is used by Biondi et. al. in \cite{biondi18}. In order to address scalability issues with overly complex SAT formulas, they use an approximate model counter, in this case ApproxMC (\cite{chakraborty13}). All these model-counting based tools compute the channel capacity of the input program.
+Klebanov, Manthey and Muise \cite{klebanov13} use the bounded model checker CBMC \cite{cbmc} to generate a boolean predicate and the d-DNNF-based \#SAT tools \textsc{sharp}SAT \cite{thurley06} and \textsc{Dsharp} \cite{muise12} to find the number of models of these predicates. A similar approach is used by Biondi et al. in \cite{biondi18}. To address scalability issues with overly complex SAT formulas, they use an approximate model counter (in this case ApproxMC \cite{chakraborty13}). All these model-counting-based tools compute the channel capacity of the input program.
 
-Chu and Hashimoto in \cite{chu19} also combine the CBMC framework with an approximate model counter to estimate pre-image size of a program input.
+Chu and Hashimoto in \cite{chu19} also combine the CBMC framework with an approximate model counter to estimate the pre-image size of a program input.
 
-A static analysis based on constant bit analysis is presented in \cite{bechberger18}. By analysing bit-level dependencies on a PDG, the amount of leaked information can be estimated by calculating a minimal vertex cut.
+A static analysis based on constant bit analysis is presented in \cite{bechberger18}. By analyzing bit-level dependencies on a PDG, the amount of leaked information can be estimated by calculating a minimal vertex cut.
 
-A previous attempt at combining static and dynamic techniques has been made by McCamant and Ernst \cite{mccamant08}. They transform programs into network graphs with edge capacities corresponding to the amount of Information that might flow between the corresponding program parts. Thus, the maximum leak of information corresponds to the maximum flow in the created network. They use the approach to estimate the leakage of the input program, however their analysis is not sound and might underestimate leakage.
+A previous attempt at combining static and dynamic techniques has been made by McCamant and Ernst \cite{mccamant08}. They transform programs into network graphs with edge capacities corresponding to the amount of information that might flow between the corresponding program parts. Thus, the maximum leak of information corresponds to the maximum flow in the created network. They use the approach to estimate the leakage of the input program. However, their analysis is not sound and might underestimate leakage.
 
-Dynamic techniques such as multiexecution \cite{devriese10} or faceted values \cite{austin17} offer the possibility of executing the program in a safe manner: Multiple executions are simulated simultaneously for different security levels. The true program outputs are only produced in the execution linked to their security. All other outputs are substituted by default values.
+Dynamic techniques such as multi execution \cite{devriese10} or faceted values \cite{austin17} offer the possibility of executing the program safely: Multiple executions are simulated simultaneously for different security levels. The true program outputs are only produced in the execution linked to their security. All other outputs are substituted by default values.
 
-The analysis presented in \cite{bichhawat17} extends the dynamic \emph{permissive upgrade strategy} to include a quantification of the information leakage in order to bound the amount of information leaked at runtime.
+The analysis presented in \cite{bichhawat17} extends the dynamic \emph{permissive upgrade strategy} to include a quantification of the information leakage to bound the amount of information leaked at run time.
 
 \section{Contributions and Overview}
-In this thesis, we define and compare two different measures for information leakage: the first is one based on min-entropy and is used by many of the QIFC tools mentioned above. The second one is based on the notion of dynamic leakage during a single program run. We will present a model-counting based analysis that is able to provide estimations for both quantities.
+In this thesis, we define and compare two different measures for information leakage: the first is one based on min-entropy and is used by many of the QIFC tools mentioned above. The second one is based on the notion of dynamic leakage during a single program run. We will present a model-counting-based analysis that can provide estimations for both quantities.
 
-Additionally, we present an integration of static QIF methods into our analysis in order to mitigate the difficulties that other model counting based tools have.
+Additionally, we present an integration of static QIF methods into our analysis to mitigate the difficulties that other model-counting-based tools have.
 
-The analysis will be integrated into an interpreter that provides the possibility of executing a program in an environment that can protect secret information by either aborting execution or masking values before they are leaked to a public channel.
+The analysis will be integrated into an interpreter that provides the possibility of executing a program while simultaneously providing the user with bounds on the information that is leaked by the program and the current execution.
 
 This thesis will be structured as follows: We begin by introducing the theoretical concepts that our work is based on in section \ref{sec:basics}. In section \ref{sec:design}, we introduce the basic design and theoretical foundations of the interpreter. The following section \ref{ch:loops} extends the analysis to more advanced control flow structures.
 
