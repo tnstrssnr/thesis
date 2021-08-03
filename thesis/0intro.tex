@@ -35,7 +35,7 @@ QIFC analyses are typically divided into two categories:
 
 \emph{Static analyses} are performed without executing the program and rely solely on examination of the source code. Such analyses usually deliver an upper bound for the amount of information a program might leak. However, the upper bound the analysis can compute might be much larger than the actual leakage, due to the lack of knowledge about concrete control and data flows in the program.
 
-Contrarily, \emph{dynamic} analyses compute a program's leakage by simulating one or more program executions. For these executions, dynamic analyses might be able to deliver a more precise estimation of the leakage than static analyses. However, these estimations are not guaranteed to be a sound upper bound, since it is infeasible to analyze every possible input combination for the program.
+Contrarily, \emph{dynamic} analyses compute a program's leakage by simulating one or more program executions. For these executions, dynamic analyses might be able to deliver a more precise estimate of the leakage than static analyses. However, these estimates are not guaranteed to be a sound upper bound, since it is infeasible to analyze every possible input combination for the program.
 
 \section{Related Work}\label{sec:relWork}
 
@@ -43,15 +43,15 @@ While early mentions of quantifying information flow have been made, for example
 
 Numerous QIFC analyses based on model counting have previously been introduced.
 
-Newsome, McCamant, and Song \cite{newsome09} transform their programs into boolean predicates that accurately model its semantics. Using SAT-based techniques they then measure the program's channel capacity. The results are used to find false positives in a dynamic taint analysis to more accurately determine the amount of influence of an attacker over the program. 
+Newsome, McCamant, and Song \cite{newsome09} transform their programs into boolean predicates that accurately model the programs' semantics. Using SAT-based techniques they then measure the program's channel capacity. The results are used to find false positives in a dynamic taint analysis to more accurately determine the amount of influence of an attacker on the program. 
 
-Klebanov, Manthey and Muise \cite{klebanov13} use the bounded model checker CBMC \cite{cbmc} to generate a boolean predicate and the d-DNNF-based \#SAT tools \textsc{sharp}SAT \cite{thurley06} and \textsc{Dsharp} \cite{muise12} to find the number of models of these predicates. A similar approach is used by Biondi et al. in \cite{biondi18}. To address scalability issues with overly complex SAT formulas, they use an approximate model counter (in this case ApproxMC \cite{chakraborty13}). All these model-counting-based tools compute the channel capacity of the input program.
+Klebanov, Manthey, and Muise \cite{klebanov13} use the bounded model checker CBMC \cite{cbmc} to generate a boolean predicate and the d-DNNF-based \#SAT tools \textsc{sharp}SAT \cite{thurley06} and \textsc{Dsharp} \cite{muise12} to find the number of models of these predicates. A similar approach is used by Biondi et al. in \cite{biondi18}. To address scalability issues with overly complex SAT formulas, they use an approximate model counter (in this case ApproxMC \cite{chakraborty13}). All these model-counting-based tools compute the channel capacity of the input program.
 
 Chu and Hashimoto in \cite{chu19} also combine the CBMC framework with an approximate model counter to estimate the pre-image size of a program input.
 
 A static analysis based on constant bit analysis is presented in \cite{bechberger18}. By analyzing bit-level dependencies on a PDG, the amount of leaked information can be estimated by calculating a minimal vertex cut.
 
-A previous attempt at combining static and dynamic techniques has been made by McCamant and Ernst \cite{mccamant08}. They transform programs into network graphs with edge capacities corresponding to the amount of information that might flow between the corresponding program parts. Thus, the maximum leak of information corresponds to the maximum flow in the created network. They use the approach to estimate the leakage of the input program. However, their analysis is not sound and might underestimate leakage.
+A previous attempt at combining static and dynamic techniques has been made by McCamant and Ernst \cite{mccamant08}. They transform programs into network graphs with edge capacities corresponding to the amount of information that might flow between the corresponding program parts. Thus, the maximum leak of information corresponds to the maximum flow in the created network. They use this approach to estimate the leakage of the input program. However, their analysis is not sound and might underestimate leakage.
 
 Dynamic techniques such as multi execution \cite{devriese10} or faceted values \cite{austin17} offer the possibility of executing the program safely: Multiple executions are simulated simultaneously for different security levels. The true program outputs are only produced in the execution linked to their security. All other outputs are substituted by default values.
 
@@ -66,4 +66,4 @@ The analysis will be integrated into an interpreter that provides the possibilit
 
 This thesis will be structured as follows: We begin by introducing the theoretical concepts that our work is based on in section \ref{sec:basics}. In section \ref{sec:design}, we introduce the basic design and theoretical foundations of the interpreter. The following section \ref{ch:loops} extends the analysis to more advanced control flow structures.
 
-In section \ref{sec:eval} we test our tool regarding aspects like precision and scalability and evaluate the results in comparison to other analyses.
+In section \ref{sec:eval} we benchmark our tool regarding aspects like precision and scalability and evaluate the results in comparison to other analyses.

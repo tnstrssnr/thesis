@@ -1,12 +1,12 @@
 \chapter{Evaluation}\label{sec:eval}
-We test the implementation of our analysis in two ways:
+We evaluate the implementation of our analysis in two ways:
 
 We compare the analysis using the hybrid method to the analysis using only the dependency analysis to examine whether it is possible to achieve a decrease in computation time and to determine the loss in precision of the results that might occur.
 
-Secondly, we compare out tool to three other comparable tools: Nildumu \cite{bechberger18}, ApproxFlow \cite{biondi18} and Flowcheck \cite{mccamant08}.
+Secondly, we compare our tool to two other comparable tools: Nildumu \cite{bechberger18} and ApproxFlow \cite{biondi18}.
 
 \section{Benchmarks}
-In this evaluation we use synthetic benchmarks taken from \cite{backes09}, \cite{bechberger18}, \cite{biondi15} and \cite{meng11} as well as some benchmarks we created ourselves. The benchmark programs are described in \ref{ch:benchmarks}. To run the benchmarks with all four tools, we translated them into Java, C and Nildumu's own language specification. As our tool and Nildumu don't support unsigned integers, we modified benchmarks where necessary with a condition $h \geq 0$.
+In this evaluation, we use synthetic benchmarks taken from \cite{backes09}, \cite{bechberger18}, \cite{biondi15} and \cite{meng11} as well as some benchmarks we created ourselves. The benchmark programs are described in appendix \ref{ch:benchmarks}. To run the benchmarks with all four tools, we translated them into Java, C, and Nildumu's own language specification. As our tool and Nildumu don't support unsigned integers, we modified benchmarks where necessary with a condition $h \geq 0$ (the modification was applied to the benchmarks for all tools).
 
 \section{Tools}
 
@@ -15,17 +15,18 @@ We evaluated the benchmarks using three different configurations:
 \begin{itemize}
     \item \emph{QIFCI:} The dependency analysis is not combined with any static analysis.
     \item \emph{QIFCI-PP:} The dependency analysis is combined with the static pre-processing
-    \item \emph{QIFCI-Hybrid:} The dependency analysis is combined with the static \\ pre-processing and the hybrid analysis. The hybrid analysis is applied to all loops and function calls in the program.
+    \item \emph{QIFCI-H:} The dependency analysis is combined with the static \\ pre-processing and the hybrid analysis. The hybrid analysis is applied to all loops and function calls in the program.
 \end{itemize}
 
 \paragraph{Nildumu}
-We use the stand-alone implementation of Nildumu (version \texttt{2caee6b}) for the evaluation at revision. Apart from the recursion bound, we adopted the standard configurations provided by Nildumu.
+We use the stand-alone implementation of Nildumu (version \texttt{2caee6b}) for the evaluation. Apart from the recursion bound, we adopted the standard configurations provided by Nildumu.
 
 \paragraph{ApproxFlow}
-For our benchmark, we used an updated version of ApproxFlow\footnote{The used ApproxFlow version can be found at: \url{https://github.com/parttimenerd/approxflow}} that includes a newer version of ApproxMC.
+For our benchmark, we used an updated version of ApproxFlow\footnote{The used ApproxFlow version can be found at \url{https://github.com/parttimenerd/approxflow}} that includes a newer version of ApproxMC.
 
-\paragraph{FlowCheck}
-The benchmarks for Flowcheck were executed inside a Docker container, due to incompatibility issues on the benchmark machine. The Docker container is build from an Ubuntu-18.04-based image. Run time overhead for Docker containers are generally small enough to allow the benchmarked execution times to be comparable to the other tools \cite{docker}.
+
+%\paragraph{FlowCheck}
+%The benchmarks for Flowcheck were executed inside a Docker container, due to incompatibility issues on the benchmark machine. The Docker container is build from an Ubuntu-18.04-based image. Run time overhead for Docker containers are generally small enough to allow the benchmarked execution times to be comparable to the other tools \cite{docker}.
 
 \section{Evaluation Setup}
 
@@ -33,14 +34,14 @@ The benchmarks for Flowcheck were executed inside a Docker container, due to inc
 The evaluation was performed on a machine with a 4-core Intel Core i7-7500U CPU and 24GiB of RAM, running a Manjaro Linux operating system.
 
 \paragraph{Benchmarking}
-For each tool, we ran each benchmark a total of 10 times and report the average run time over all 10 executions. To minimize potential interferences of other processes running in the background, we used the command line tool \texttt{chrt} to switch to a FIFO scheduling policy and set the executions's priority to the maximum value.
+For each tool, we ran each benchmark a total of 10 times and report the average run time over all 10 executions. To minimize potential interferences of other processes running in the background, we used the command line tool \texttt{chrt} to switch to a FIFO scheduling policy and set the executions' priority to the maximum value.
 We use \texttt{perf} to analyze the performances of the executions.
 
 For measuring the duration of the pipeline stages in QIFCI, we used timestamps from the tool's log files. Thus the overall run time might deviate from the run times measured with \texttt{perf}.
 
-For each tool we used an integer width of 32 bit. For Nildumu, ApproxFlow and our own tool, we ran each benchmark twice: Once with a recursion and loop bound of 8 and once with a recursion and loop bound of 32.
+For each tool, we used an integer width of 32 bits. For Nildumu, ApproxFlow, and our own tool, we ran each benchmark twice: Once with a recursion and loop bound of 8 and once with a recursion and loop bound of 32.
 
-For the tool comparison, we turned off the dynamic leakage computation of QIFCI, since it is the only tool that computes this value. Thereby all tools only analyze the channel capacity of the given input program. For all tools, we included the run time of necessary pre-processing steps in the reported run time. Specifically, Flowcheck requires the program to be compiled beforehand.
+For the tool comparison, we turned off the dynamic leakage computation of QIFCI, since it is the only tool that computes this value. Thereby all tools only analyze the channel capacity of the given input program.
 
 \section{Findings}
 
@@ -50,18 +51,18 @@ The results of the benchmark runs are shown in tables \ref{tab:othertools} and \
 \paragraph{ApproxFlow}
 ApproxFlow was able to precisely compute the channel capacity for all simple benchmarks. However, the tool reports channel capacities that are too low in most of the other benchmarks.
 
-Wrong results occur if the loop bound is lower than the needed amount of loop iterations. An example of this phenomenon is the \emph{Laundering Attack} benchmark with a loop bound of 32. The 32 iterations will each give a different output, leading to the channel capacity estimation of $log_2 32 = 5$.
+Wrong results occur if the loop bound is lower than the needed amount of loop iterations. An example of this phenomenon is the \emph{Laundering Attack} benchmark with a loop bound of 32. The 32 iterations will each give a different output, leading to the channel capacity estimation of $log_2 \: 32 = 5$ instead of the actual channel capacity of $32$.
 
-In cases where the channel capacity cannot be accurately computed, the tool does not approximate safely. Instead, the given results are lower than the actual leakage.
+In cases where the channel capacity cannot be accurately computed, the tool does not approximate safely.
 
-The run time of ApproxFlow was below 0,3s for all benchmarks. The run times were only minimally affected by the loop bound increase from 8 to 32. The complexity of the benchmarks had a greater influence on the run time. The longest run time had the \emph{Sum Query} benchmark. We suspect, this is due to the model counting process in the analysis, as we saw the same effect in QIFCI.
+The run time of ApproxFlow was below 0.3s for all benchmarks. The run times were only minimally affected by the loop bound increase from 8 to 32. The complexity of the benchmarks had a greater influence on the run time. The \emph{Sum Query} benchmark had the longest run time. We suspect, this is due to the model counting process in the analysis, as we saw the same effect in QIFCI.
 
-While in our evaluation the accuracy of ApproxFlow is quite low, this can be improved by increasing the loop bound. The run times suggest that even with a significantly higher bound, the execution would remain in an acceptable timeframe.
+The low accuracy of ApproxFlow in our analysis can be attributed to the loop bound being too low. Increasing the bound will improve the leakage estimate. The run times suggest that even with a significantly higher bound, the execution would remain in an acceptable time frame.
 
 \paragraph{Nildumu}
-All channel capacities computed by Nildumu are equal or greater than the exact channel capacity. Contrary to ApproxFlow, the approximation by the tool is thus safe.
+All channel capacities computed by Nildumu are equal or greater than the exact channel capacity, with the exception of the \emph{Masked Copy} benchmark, where Nildumu underestimated the leakage by one bit. We suspect that this is not due to the design of the analysis Nildumu does, but a problem in the implementation. For all other benchmarks, the approximation by the tool is safe.
 
-Inaccurate results occur for some benchmarks containing implicit flows: In the \emph{Implicit Flow} benchmark, the tool does not recognize that two of the branches output the same value. The benchmarks \emph{Sanity Check} and \emph{Sane Laundering} shoe the same issues.
+Inaccurate results occur for some benchmarks containing implicit flows: In the \emph{Implicit Flow} benchmark, the tool does not recognize that two of the branches output the same value. The benchmarks \emph{Sanity Check} and \emph{Sane Laundering} show the same issues.
 
 The run times of Nildumu were significantly higher than those of ApproxFlow. Increasing Nildumu's inlining bound does not affect the run time significantly.
 
@@ -73,50 +74,54 @@ The run time of QIFCI is highly vulnerable to increases in the analysis bounds u
 \paragraph{QIFCI-PP}
 Adding the static pre-processing to the configuration of QIFCI does not change the channel capacities that are computed.
 
-run times for the simple benchmarks were within a small range compared to the QIFCI configuration with the exception of the \emph{Table Lookup} benchmark. Run times for loop benchmarks and function / recursion benchmarks increased most of the time. The static bit analysis in the pre-processing cannot assign many constant values to variables inside loops. This decreases the performance gain during the later dependency analysis, while the overhead incurred by the pre-processing does not change significantly.
+Run times for the simple benchmarks were within a small range compared to the QIFCI configuration with the exception of the \emph{Table Lookup} benchmark, where the run time increased significantly. Run times for loop benchmarks and function/recursion benchmarks increased most of the time. The static bit analysis in the pre-processing cannot assign many constant values to variables inside loops. This decreases the performance gain during the later dependency analysis, while the overhead incurred by the pre-processing does not change significantly. 
 
-The only decrease in run time in the loop benchmarks can be found in \emph{Shift and Launder}. This benchmark deliberately includes computations inside a loop that are irrelevant for the output. Here the PDG Pruning based on the output's backward slice leads to a performance gain that outweighs additional run time required by the pre-processing.
+
+The only decrease in run time in the loop benchmarks can be found in \emph{Shift and Launder}. This benchmark deliberately includes computations inside a loop that are irrelevant to the output. Here the PDG Pruning based on the output's backward slice leads to a performance gain that outweighs the additional run time required by the pre-processing.
 
 \paragraph{QIFCI-H}
-The configuration of our tool including the pre-processing and the hybrid analysis was able to produce almost identical results as the other two configurations. The only change occurs in \emph{Sane Laundering}, where the analysis of QIFCI-H accurately returns a channel capacity of 4 for an iteration bound of 8. The other two QIFCI configurations recognized that there are program executions that do not adhere to the iteration bound of 8 and thus assumed that such executions could return arbitrary values. During the hybrid analysis, the sanity check part and the laundering part of the \emph{Sane Laundering} are analysed separately. The final channel capacity is 4, the channel capacity of the sanity check part.
+The configuration of our tool including the pre-processing and the hybrid analysis was able to produce almost identical results as the other two configurations. The only change occurs in \emph{Sane Laundering}, where the analysis of QIFCI-H accurately returns a channel capacity of 4 for an iteration bound of 8. The other two QIFCI configurations recognized that there are program executions that do not adhere to the iteration bound of 8 and thus assumed that such executions could return arbitrary values. During the hybrid analysis, the sanity check part and the laundering part of the \emph{Sane Laundering} are analyzed separately. The final channel capacity is 4, the channel capacity of the sanity check part.
 
-Run times for the simple benchmarks show no significant changes compared to the QIFCI-PP evaluation. Run times for the loop benchmarks were reduced significantly compared to QIFCI-PP run times, especially with a higher iteration bound. Since in the hybrid analysis loops and recursive functions are only analysed statically, the run time cost of adding more loop iterations / more recursion depth is almost completely eliminated. With the higher iteration bound, the QIFCI-H also executes faster than QIFCI for all loop benchmarks and one of the recursion benchmarks. Increases in run time from QIFCI to QIFCI-H are not significant compared to run time increases from increased analysis bounds or more complex benchmarks.
+Run times for the simple benchmarks show no significant changes compared to the QIFCI-PP evaluation. Run times for the loop benchmarks were reduced significantly compared to QIFCI-PP run times, especially with a higher iteration bound. Since in the hybrid analysis loops and recursive functions are only analyzed statically, the run time cost of adding more loop iterations / more recursion depth is almost completely eliminated. With the higher iteration bound, the QIFCI-H also executes faster than QIFCI for all loop benchmarks and one of the recursion benchmarks. Increases in run time from QIFCI to QIFCI-H are not significant compared to run time increases from increased analysis bounds or more complex benchmarks.
 
 \begin{figure}
 \begin{table}[H]
-\begin{tabular}{rr|rr|rr|rr}
-                                      & \textbf{}     & \multicolumn{2}{c|}{\textbf{ApproxFlow}}                 & \multicolumn{2}{c|}{\textbf{Nildumu}} & \multicolumn{2}{c}{\textbf{Flowcheck}} \\
-                                      & $CC$          & 8                      & 32                     & 8             & 32           & mc             & no mc         \\ \hline
-\multirow{2}{*}{Masked Copy}          &               & 0.16                   & 0.15                   & 5.23          & 5.20         &                &               \\
-                                      & \textbf{16}   & \textbf{16}            & \textbf{16}            & \textbf{15}   & \textbf{15}  & \textbf{}      & \textbf{}     \\ \hline
-\multirow{2}{*}{Sum Query}            &               & 0.30                   & 0.30                   & 5.24          & 5.40         &                &               \\
-                                      & \textbf{32}   & \textbf{32}            & \textbf{32}            & \textbf{32}   & \textbf{32}  &                &               \\ \hline
-\multirow{2}{*}{Sanity Check}         &               & 0.11                   & 0.12                   & 5.29          & 5.27         &                &               \\
-                                      & \textbf{4}    & \textbf{4}             & \textbf{4}             & \textbf{32}   & \textbf{32}  &                &               \\ \hline
-\multirow{2}{*}{Table Lookup}         &               & 0.13                   & 0.12                   & 5.94          & 5.92         &                &               \\
-                                      & \textbf{3}    & \textbf{3}             & \textbf{3}             & \textbf{3}    & \textbf{3}   &                &               \\ \hline
-\multirow{2}{*}{Implicit Flow}        &               & 0.12                   & 0.11                   & 5.46          & 5.33         &                &               \\
-                                      & \textbf{2.80} & \textbf{2.80}          & \textbf{2.80}          & \textbf{3}    & \textbf{3}   &                &               \\ \hline\hline
-\multirow{2}{*}{Parity}               &               & \multirow{2}{*}{\textit{error\footnotemark[2]}} & \multirow{2}{*}{\textit{error}\footnotemark[2]} & 6.72          & 6.63         &                &               \\
-                                      & \textbf{1}    &                        &                        & \textbf{1}    & \textbf{1}   &                &               \\ \hline
-\multirow{2}{*}{Laundering Attack}    &               & 0.11                   & 0.13                   & 6.50          & 6.40         &                &               \\
-                                      & \textbf{32}   & \textbf{3}             & \textbf{5}             & \textbf{32}   & \textbf{32}  &                &               \\ \hline
-\multirow{2}{*}{Shift and Launder}    &               & 0.11                   & 0.19                   & 7.66          & 7.01         &                &               \\
-                                      & \textbf{32}   & \textbf{3}             & \textbf{5}             & \textbf{32}   & \textbf{32}  &                &               \\ \hline
-\multirow{2}{*}{Masked Laundering}    &               & 0.14                   & 0.17                   & 7.57          & 8.49         &                &               \\
-                                      & \textbf{31}   & \textbf{2.31}          & \textbf{4.08}          & \textbf{32}   & \textbf{32}  &                &               \\ \hline
-\multirow{2}{*}{Sane Laundering}      &               & 0.16                   & 0.20                   & 7.82          & 7.61         &                &               \\
-                                      & \textbf{4}    & \textbf{2.32}          & \textbf{4}             & \textbf{32}   & \textbf{32}  &                &               \\ \hline\hline
-\multirow{2}{*}{Recursive Laundering} &               & 0.12                   & 0.23                   & 5.62          & 5.61         &                &               \\
-                                      & \textbf{32}   & \textbf{3.16}          & \textbf{5.04}          & \textbf{32}   & \textbf{32}  &                &               \\ \hline
-\multirow{2}{*}{Call Mask}            &               & 0.24                   & 0.24                   & 5.54          & 5.41         &                &               \\
-                                      & \textbf{28}   & \textbf{28}            & \textbf{28}            & \textbf{28}   & \textbf{28}  &                &               \\ \hline
-\multirow{2}{*}{Dead Recursion}       &               & \multirow{2}{*}{\textit{error}} & \multirow{2}{*}{\textit{error}} & 6.60          & 6.60         &                &               \\
-                                      & 0             &                        &                        & 0             & 0            &                &              
+\centering
+\begin{tabular}{rr|rr|rr}
+                                      & \textbf{}     & \multicolumn{2}{c|}{\textbf{ApproxFlow}}                 & \multicolumn{2}{c}{\textbf{Nildumu}}  \\
+                                      & $CC$          & 8                      & 32                     & 8             & 32                   \\ \hline
+\multirow{2}{*}{Masked Copy}          &               & 0.16                   & 0.15                   & 5.23          & 5.20                       \\
+                                      & \textbf{16}   & \textbf{16}            & \textbf{16}            & \textbf{15}   & \textbf{15}       \\ \hline
+\multirow{2}{*}{Sum Query}            &               & 0.30                   & 0.30                   & 5.24          & 5.40                        \\
+                                      & \textbf{32}   & \textbf{32}            & \textbf{32}            & \textbf{32}   & \textbf{32}                 \\ \hline
+\multirow{2}{*}{Sanity Check}         &               & 0.11                   & 0.12                   & 5.29          & 5.27                        \\
+                                      & \textbf{4}    & \textbf{4}             & \textbf{4}             & \textbf{32}   & \textbf{32}                \\ \hline
+\multirow{2}{*}{Table Lookup}         &               & 0.13                   & 0.12                   & 5.94          & 5.92                        \\
+                                      & \textbf{3}    & \textbf{3}             & \textbf{3}             & \textbf{3}    & \textbf{3}                 \\ \hline
+\multirow{2}{*}{Implicit Flow}        &               & 0.12                   & 0.11                   & 5.46          & 5.33                        \\
+                                      & \textbf{2.80} & \textbf{2.80}          & \textbf{2.80}          & \textbf{3}    & \textbf{3}                  \\ \hline\hline
+\multirow{2}{*}{Parity}               &               & \multirow{2}{*}{\textit{error\footnotemark[2]}} & \multirow{2}{*}{\textit{error}\footnotemark[2]} & 6.72          & 6.63       \\
+                                      & \textbf{1}    &                        &                        & \textbf{1}    & \textbf{1}                  \\ \hline
+\multirow{2}{*}{Laundering Attack}    &               & 0.11                   & 0.13                   & 6.50          & 6.40                        \\
+                                      & \textbf{32}   & \textbf{3}             & \textbf{5}             & \textbf{32}   & \textbf{32}                 \\ \hline
+\multirow{2}{*}{Shift and Launder}    &               & 0.11                   & 0.19                   & 7.66          & 7.01                        \\
+                                      & \textbf{32}   & \textbf{3}             & \textbf{5}             & \textbf{32}   & \textbf{32}                \\ \hline
+\multirow{2}{*}{Masked Laundering}    &               & 0.14                   & 0.17                   & 7.57          & 8.49                        \\
+                                      & \textbf{31}\footnotemark[3]   & \textbf{2.31}          & \textbf{4.08}          & \textbf{32}   & \textbf{32}                 \\ \hline
+\multirow{2}{*}{Sane Laundering}      &               & 0.16                   & 0.20                   & 7.82          & 7.61                        \\
+                                      & \textbf{4}    & \textbf{2.32}          & \textbf{4}             & \textbf{32}   & \textbf{32}                 \\ \hline\hline
+\multirow{2}{*}{Recursive Laundering} &               & 0.12                   & 0.23                   & 5.62          & 5.61                        \\
+                                      & \textbf{32}   & \textbf{3.16}          & \textbf{5.04}          & \textbf{32}   & \textbf{32}                \\ \hline
+\multirow{2}{*}{Call Mask}            &               & 0.24                   & 0.24                   & 5.54          & 5.41                        \\
+                                      & \textbf{28}   & \textbf{28}            & \textbf{28}            & \textbf{28}   & \textbf{28}                 \\ \hline
+\multirow{2}{*}{Dead Recursion}\footnotemark[4]       &               & 0.12                   & 0.14                   & 6.60          & 6.60     \\
+                                      & \textbf{0}    & \textbf{0}                      & \textbf{0}                      & \textbf{0 }            & \textbf{0}                        
 \end{tabular}
-\caption{Results for ApproxFlow, Nildumu and Flowcheck. The column $CC$ shows the channel capacity. For each benchmark we show the calculated channel capacity and the average run time.}\label{tab:othertools}
+\caption{Results for ApproxFlow, Nildumu, and Flowcheck. The column $CC$ shows the channel capacity. For each benchmark, we show the calculated channel capacity and the average run time.}\label{tab:othertools}
 \end{table}
-{\footnotesize $^2$ ApproxFlow crashed when trying to execute the benchmark with the given loop unwinding bounds. Increasing the bound to $> 32$ fixed the error.}
+{\footnotesize $^2$ ApproxFlow crashed when trying to execute the benchmark with the given loop unwinding bounds. Increasing the bound to $> 32$ fixed the error.}\\
+{\footnotesize $^3$ The exact value of the channel capacity is $\log_2 (2^{31} + 1) \approx 31$.}\\
+{\footnotesize $^4$ ApproxFlow crashes after correctly recognizing that the leaked value is constant.}
 \end{figure}
 
 \begin{figure}
@@ -141,7 +146,7 @@ Run times for the simple benchmarks show no significant changes compared to the 
 \multirow{2}{*}{Shift and Launder}    &              & 7.44         & \multicolumn{1}{r|}{19.36}        & 9.25         & \multicolumn{1}{r|}{17.86}        & 9.44              & 8.79             \\
                                       & \textbf{32}  & \textbf{32}  & \multicolumn{1}{r|}{\textbf{32}}  & \textbf{32}  & \multicolumn{1}{r|}{\textbf{32}}  & \textbf{32}       & \textbf{32}      \\ \hline
 \multirow{2}{*}{Masked Laundering}    &              & 6.70         & \multicolumn{1}{r|}{10.95}        & 8.34         & \multicolumn{1}{r|}{12.67}        & 8.71              & 8.52             \\
-                                      & \textbf{31}\footnotemark[3]  & \textbf{31}  & \multicolumn{1}{r|}{\textbf{31}}  & \textbf{31}  & \multicolumn{1}{r|}{\textbf{31}}  & \textbf{31}       & \textbf{31}      \\ \hline
+                                      & \textbf{31}\footnotemark[5]  & \textbf{32}  & \multicolumn{1}{r|}{\textbf{32}}  & \textbf{32}  & \multicolumn{1}{r|}{\textbf{32}}  & \textbf{32}       & \textbf{32}      \\ \hline
 \multirow{2}{*}{Sane Laundering}      &              & 12.48        & \multicolumn{1}{r|}{35.85}        & 14.53        & \multicolumn{1}{r|}{37.79}        & 9.65              & 10.30            \\
                                       & \textbf{4}   & \textbf{32}  & \multicolumn{1}{r|}{\textbf{4}}   & \textbf{32}  & \multicolumn{1}{r|}{\textbf{4}}   & \textbf{4}        & \textbf{4}       \\ \hline\hline
 \multirow{2}{*}{Recursive Laundering} &              & 6.01         & \multicolumn{1}{r|}{10.36}        & 7.76         & \multicolumn{1}{r|}{12.08}        & 7.88              & 7.80             \\
@@ -153,27 +158,27 @@ Run times for the simple benchmarks show no significant changes compared to the 
 \end{tabular}
 \caption{Results for the 3 benchmarked configurations of QIFCI. The analysis doesn't include the execution of the program and the computation of the dynamic leakage.}\label{tab:qifcicc}
 \end{table}
-{\footnotesize $^3$ The exact value of the channel capacity is $\log_2 (2^{31} + 1) \approx 31$.}
+{\footnotesize $^5$ The exact value of the channel capacity is $\log_2 (2^{31} + 1) \approx 31$.}
 \end{figure}
 
 \subsection{Hybrid Analysis}
-Table \ref{tab:time} shows the changes in run time between QIFCI and QIFCI-H divided into the tools different analysis stages. The stages are described in \ref{ch:impl}.
+Table \ref{tab:time} shows the changes in run time between QIFCI and QIFCI-H divided into the tools' different analysis stages. The stages are described in section \ref{ch:impl}.
 
 \paragraph{Build Stage}
 The \emph{Build} stage is not affected by the hybrid analysis. As expected the run times for both configurations are within a normal range of variance to each other.
 
 \paragraph{Pre-Processing Stage and Dependency Analysis stage}
-The evaluation of the pre-processing stage shows that the loop benchmark as well as the \emph{Table Lookup} benchmark need the most time. This corresponds with Nildumu needing the longest time for these benchmarks. The only benchmark where this correlation doesn't hold is the \emph{Table Lookup} benchmark.
+The evaluation of the pre-processing stage shows that the loop benchmarks, as well as the \emph{Table Lookup} benchmark, need the most time. This corresponds with Nildumu having the longest run time for these benchmarks. The only benchmark where this correlation doesn't hold is the \emph{Table Lookup} benchmark. 
 
-The run time needed for the \emph{Dependency Analysis} stage was decreased by the pre-processing in every case, however for most benchmarks the decrease is not significant and most likely due to normal variances in run time.
+The run time needed for the \emph{Dependency Analysis} stage was decreased by the pre-processing in every case, however, for most benchmarks the decrease is not significant and most likely due to normal variances in run time.
 
 \paragraph{Hybrid Analysis Stage}
-During the \emph{Hybrid Analysis} stage simple benchmarks. R that contain no control flow structures that are handled by the hybrid analysis, are not significantly affected in their run time by enabling the hybrid analysis. The computation of the channel capacity is decreased significantly for the benchmarks \emph{Laundering}, \emph{Shift and Launder}, \emph{Masked Laundering} and \emph{Sane Laundering}. In part this is due to the reduced run time of ApproxMC, the biggest decrease however is seen in the rest of the \emph{Hybrid Analysis} stage, where the formula for the model counter is generated from the dependency vectors and turned into CNF.
+During the \emph{Hybrid Analysis} stage simple benchmarks, that contain no control flow structures that are handled by the hybrid analysis, are not significantly affected in their run time by enabling the hybrid analysis. The computation of the channel capacity is decreased significantly for the benchmarks \emph{Laundering}, \emph{Shift and Launder}, \emph{Masked Laundering} and \emph{Sane Laundering}. In part this is due to the reduced run time of ApproxMC, the biggest decrease, however, is seen in the rest of the \emph{Hybrid Analysis} stage, where the formula for the model counter is generated from the dependency vectors and turned into CNF.
 
 \paragraph{Execution Stage}
 The \emph{Execution} stage for simple benchmarks is not greatly affected by thy hybrid analysis. The loop benchmarks that benefited from the hybrid analysis during the \emph{Hybrid Analysis} stage show a drastic increase in run time during the \emph{Execution stage}. The analysis of the channel capacity and the dynamic leakage are based on the same propositional formulas. The effort that was saved in earlier stages (loop unrolling, recursive function inlining) has to be put into the formula generation for the dynamic leakage computation. The benchmark \emph{Masked Laundering} and \emph{Sane Laundering} have similar total run times for both configurations. The distribution of the run time is shifted towards the \emph{Execution} stage if the hybrid analysis is employed.
 
-The benchmark \emph{Shift and Launder} is the only benchmark with a significant overall decrease in run time. This is due to this benchmark being the only one, that contains computations that don't influence the output, thereby being the only benchmark that considerably benefits from the PDG pruning in the pre-analysis.
+The benchmark \emph{Shift and Launder} is the only benchmark with a significant overall decrease in run time. This is due to this benchmark being the only one that contains computations that don't influence the output, thereby being the only benchmark that considerably benefits from the PDG pruning in the pre-analysis.
 
 \begin{figure}
 \begin{table}[H]
@@ -212,6 +217,8 @@ The benchmark \emph{Shift and Launder} is the only benchmark with a significant 
 \end{table}
 {\footnotesize $^4$ The tool could execute the analysis until the invocation of ApproxMC for the determination of the dynamic analysis was completed. The ApproxMC output was written to a file in the output directory. QIFCI timed out afterwards due to buffering issues.}
 \end{figure}
+
+
 \subsection{Dynamic Leakage}
 Table \ref{tab:dLeak} shows the dynamic leakage that we computed for the benchmarks with certain selected inputs. We chose inputs that represent different equivalence classes regarding the indistinguishability relation.
 
@@ -220,13 +227,13 @@ We used the QIFCI configuration to compute the dynamic leakages. The computed le
 For many benchmarked executions, the computed dynamic leakage by QIFCI is equal to the true dynamic leakage of the given program and input. Cases where the two values differ can be divided into two categories:
 
 \begin{enumerate}
-    \item \emph{Differences due to approximated model counting} The model counter ApproxMC is not able to compute a precise model count for every benchmark execution. This case occurs for cases where the number of models is close to, but not equal to, the number of possible inputs. The approximation by ApproxMC leads to an inaccurate dynamic leakage. This can lead to unsafe underapproximations of the leaked information. In our benchmarks underapproximations happened for certain 32 bit width execution of the benchmarks \emph{Sanity Check}, \emph{Table Lookup} and \emph{Implicit Flow}. However the error in the computed dynamic leakage for these benchmarks is small enough to not pose a safety risk.
-    \item \emph{Differences due to approximated loop and recursion formulas} The propositional formulas generated during the analysis include restrictions for the inputs values. Input values that require more loop iterations /recursive calls than the chosen bound allows, are generally treated as belonging to a different indistinguishability set than the examined input. This leads to rather gross approximations where the number of loop iterations of a program execution is often greater than the iteration bound. The effect is visible in the benchmark results of the programs \emph{Parity} and \emph{Masked Laundering}.
+    \item \emph{Differences due to approximated model counting}:\\The model counter ApproxMC is not able to compute a precise model count for every benchmark execution. This case occurs for cases where the number of models is close to, but not equal to, the number of possible inputs. The approximation by ApproxMC leads to an inaccurate dynamic leakage. Since ApproxMC does not guarantee whether the result is an over- or an under-approximation, this could lead to unsafe under-approximations of the leaked information. However, the error in the computed dynamic leakage for these benchmarks is small enough to not pose a safety risk.
+    \item \emph{Differences due to approximated loop and recursion formulas}:\\The propositional formulas generated during the analysis include restrictions for the inputs values. Input values that require more loop iterations /recursive calls than the chosen bound allows, are generally treated as belonging to a different indistinguishability set than the examined input. This leads to rather loose approximations where the number of loop iterations of a program execution is often greater than the iteration bound. The effect is visible in the benchmark results of the programs \emph{Parity} and \emph{Masked Laundering}.
 \end{enumerate}
 
-Table \ref{tab:dLeakTime} shows the average run time of the benchmark evaluations. The run times are very sensitive to increases in bit width and analysis bounds. The results however do not show a dependency of the run time on the specific input for which the dynamic leakage is computed.
+Table \ref{tab:dLeakTime} shows the average run time of the benchmark evaluations. The run times are very sensitive to increases in bit width and analysis bounds. The results, however, do not show a dependency of the run time on the specific input for which the dynamic leakage is computed.
 
-The benchmark executions for the \emph{Sum Query} benchmark on 32 bit integers timed out after 30min during the ApproxMC computation. We assume the difficulty arises from the high number of models ($2^32$) in combination with the long formulas that are necessary to represent two additions with a total of $96$ variables.
+The benchmark executions for the \emph{Sum Query} benchmark on 32 bit integers timed out after 30min after the ApproxMC invocation finished. The time-out is most likely the reult of buffering issues. We assume the difficulty arises from the high number of models ($2^{32}$) in combination with the long formulas that are necessary to represent two additions with a total of $96$ variables.
 
 
 \begin{table}[]
@@ -293,4 +300,4 @@ Dead Recursion                     & 0       & 4.66             & 4.64          
 
 \section{Conclusion}
 In our evaluation QIFCI and Nildumu were the only tools that returned safe approximations of the channel capacity for all benchmarked programs.
-The accuracy of QIFCI (in the configuration without pre-processing and without hybrid analysis) was thereby generally better than Nildumu's: We achieved a better approximation of the channel capacity for the benchmarks \emph{Sanity Check}, \emph{Implicit Flow} and \emph{Sane Laundering} (loop bound = 32). The improvements stem from a better handling of implicit flows in QIFCI than in the static analysis by Nildumu.
+The accuracy of QIFCI (in the configuration without pre-processing and without hybrid analysis) was hereby generally better than Nildumu's: We achieved a better approximation of the channel capacity for the benchmarks \emph{Sanity Check}, \emph{Implicit Flow} and \emph{Sane Laundering} (loop bound = 32). The improvements stem from a better handling of implicit flows in QIFCI than in the static analysis that Nildumu uses.

@@ -1,0 +1,135 @@
+\chapter{Proof for Theorem \ref{eq:ev}}\label{ch:evProof}
+
+We proof the equivalence theorem, that is introduced in section \ref{sec:design}:
+
+\begin{theorem*}[Equivalence Theorem]
+    Given an input value $h \in \mathcal{H}$ for the program $p$, let $v$ be an arbitrary value in the program $p$. The relation between the dependency vector and the execution value of v is given by:
+    \begin{center}
+        $\forall 0 \leq i < w: \mathcal{V}_h(dVec(v)^i) \iff \llbracket p \rrbracket_h (v)^i$
+    \end{center}
+\end{theorem*}
+
+To prove the theorem, we need to prove the correctness of the definition of $\me{\cdot}$ (\ref{def:exprEval}) as well as the correctness of the definition of $exec(\cdot)$ (\ref{def:exec}).
+
+\paragraph{Assumptions}
+We assume that all expressions in the program $p$ contain at most one operator. The operands of the operator are constant values or variable / parameter accesses. Nested expressions are split: The inner expressions are assigned to new values which in turn are used as the operands for the outer expression.
+
+\paragraph{Proof Structure}
+The proof will be organised as three nested inductions. The outermost induction is a structural induction over the program p. The base case are linear programs, that contain no diverging control flow structures.
+
+We will use an induction over the basic blocks of $p$ to prove the hypothesis holds for linear programs. For each step in the induction, we show that the theorem holds via an induction over the definition of $\me{\cdot}$ and a proof that the edge notations $follow(e)$ and the execution condition $exec(\cdot)$ are correct.
+
+From the base case of linear programs, we will prove in the induction step, that the theorem holds for programs containing \texttt{if}-statements. This again will be done by an induction over the basic blocks of the program in question.
+
+\section*{Structural Induction over the Program $p$}
+
+\paragraph{Hypothesis}
+Let $p$ be a loop-free program that consists of a single function. Then, for every basic block $b \in \mbb_p$, the following statements hold:
+\begin{enumerate}
+    \item[H.1] $\mathcal{V}_h(exec(b)) = \mttt \iff \text{b is executed in the execution with input $h$}$
+    \item[H.2] For all values defined in $b$, theorem \ref{thm:equiv} is fulfilled
+    \item[H.3] For all outgoing edges $e$ of $b$,\\ $\mathcal{V}_h(follow(e)) = \mttt \iff \text{The execution with input $h$ follows the edge $e$}$
+\end{enumerate}
+
+\subsection*{Base Case: Linear Programs}
+Let $p$ be a linear program, i.e. a program without diverging control flow structures. Such a program will consist of a $\texttt{start}$ block, a block $b$ containing all program statements and an \texttt{end} block. $b$'s only predecessor is \texttt{start} and its only successor is \texttt{end}.
+
+\subsubsection{Induction over $p$}
+\paragraph{Base Case}
+Let $b = \mathtt{start}$. Per definition, $exec(\mathtt{start}) = \mttt$. Since the start block is executed, independent of the input, H.1 holds.
+
+The basic block \texttt{start} does not contain any statements, hence H.2 holds trivially.
+
+\texttt{Start} has a single successor. For the edge $e$ that connects \texttt{start} to its successor, $follow(e) = \mttt$. H.3 holds, since every execution follows the edge $e$.
+
+\paragraph{Induction Hypothesis}
+Let $b \in \mbb_p$ be an arbitrary basic block of the program $p$. We assume that for all basic blocks that might precede $b$ in an execution, the statements H.1, H.2 and H.3 hold.
+
+\paragraph{Induction Step}
+We show that H.1, H.2 and H.3 hold for the block $b \in \mbb_p$, if the induction hypothesis is fulfilled.
+
+Because $p$ is a linear program, $b$ has a single predecessor. Let $b'$ be this predecessor. At the same time, $b$ is the only successor of $b'$. Thus, $follow((b', b)) = \mttt$ and $exec(b) = exec(b') \land \mttt$. Since $exec(b')$ is correct due to the induction hypothesis and $b$ will be executed iff $b'$ is executed (because it is the only successor),  H.1 holds for the block $b$.
+
+We prove the statement H.2 by induction over the definition of $\me{\cdot}$. Let $v \in \val_p$ be an arbitrary value in $p$, that is defined by the statement $v \leftarrow e$.
+
+\subparagraph{Base Case}
+\begin{itemize}
+    \item $e := n, \quad n \in \mathbb{Z} \implies v_h = bv(n)$\\
+    Per definition $\mathcal{E}(e) = bv(n)$. Thus $\forall 0 \leq i < w: \mathcal{V}_h(\mathcal{E}(e))^i \iff v_h^i$
+    
+    \item $e := \mIn \implies v_h = bv(h)$\\
+    Per definition $\mathcal{E}(e) = \var(h)$ and $\mathcal{V}_h(\var(h)) = bv(h)$. Thus\\ $\forall 0 \leq i < w: \mathcal{V}_h(\mathcal{E}(e))^i \iff v_h^i$
+    
+\end{itemize}
+
+\subparagraph{Induction Hypothesis}
+    Let theorem \ref{thm:equiv} be true for every value $v'$ that appears in the expression $e$.
+    
+\subparagraph{Induction Step}
+\begin{itemize}
+    \item $e := v', \quad v' \in \val_p \implies v_h = \llbracket p \rrbracket_h (v')$\\
+    For all inputs $h \in \mathcal{H}$, $\mathcal{V}_h(v) = \mathcal{V}_h(v') \stackrel{I.H.}{=} \llbracket p \rrbracket_h(v') \stackrel{v := v'}{=} \llbracket p \rrbracket_h(v)$
+    \item $e := \hat{e} \oplus \tilde{e}$ / $ e := \oplus \hat{e}$ for a bitwise or arithmetic operator $\oplus$\\
+    The function $\me{\cdot}$ is defined by the boolean algebra definitions of the operators. The correctness of the theorem \ref{thm:equiv} follows from the equivalence of the evaluation of boolean algebra and propositional logic.
+\end{itemize}
+Thus, theorem \ref{thm:equiv} holds for the value $v$ and H.2 is fulfilled for the block $b$.
+
+Finally, H.3 is fulfilled for the basic block $b$, because $b$ has at most one outgoing edge $e$. If $b$ is the \texttt{end}-block, $b$ has no outgoing edges and H.3 is trivially fulfilled. If $b$ has one outgoing edge $e$, $follow(e) = \mttt$. H.3 holds, because very execution must follow $e$, since there are no other possibilities to continue the execution otherwise.\\[1em]
+
+\paragraph{Conclusion}
+For every linear program $p$, all basic blocks fulfill the statements H.1, H.2 and H.3.
+
+\subsection*{Induction Hypothesis}
+Due to the prerequisite of $p$ being loop-free and consisting of only a single function, the only control-flow structure we need to address in the induction are conditional statements. These can appear linearly in the program $p$ or nested inside one another.
+
+Let $p$ be an arbitrary program that contains a conditional statement. Let $b_{split}$ be the basic block, where the conditional statements splits the control flow into two separate paths and let $b_{join}$ be the basic block where these two paths merge back together. The conditional statement does not contain any further conditional statements inside it.
+
+Let $\mbb_{before} \subseteq \mbb_p$ be the set of blocks that might precede $\splitt$ in an execution of $p$, $\mbb_{during} \subseteq \mbb_p$ the set of basic blocks between $\splitt$ and $\join$ and $\mbb_{after} \subseteq \mbb_p$ the set of basic blocks that succeed $\join$ in an execution of $p$.
+
+\paragraph{Hypothesis}
+Let, for the program structure that be obtain if we remove $\mbb_{during}$ from the program $p$ and connect $\splitt$ and $\join$ by a single edge, the proof hypothesis be true.
+
+\subsection*{Induction Step}
+We show, that for all basic blocks in the program $p$, the statements H.1, H.2 and H.3 are true. We prove this by an induction over the basic blocks of $p$:
+
+\subsubsection{Base Case}
+The base case is the same as in the case of linear programs.
+
+\subsubsection{Induction Hypothesis}
+Let $b \in \mbb_p$ be an arbitrary basic block of the program $p$. We assume that for all basic blocks that might precede $b$ in an execution, the statements H.1, H.2 and H.3 hold.
+
+\subsubsection{Induction Step}
+We show that H.1, H.2 and H.3 hold for the block $b \in \mbb_p$, if the induction hypothesis is fulfilled.
+
+We consider the following cases:
+\begin{enumerate}
+    \item $b \in \mbb_{before}$\\
+    We know from the induction hypothesis, that we can build a program that contains the blocks $\mbb_{before}$ and that fulfills the proof hypothesis. Thus, for this program, the blocks in $\mbb_{before}$ all fulfill H.1, H.2 and H.3.
+    Because for every basic block, the conditions H.1, H.2 and H.3 only depend on the block itself and its predecessors, they are still fulfilled in the program $p$.
+    \item $b = \splitt$
+    \begin{itemize}
+        \item[H.1] If the block $\splitt$ is executed, then one of its predecessors $b'$ must have been executed before, followed by a transfer of the control flow via the edge $(b', b)$. Hence $exec(b') \land follow((b', b)) = \mttt$. Thus, by definition, $exec(b) = \mttt$. If on the other hand $exec(b):= \bigvee\limits_{b' \in pred(b)} (exec(b') \land follow((b', b))) = \mttt$, then there must a exist a predecessor $b'$ for which \\$exec(b') \land follow((b', b) = \mttt$. Per the induction hypothesis, this implies that $b'$ will be executed and the execution will follow the edge $(b', b)$. Thus $b$ will be executed as well.
+        \item[H.2] That the condition H.2 holds for the block $\splitt$ can be proven with the same induction as in the base case.
+        \item [H.3] Since the block $b$ splits the control flow, its outgoing edges are going to be annotated with the condition of the conditional jump. Let $e$ be the expression of the condition for the jump from $b$ to $b'$. If $e := \mttt$ or $e := \mfff$ then H.3 certainly holds. If $e := v_1 \simeq v_2$ for some comparison operator $\simeq$, then:
+        $\me{e} := dVec(v_1) \simeq dVec(v_2)$. We have already shown that H.2 holds for $v_1$ and $v_2$. Due to the equivalence of comparison operators in binary and propositional logic, H.3 holds for $\splitt$.
+    \end{itemize}
+    
+    \item $b \in \mbb_{during}$\\
+    The branches of the conditional statement are linear program segments according to the prerequisites. Thus $b$ has one predecessor and one successor. We can prove that H.1, H.2 and H.3 hold, using the same arguments as in the base case for linear programs.
+    
+    \item $b = \join$\\
+    \begin{itemize}
+        \item[H.1] analog to $b = \splitt$
+        \item[H.2] Let $v$ be an arbitrary value that is defined in $\join$ and let $v$ be defined by the expression $e$. We prove H.2 via an induction over the expression $e$. The induction is mostly analog to the induction done in the base case for linear programs. It is only left to prove that the condition H.2 holds, if $e := \phi(v_1, v_2)$.
+        
+        Let $e := \phi(v_1, v_2)$ and let $b_1, b_2$ be the first and second predecessor of $\join$. Then $dVec(v) := \mathbb{IF}(exec(b), v_1, v_2)$.
+        
+        Let $h \in \mathcal{H}$ be an input for which the block $\join$ is executed. Then one of the blocks $b_1, b_2$ must have been executed as well. Note that $exec(b_1) \not\iff exec(b_2)$. Let without loss of generality $exec(b_1) = \mttt$. Then:\\ $\mathcal{V}_h(dVec(v)) = \mathcal{V}_h(v_1) \stackrel{H.I}{\iff} \llbracket p \rrbracket_h (v_1) = \llbracket p \rrbracket_(v)$. 
+        \item[H.3] analog to base case
+    \end{itemize}
+    \item $b \in \mbb_{after}$\\
+    analog to case $b \in \mbb_{before}$
+    \item otherwise\\
+    If $b$ doesn't fall into one of the other cases, then it is a block inside a conditional statement, where the other branch of the conditional statement contains the blocks $\splitt, \mbb_{during},$ and $\join$. Since the two branches of a conditional statement cannot both be executed at the same time, their computations do not influence each other.
+    Therefore we can prove the hypothesis holds analog to the cases $b \in \mbb_{before}$ and $b \in \mbb_{after}$.
+\end{enumerate}

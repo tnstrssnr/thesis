@@ -187,6 +187,7 @@
 \usepackage{multirow}
 \usepackage{graphics}
 \usepackage{tablefootnote}
+\usepackage{multicol}
 
 
 %%% environments
@@ -198,6 +199,7 @@
 \theoremstyle{break}
 \newtheorem{definition}{Definition}[section]
 \newtheorem{theorem}{Theorem}[chapter]
+\newtheorem*{theorem*}{Theorem}
 \newtheorem{lemma}[theorem]{Lemma}
 
 %%% pseudocode settings
@@ -237,6 +239,10 @@
 \newcommand{\func}{\mathtt{Func}_p}
 \newcommand{\stmts}{\mathtt{Stmts}}
 \newcommand{\expr}{\mathtt{Expr}}
+\newcommand{\me}[1]{\mathcal{E}(#1)}
+\newcommand{\join}{b_{join}}
+\newcommand{\splitt}{b_{split}}
+\newcommand{\rec}{r_{rec}}
 
 \definecolor{light-gray}{gray}{0.7}
 

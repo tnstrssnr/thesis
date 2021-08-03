@@ -4,26 +4,26 @@ This chapter presents the theoretical background of this thesis. We will explain
 
 \section{Quantitative Information Flow Control}
 
-Information flow control aims to guarantee the confidentiality of the secret input data of a program, by examining the flow of information through the program to public output channels, where the information would become accessible to an attacker.
+Information flow control aims to guarantee the confidentiality of the secret input data of a program, by examining the flow of information through the program to public output channels, where the information becomes accessible to an attacker.
 
 There are different ways in which such information leakage might happen: Explicit information flows are a consequence of data dependencies. They occur for example when a secret value is written to a public channel or the information is copied to another variable that is later leaked to a public channel. An example of a program is shown in figure \ref{fig:exEx}. Implicit information flows are caused by control dependencies. Leaks through implicit flows happen when secret values affect the program's output by influencing the execution path. Figure \ref{fig:ifEx} shows a program that contains an implicit flow. The program never assigns a secret value to an output variable. However, through the condition of the if-statement, the secret still influences the output value. 
 Additional to explicit and implicit flows, an attacker could gain information through covert channels by observing a program's usage of different resources, such as time or memory \cite{smith07}.
 
 The aim of qualitative information flow control is to prove the absence of explicit and implicit information flows, a property called \emph{non-interference}. For real-world applications, leaking a certain amount of information is often required to build useful programs. In this case, the non-interference property is too strict. Instead, we wish to limit the amount of information that is leaked. Quantitative information flow control provides tools to measure how much information can be learned by an attacker about a program's secret inputs \cite{smith09}.
 
-The central question of QIFC is: Given a program \p that accepts some input \In and produces some output \Out, how much information can an adversary \A learn about \In, if he knows the program \p and observes \Out?
+The central question of QIFC is: Given a program \p that accepts some input \In and produces some output \Out, how much information can an adversary \A{} learn about \In, if he knows the program \p and observes \Out?
 
 We will use the following assumptions for \p and \A:
 
-\paragraph{Input program}\label{p:input} We assume \p to be a sequential, deterministic program, that receives an input $\mIn$ and produces an output $\mOut$. Both the input and output can be tuples that consist of multiple values. The concrete input and output values of a single execution are called $h$ and $l$. The input $h$ is an element of the set of all possible inputs for a program $mIn$. We assume that all program executions terminate.
+\paragraph{Input program}\label{p:input} We assume \p to be a sequential, deterministic program that receives an input $\mIn$ and produces an output $\mOut$. Both the input and output can be tuples that consist of multiple values. The concrete input and output values of a single execution are called $h$ and $l$. The input $h$ is an element of the set $\mathcal{H}$ of all possible inputs for a program. We assume that all program executions terminate.
 
-Because the programs we consider are deterministic, each program $p$ and input value $h$ induces a mapping $\llbracket p \rrbracket_h: \{\mOut\} \longrightarrow \mathcal{L}$, where $\mathcal{L}$ is the set of all possible outputs of the program. The set $\mathcal{L}$ is determined by $p$ and $\mIn$ via the equation $\mathcal{L} := \{\llbracket p \rrbracket_h(\mOut) \: | \: h \in \mIn \}$
+Because the programs we consider are deterministic, each program $p$ and input value $h$ induces a mapping from the input value to the output value of the program. We write $\llbracket p \rrbracket_h(\mOut)$ for the output value from the execution with $h$. $\mathcal{L}$ is the set of all possible outputs of the program. The set $\mathcal{L}$ is determined by $p$ and $\mIn$ via the equation $\mathcal{L} := \{\llbracket p \rrbracket_h(\mOut) \: | \: h \in \mathcal{H} \}$
 
-For a more detailed description of the input language we used, we refer to \ref{sec:inputLang}.
+For a more detailed description of the input language we use, we refer to \ref{sec:inputLang}.
 
 \paragraph{Security Lattice} Input and output variables are associated with an element of a security lattice, describing its confidentiality level. We use a lattice with two elements: $\hat{l}$ for public values and $\hat{h}$ for secret values. If not otherwise specified, we consider all inputs to be secret and all outputs to be public.
 
-\paragraph{Attacker Model} We consider an adversary \A that knows the source code of the program \p and observes all outputs with a security level $\hat{l}$ after the execution is finished. The input value for an execution is chosen based on an underlying probability distribution. The distribution is known to the adversary.
+\paragraph{Attacker Model} We consider an adversary \A that knows the source code of the program \p{} and observes all outputs with a security level $\hat{l}$ after the execution has finished. The input value for an execution is chosen based on an underlying probability distribution. The distribution is known to the adversary.
 
 We assume that the attacker is not able to extract any information through covert channels. The goal of the attacker is to guess the secret input of the program, using the information he can extract through observing the program's output.
 
@@ -73,10 +73,10 @@ Smith \cite{smith09} characterizes information leakage with the following inform
 In our scenario, the unknown value \In is the initial uncertainty, measured by some entropy measure. The remaining uncertainty is the entropy of \In after observing \Out.
 
 \paragraph*{Measuring Leakage with Vulnerability}
-A widely used measure for information leakage is \emph{min-entropy}, which is based on vulnerability. Following the definitions from \cite{smith09}, the vulnerability of a value $X$ describes \enquote{the worst case probability that an adversary could guess the value of $X$ in one try.}
+A widely used measure for information leakage is \emph{min-entropy}, which is based on vulnerability. The vulnerability of a value $X$ describes \enquote{the worst case probability that an adversary could guess the value of $X$ in one try} \cite{smith09}. If no other references are given, we follow the definitions from \cite{smith09} in this section.
 
 \begin{definition}[Vulnerability and Min-Entropy]\label{def:vul}
-    Let $X$ be a random variables and $\mathcal{X}$ the set of possible values for $X$. The \emph{vulnerability} $V(X)$ is defined as
+    Let $X$ be a random variable and $\mathcal{X}$ the set of possible values for $X$. The \emph{vulnerability} $V(X)$ is defined as
     \begin{center}
         $V(X) := \max\limits_{x \in \mathcal{X}} P[X = x]$
     \end{center}
@@ -102,9 +102,7 @@ A widely used measure for information leakage is \emph{min-entropy}, which is ba
 
 Using these definitions, Smith \cite{smith09} proposes the following definitions for the leakage equation in \ref{eq:measure}:
 
-The initial uncertainty is given by the min-entropy of the input value $H_\infty(\mIn)$ and the remaining uncertainty is given by the conditional min-entropy $H_\infty(\mIn \: | \: \mOut)$ of $\mIn$ after having observed $\mOut$ as the output.
-
-Thus the information leaked by a program is $H_\infty(\mIn) - H_\infty(\mIn \: | \: \mOut)$. This quantity can be determined easily with the following definition and theorem:
+The initial uncertainty is given by the min-entropy of the input value $H_\infty(\mIn)$ and the remaining uncertainty is given by the conditional min-entropy $H_\infty(\mIn \: | \: \mOut)$ of $\mIn$ after having observed $\mOut$ as the output. Thus the information leaked by a program is $H_\infty(\mIn) - H_\infty(\mIn \: | \: \mOut)$. This quantity can be determined easily with the following definition and theorem:
 
 \begin{definition}[Channel Capacity]
     Given a program $p$, the channel capacity of $p$ is the logarithm of the number of distinct outputs than can be produced by $p$.
@@ -121,13 +119,13 @@ Thus the information leaked by a program is $H_\infty(\mIn) - H_\infty(\mIn \: |
 \paragraph{Measuring Leakage for Individual Program Executions}
 While the vulnerability-based approach is appropriate to assess the risk of inadvertent information leakage for the program as a whole, it fails to give realistic measures in the dynamic case. If we consider the output of a single program run, the information an attacker may obtain from the output can be significantly greater than what the channel capacity of the program tells us  \cite{bielova16}.
 
-We demonstrate this using the example program from \ref{fig:ifEx}. The possible outputs of the program are \texttt{0} and \texttt{1}, so the leakage, measured in bits, using the channel capacity formula is $\log_2 2 = 1$ Assuming integers are 64 bit wide, leaking a single bit seems acceptable in most cases.
+We demonstrate this using the example program from \ref{fig:ifEx}. The possible outputs of the program are \texttt{0} and \texttt{1}, so the leakage, measured in bits, using the channel capacity formula is $\log_2 2 = 1$. Assuming integers are 64 bit wide, leaking a single bit seems acceptable in most cases.
 
-Now, let's assume we run the program with the input $h := 42$. The output of the program will be $1$. An attacker that observes this output and has access to the program text will now know that the secret input was $42$. Instead of one single bit, the attacker has gained knowledge about all 64 bit of the secret input. For every other input, the attacker can only conclude that $\mIn \neq 42$. That leaves $2^{64} - 1$ possible inputs that are indistinguishable for the attacker. 
+Now, let's assume we run the program with the input $h := 42$. The output of the program will be $1$. An attacker that observes this output and has access to the program code will now know that the secret input was $42$. Instead of one single bit, the attacker has gained knowledge about all 64 bit of the secret input. For every other input, the attacker can only conclude that $\mIn \neq 42$. That leaves $2^{64} - 1$ possible inputs that are indistinguishable for the attacker. 
 
-This example shows that relying on min-entropy and channel capacity as a measure of information leakage can be dangerous if we care about the confidentiality of the secret inputs in every run of the program. Therefore, we now introduce measures, that are more suited for the dynamic case.
+This example shows that relying on min-entropy and channel capacity as a measure of information leakage can be dangerous if we care about the confidentiality of the secret inputs in every run of the program. Therefore, we now introduce measures that are more suited for the dynamic case.
 
-We define an equivalence relation called the \emph{indistinguishability relation} as shown in definition \ref{def:ir}, where two inputs are related iff they produce the same program output. The equivalence class of this relation are pre-images of the possible program outputs (see definition \ref{def:is}). When the adversary observes the value $l$, he knows that the secret input must be an element of $\mathcal{H}_l$. Thus, the bigger the size of $\mathcal{H}_l$, the less likely the adversary is, to guess the secret input in a single try \cite{backes09, smith09, alvim19}. 
+We define an equivalence relation called the \emph{indistinguishability relation} as shown in definition \ref{def:ir}, where two inputs are related iff they produce the same program output. The equivalence class of this relation are pre-images of the possible program outputs (see definition \ref{def:is}). When the adversary observes the value $l$, he knows that the secret input must be an element of $\mathcal{H}_l$. Thus, the bigger the size of $\mathcal{H}_l$, the less likely the adversary is to guess the secret input in a single try \cite{backes09, smith09, alvim19}. 
 
 \begin{definition}[Indistinguishability Relation]\label{def:ir}
         For each program $p$, we define the \emph{indistinguishability relation} $\thicksim$ over $\mathcal{H}$ as:
@@ -173,8 +171,6 @@ The relationship between dynamic leakage and min-entropy is shown in equation \r
     \end{equation}
 \end{center}
 
-\td{finish -- clean up some of the definitions + theorems -- citations}
-
 \begin{figure}
     \centering
     \begin{tabular}{ |c|c|c| } 
@@ -189,6 +185,8 @@ The relationship between dynamic leakage and min-entropy is shown in equation \r
     \label{tab:comp}
 \end{figure}
 
+In this thesis, we develop an analysis that can calculate both, the channel capacity of a program and the dynamic leakage of a single execution. 
+
 \section{Program Representation}
 
 \paragraph{Control Flow Graph}
@@ -197,20 +195,20 @@ A control flow graph (CFG) is a program representation that highlights the contr
 We use $\mbb_p$ for the set of all basic blocks of a program \p and $b_1, b_2, ...$ for the blocks themselves. With exception of the \texttt{start}- and \texttt{end}-block, every block in the CFG has at minimum one predecessor and one successor.
 
 \paragraph{Static Single Assignment}
-Static single assignment (SSA) is a representation of the program, where every variable is assigned exactly once. If in the original program, a variable is written to more than once, a copy of the variable is created, that replaces the original one from that point in the program \cite{rosen88}. 
+Static single assignment (SSA) is a representation of the program, where every variable is assigned exactly once. If in the original program, a variable is written to more than once, a copy of the variable is created that replaces the original one from that point in the program \cite{rosen88}. 
 
- To decide which copy of a variable reaches a statement that uses the value of that variable, $\phi$-functions are used. $\phi$-functions are placed at points in the program at which multiple control flow paths merge. In a CFG these point are basic blocks that have more than one predecessor. For each control flow path, the variable copy used on that path is given as an argument to the $\phi$-function. During execution, the $\phi$-function evaluates to the argument that belongs to the control flow path, that was executed. The CFG in figure \ref{fig:cfg} contains a $\phi$-function in block $b_3$. The value $\mOut$ defined in $b_3$ is assigned the value $\mOut_1$, if block $b_2$ is executed, otherwise $\mOut_0$ will be assigned to $\mOut$.
+ To decide which copy of a variable reaches a statement that uses the value of that variable, $\phi$-functions are used. $\phi$-functions are placed at points in the program at which multiple control flow paths merge. In a CFG these point are basic blocks that have more than one predecessor. For each control flow path, the variable copy used on that path is given as an argument to the $\phi$-function. During execution, the $\phi$-function evaluates to the argument that belongs to the control flow path that was executed. The CFG in figure \ref{fig:cfg} contains a $\phi$-function in block $b_3$. The value $\mOut$ defined in $b_3$ is assigned the value $\mOut_1$ if block $b_2$ is executed, otherwise $\mOut_0$ will be assigned to $\mOut$.
 
 All data structures we use to represent the input program, are built using the SSA-form of the program.
 
 \paragraph{Program Dependence Graph}
-A program dependence graph (PDG) is an intermediate representation of a program that makes the programs data and control dependencies explicit. Its nodes are the programs operations and expressions and the edges represent the dependencies that exist between those \cite{ferrante84}. The Program Dependence Graph of \ref{fig:ifEx} is shown in figure \ref{fig:pdg}.
+A program dependence graph (PDG) is an intermediate representation of a program that makes the program's data and control dependencies explicit. Its nodes are the program's operations and expressions and the edges represent the dependencies that exist between those \cite{ferrante84}. The Program Dependence Graph of the program \ref{fig:ifEx} is shown in figure \ref{fig:pdg}.
 
 A data dependency edge from node $x$ to node $y$ exists, if the operation of the node $y$ depends on a value that is defined in the node $x$.
 
 A control dependency edge from node $x$ to node $y$ exists, if the outcome of $x$ has influence on whether node $y$ will be executed.
 
-Thus, a path $x \stackrel{*}{\rightsquigarrow } y$ between two nodes exists, if information can flow in the program from location $x$ to location $y$. Consequently, if there is no path, no information can flow between the two statements. This property makes PDGs a popular data structure for information flow analysis \cite{horwitz88,giffhorn12}.
+Thus, a path $x \stackrel{*}{\rightsquigarrow } y$ between two nodes exists, if information might flow in the program from location $x$ to location $y$. Consequently, if there is no path, no information can flow between the two statements. This property makes PDGs a popular data structure for information flow analysis \cite{horwitz88,giffhorn12}.
 
 \begin{figure}
     \begin{subfigure}[t]{.45\textwidth}
@@ -258,9 +256,7 @@ Thus, a path $x \stackrel{*}{\rightsquigarrow } y$ between two nodes exists, if 
 
 \section{Program Slicing}
 
-\com{put in new section: static techniques? could also include some stuff about what nildumu does}
-
-Slicing is a technique used to find those sections of a program, that are influenced by (forward slice) or influence (backward slice) a given location in the program \cite{weiser81}.
+Slicing is a technique used to find those sections of a program that are influenced by (forward slice) or influence (backward slice) a given location in the program \cite{weiser81}.
 This location is called the \emph{slicing criterion} and is a tuple $\langle s, v \rangle$ of a program statement $s$ and a variable $v$.
 The \emph{backward slice} with respect to the criterion $\langle s, v \rangle$ contains all statements that influence the value of $v$ at point $s$ in the program. 
 A \emph{forward slice} with respect to the criterion $\langle s, v \rangle$ contains all statements that are influenced by the value of $v$ assigned at point $s$ in the program.
@@ -278,7 +274,7 @@ Tools like JOANA use slicing techniques on system dependence graphs to analyse t
     \begin{minipage}{.4\textwidth}
         \begin{algorithm}[H]
             \hspace*{\algorithmicindent} \textbf{Input} \In: int \\
-            \hspace*{\algorithmicindent} \textbf{Output} sum, product: int \\
+            \hspace*{\algorithmicindent} \textbf{Output} sum: int \\
             \hspace*{.5em}
             \begin{algorithmic}
                 \State $i: int \leftarrow 0$
@@ -297,7 +293,7 @@ Tools like JOANA use slicing techniques on system dependence graphs to analyse t
     \begin{minipage}{.4\textwidth}
         \begin{algorithm}[H]
             \hspace*{\algorithmicindent} \textbf{Input} \In: int \\
-            \hspace*{\algorithmicindent} \textbf{Output} sum, product: int \\
+            \hspace*{\algorithmicindent} \textbf{Output} sum: int \\
             \hspace*{.5em}
             \begin{algorithmic}
                 \State $i: int \leftarrow 0$
@@ -320,7 +316,7 @@ Tools like JOANA use slicing techniques on system dependence graphs to analyse t
 
 \section{Model Counting}
 
-Given a propositional formula $F$, the model counting problem (\#SAT) is the problem of finding the number of distinct variable assignments for $F$, for which $F$ evaluates to true \cite{biere09}. So the solution for the formula shown in  \ref{fig:satEx} is \#F = 3, with the fulfilling variable assignments being $\{ x = \mttt, y = \mfff\}, \{x = \mttt, y = \mttt\}$ and  $\{x = \mfff, y = \mfff\}$. We will denote the model count of a propositional formula $f$ as $mc(f)$.
+Given a propositional formula $F$, the model counting problem (\#SAT) is the problem of finding the number of distinct variable assignments for $F$, for which $F$ evaluates to $\mttt$ \cite{biere09}. So the solution for the formula shown in  \ref{fig:satEx} is \#F = 3, with the fulfilling variable assignments being $\{ x = \mttt, y = \mfff\}, \{x = \mttt, y = \mttt\}$ and  $\{x = \mfff, y = \mfff\}$. We will denote the model count of a propositional formula $f$ as $mc(f)$.
 
 \#SAT is a generalization of the SAT problem and falls into the \#P-complete complexity class, as demonstrated by Valiant in \cite{valiant79}.
 
@@ -340,14 +336,4 @@ The first approximate \#SAT algorithm for DNF formulas was introduced by Luby an
 \paragraph*{Projected Model Counting}
 Given a set of propositional variables $\mathcal{V}$ and a propositional formula $F$ over $\mathcal{V}$, projected model counting (\#$\exists$SAT) is the problem of finding the number of assignments to a set of priority variables $\mathcal{P} \subseteq \mathcal{V}$, such that the assignment can be extended to an assignment over $\mathcal{V}$ that fulfills $F$. Considering the example from \ref{fig:satEx} and a priority set $\mathcal{P} = \{x\}$, the number of projected models is 2, with both possible assignments of $x$ being extendable to a fulfilling assignment over all variables by setting $y = \mfff$. We will denote the projected model count of a propositional formula $f$ over the set of priority variables $\mathcal{P}$ as $mc_\mathcal{P}(f)$.
 
-The problem is introduced by Aziz et.al. in \cite{aziz15}, along with a discussion of approaches to solve \#$\exists$SAT. \td{finish}
-
-% Model Counting
-% Complexity
-% Hashing-based approaches
-% Application to CNF
-% (\epsilon, \delta) approximation / "Probably Approximately Correct"
-
-%%% relevant for this section
-% The Complexity of Enumeration and Reliability Problems (Valiant '79) -- \cite{valiant79}
-% A scalable approximate model counter (chakraborty '13) -- \cite{chakraborty13}
+The problem is introduced by Aziz et al. in \cite{aziz15}. Solving projected model counting is usually done using modified algorithms for the \#SAT problem. Aziz et al. introduce approaches based on the DPLL strategy, where search decisions are first made on non-priority variables, and on the d-DNNF strategy, where non-priority variables are \enquote{forgotten} by replacing them with the value $\mttt$. 

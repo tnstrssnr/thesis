@@ -1,11 +1,9 @@
 \chapter{Extended Dependency Analysis}\label{ch:loops}
 
-Chapter \ref{sec:design} introduced the basic principles of the dependency analysis and how the results of the dependency analysis can be used to measure the amount of leaked information for a given program.
-
-In this chapter we will extend the dependency analysis to include the handling of arrays and more complex control flow structures.
+Chapter \ref{sec:design} introduced the basic principles of the dependency analysis and how the results of the dependency analysis can be used to measure the amount of leaked information for a given program. In this chapter, we will extend the dependency analysis to include the handling of arrays and more complex control flow structures, such as loops and function calls.
 
 \paragraph{Sequential Execution Value}
-So far, we used the execution value $\llbracket p \rrbracket_h (v)$ to get the actual value of $v$ during the execution with input $h$. Allowing loops and function calls in our input programs means, that it is possible for statements to be executed multiple times. A value $v$ can thereby have more than one execution value during an execution.
+So far, we used the execution value $\llbracket p \rrbracket_h (v)$ to get the actual value of $v$ during the execution with input $h$. Allowing loops and function calls in our input programs means that it is possible for statements to be executed multiple times. A value $v$ can thereby have more than one execution value during an execution.
 To ensure that the execution value of a value is still well defined, we add a parameter $i$ that signifies, which of the possible execution values we want to refer to.
 
 \begin{definition}[Sequential Execution Value]
@@ -13,26 +11,24 @@ To ensure that the execution value of a value is still well defined, we add a pa
     \begin{center}
         $\llbracket p \rrbracket_h: \val_p \times \mathbb{N} \to \{0, 1\} ^w \cup \{\bot\}$.
     \end{center}
-    For a value $v$, $\llbracket p \rrbracket_h(v, i)$ is the numerical value of the $i$-th assignment of $v$ during the execution. If there is not $i$-th assignment of the value, the function returns $\bot$.
+    For a value $v$, $\llbracket p \rrbracket_h(v, i)$ is the numerical value of the $i$-th assignment of $v$ during the execution. If there is no $i$-th assignment of the value, the function returns $\bot$.
 \end{definition}
 
 \paragraph{Execution Condition $exec(\cdot)$ in Loops}
-In our analysis we treat loops as if they were separate functions. Therefore, when computing the execution condition $exec(\cdot)$ for the basic blocks, we need a special handling of the blocks inside a loop:
+In our analysis, we treat loops as if they were separate functions. Therefore, when computing the execution condition $exec(\cdot)$ for the basic blocks of a program, we need a special handling of the blocks inside a loop:
 
 The execution condition for the loop header will be computed in the standard way.
 
 For the blocks inside the loop, we assume they form a separate function with the loop header being the entry block. We compute the execution condition for those blocks in the standard way, but under the assumption that $exec(b) = \mttt$ for the loop header $b$.
 
-Since we treat loops as a function rather than a control flow structure, we annotate the edge between the loop head $b$ and the block following the loop header outside the loop $\hat{b}$ with $follow((b, \hat{b})) = \mttt$. The execution condition $exec(\hat{b})$ is computed using this annotation.
+Since we treat loops as a function rather than a control flow structure, we annotate the edge between the loop head $b$ and the block following the loop header after the loop $\hat{b}$ with $follow((b, \hat{b})) = \mttt$. The execution condition $exec(\hat{b})$ is computed using this annotation.
 
 \section{Loops}\label{sec:loops}
 Loops are handled during the dependency analysis with the following steps:
 
-First, we isolate the loop from the rest of the program and analyse the loop body as a separate function. Second, we generate the dependency vectors for loop output values. These dependency vectors act as a map from the loop inputs to the loop outputs. For each iteration we recursively apply this mapping outputs to itself. Finally, we combine the iteration results into dependency vectors that represent the effect of the loop during the execution as a whole.
+First, we isolate the loop from the rest of the program and analyze the loop body as a separate function. Second, we generate the dependency vectors for loop output values. These dependency vectors act as a map from the loop inputs to the loop outputs. We compute the outputs of specific iterations using this map. Finally, we combine the iteration results into dependency vectors that represent the effect of the loop during the execution as a whole.
 
-Because all three steps refer to the same program values in a different context, we use different notations to differentiate between them. The notations represent the value as an element of $\val_p$ and are used as alternative names for the values during different stages of the analysis.
-
-For a program value $v$ that is defined inside a loop $l$:
+Because all three steps refer to the same program values in a different context, we use different notations to differentiate between them. The notations represent the value as an element of $\val_p$ and are used as alternative names for the values during different stages of the analysis. For a program value $v$ that is defined inside a loop $l$:
 \begin{itemize}
     \setlength\itemsep{0em}
     \item $v[l]$ is used instead of $v$ during the general loop body analysis, which is the analysis of the loop separate from the rest of the program.
@@ -77,7 +73,7 @@ For a program value $v$ that is defined inside a loop $l$:
                 \draw[arrow] (b3.east) -- ++(1,0) |- (b2.east);
                 \draw[arrow] (b2.west) -- ++(-1,0) |-(exit.west);
     \end{tikzpicture}
-    \caption{CFG of the example program}
+    \caption{CFG of the example program in SSA-form}
     \label{fig:whilegraph}
 \end{subfigure}
 \caption{Example program for Loop Analysis. The program doesn't have a secret input and always returns $111_2$.}\label{fig:loopEx}
@@ -88,25 +84,23 @@ We begin the analysis by defining input and output values for a single loop iter
 
 The set of values that are used inside a loop can be divided into two categories:
 \begin{enumerate}
-    \item Values, that might change with each iteration. These are values that are defined inside the loop (or before the loop in the case of the first loop iteration) and then get passed to the next iteration via a $\phi$-function in the loop header.
-    \item Values, that are constant for every loop iteration.
+    \item Values that might change with each iteration. These are values that are defined inside the loop (or before the loop in the case of the first loop iteration) and then get passed to the next iteration via a $\phi$-function in the loop header.
+    \item Values that are constant for every loop iteration.
 \end{enumerate}
 
-The first group of values represent the inputs of a loop iteration, while the second group can be treated as constants in the loop analysis, even if their concrete value is unknown. The outputs of a loop iteration are the values that are defined inside the loop and used either in the subsequent iteration or after the loop.
+The first group of values represents the inputs and outputs of a loop iteration, while the second group can be treated as constants in the loop analysis, even if their concrete value is unknown.
 
 \begin{definition}[Loop Inputs and Outputs]
     Let $l$ be a loop in program $p$.
     \begin{itemize}
         \item[(a)] We define the set $in[l]$ of inputs of the loop as the set of values defined by $\phi$-functions in the header of the loop $l$.
-        \item[(b)] We define the set $out[l]$ of outputs of the loop as the set of values that are defined inside the loop \emph{and} appear as arguments in a $\phi$-function in $l$.
+        \item[(b)] We define the set $out[l]$ of outputs of the loop as the set of values that are defined inside the loop \emph{and} appear as arguments in a $\phi$-function in the loop header of $l$.
     \end{itemize}
 \end{definition}
 
-Analogous to the notation for values, $in[l]$ and $out[l]$ refer to the input and output sets during the general loop body analysis. The input and output sets for a specific iteration $i$ are called $in[l, i]$ and $out[l, i]$.
+Analogous to the notation for values, $in[l]$ and $out[l]$ refer to the input and output sets during the general loop body analysis. The input and output sets for the $i$-th iteration are called $in[l, i]$ and $out[l, i]$.
 
-Using the defined inputs and outputs, we can apply the principles of the basic dependency analysis to the loop $l$:
-
-We set $dVec(v[l]) = \var(v[l])$ for $v[l] \in in[l]$, i.e. we represent the values of the inputs as vectors of fresh boolean variables. Next, we compute the dependency vectors of all values defined inside the loop.
+Using the inputs and outputs, we can apply the principles of the basic dependency analysis to the loop $l$. We represent the values of the inputs as vectors of fresh boolean variables by setting $dVec(v[l]) = \var(v[l])$ for $v[l] \in in[l]$. Next, we compute the dependency vectors of all values defined inside the loop. 
 
 The dependency vectors of the loop outputs $out[l]$ are made up of formulas that depend on
 \begin{enumerate}
@@ -116,12 +110,10 @@ The dependency vectors of the loop outputs $out[l]$ are made up of formulas that
     \item Variables that represent loop input bits from enclosing loops
 \end{enumerate}
 
-Additional to the inputs and outputs, we define a propositional formula $exit[l]$ for the loop $l$, that represents the condition that must be fulfilled to jump out of the loop. Like the formulas for values in $out[l]$, $exit_l$ depends on variables from the loop inputs as well as the program inputs. 
+Additional to the inputs and outputs, we define a propositional formula $exit[l]$ for the loop $l$, which represents the condition that must be fulfilled to jump out of the loop. Like the formulas for values in $out[l]$, $exit[l]$ depends on variables from the loop inputs, the program inputs, and enclosing loop inputs. 
 
 \paragraph{Example}
-Figure \ref{fig:loopEx} shows an example of a program containing a loop $l$.
-
-The inputs of the loop are the values $L_1[l]$ and $i_1[l]$. The outputs of the loop are the values $L_2[l]$ and $i_2[l]$.
+Figure \ref{fig:loopEx} shows an example of a program containing a loop $l$. The inputs of the loop are the values $L_1[l]$ and $j_1[l]$. The outputs of the loop are the values $L_2[l]$ and $j_2[l]$.
 
 The dependency vectors of those values are:
 \begin{align*}
@@ -131,28 +123,26 @@ The dependency vectors of those values are:
     dVec(j_2[l]) &= [j_1^1, j_1^0, 0] \\
 \end{align*}
 
-The loop condition is $exit[l] = [j_1^2, j_1^1, j_1^0] == [0, 0, 0]$.
+The loop condition is $exit[l] = \left( [j_1^2, j_1^1, j_1^0] == [0, 0, 0] \right)$.
 
 \paragraph{Computing Iterations}
 We use the dependency vectors from the general loop body analysis, to obtain dependency vectors that represent the loop outputs after a specific iteration. The formulas in these vectors will then only depend on the program input variables and not the loop variables.
 
-Input and output values of specific loop iterations are collected in the sets $in[l, i]$ and $out[l, i]$, where $i$ is the iteration count. The special case $i = 0$ refers to the program state before the loop is entered. We leave $in[l(0)]$ undefined and use $out[l(0)]$ as the values that are computed before the loop and then used inside the loop during the first iteration. For $i > 0$ we have $in[l(i + 1)] = out[l, i]$.
+Input and output values of specific loop iterations are collected in the sets $in[l, i]$ and $out[l, i]$, where $i$ is the iteration count. The special case $i = 0$ refers to the program state before the loop is entered. We leave $in[l, 0]$ undefined and use $out[l, i]$ as the values that are computed before the loop and then used inside the loop during the first iteration. For $i > 0$ we have $in[l, i + 1] = out[l, i]$.
 
 Given the dependency vectors for values in $in[l, i]$ for some value of $i$, we can compute the dependency vectors for values in $out[l, i]$, by substituting the variables representing values in $in[l]$ by the corresponding formula of the value in $in[l, i]$.
 
 \begin{definition}[Iteration Substitution]
     Let $p$ be a program with a loop starting at block $l$. We are given dependency vectors for values in $in[l, i]$. To compute the dependency vectors for values in $out[l, i]$, we use the substitution
     \begin{center}
-        $\sigma_{l, i} := \{h_i^j \mapsto dVec(h_i)^j | \quad h_i \in in[l, i]\}$
+        $\sigma_{l, i} := \{h[l]^j \mapsto dVec(h[l, i])^j | \quad h[l] \in in[l]\}$
     \end{center}
     and apply it to the dependency vectors of $out[l]$.
 \end{definition}
 
-The substitution $\sigma_{l, i}$ can be applied to $exit[l]$ to obtain a formula $exit[l, i]$ that represents the condition of whether the i-th loop iteration will be entered or not.
+The substitution $\sigma_{l, i}$ can be applied to $exit[l]$ to obtain a formula $exit[l, i]$ that represents the condition of whether the loop is exited after the i-th loop iteration.
 
-\paragraph{Example (cont'd)} The dependency vectors of the input and output values, as well as the loop condition, for the first iterations for the example program are presented in table \ref{tab:loop}.
-
-The construction of the substitution for $i = 1$ is shown below:
+\paragraph{Example (cont'd)} The dependency vectors of the input and output values, as well as the loop condition, for the first iterations for the example program are presented in table \ref{tab:loop}. The construction of the substitution for $i = 1$ is shown below:
 
 \begin{align*}
 dVec(L_1[l]) &&:= [ && L_1^2 && L_1^1 && L_1^0 && ]\\
@@ -164,7 +154,7 @@ dVec(j_1[l, 0]) &&:= [ && 0 && 0 && 1 && ]\\
 \sigma_{l, 1} && := &&\sigma_{l, 1, L} \cup \sigma_{l, 1, i}
 \end{align*}
 
-The dependency vectors for the values $j_2[l, 1]$ and $L_2[l, 1]$ are the result of applying the substitution $\sigma_{l, 1}$ to the vectors $dVec(j_2[l])$ and $dVec(L_2[l])$ respectively.
+The dependency vectors for the values $j_2[l, 1]$ and $L_2[l, 1]$ are the result of applying the substitution $\sigma_{l, 1}$ to the vectors $dVec(j_2[l])$ and $dVec(L_2[l])$.
 
 \begin{table}
     \centering
@@ -182,7 +172,7 @@ The dependency vectors for the values $j_2[l, 1]$ and $L_2[l, 1]$ are the result
 \end{table}
 
 \paragraph{Combining Iterations for Overall Loop Result}
-To finish the loop analysis, we compute dependency vectors for the output values, that represent the loop execution as a whole.
+To complete the loop analysis, we compute dependency vectors for the output values, that represent the loop execution as a whole.
 
 The result values of the loop depend on the number of iterations that are executed. The case that the loop is executed exactly $i$ times is represented by the condition $iterations[l, i]$:
 
@@ -190,17 +180,16 @@ The result values of the loop depend on the number of iterations that are execut
     Let $p$ be a program with a loop beginning with basic block $l$.
     The propositional formula
     \begin{center}
-        $iterations[l, i]: (\bigwedge\limits_{0 \leq j < i} \lnot exit[l(j)]) \land exit[l, i]$
+        $iterations[l, i]: \left( \bigwedge\limits_{0 \leq j < i} \lnot exit[l, i] \right) \land exit[l, i]$
     \end{center}
-    is a propositional formula over $\var_p$ and evaluates to true, iff for a program input $h$ the loop is executed exactly $i$ times.
+    is a propositional formula that evaluates to true, iff for a program input $h$ the loop is executed exactly $i$ times. IT contains variables from $\var_p$ and variables representing inputs from enclosing loops where applicable.
 \end{definition}
 
-The formula $iterations[l, i]$ encodes the following intuition: For every $j < i$, \\$exit[l(j)]$ must be false, otherwise the loop execution would have been aborted before the $i$-th iteration. The condition $exit[l, i])$ must be true, otherwise the loop would have been executed more than $i$ times.
+The formula $iterations[l, i]$ encodes the following intuition: For every $j < i$, \\$exit[l, j]$ must be false, otherwise the loop execution would have been aborted before the $i$-th iteration. The condition $exit[l, i])$ must be true, otherwise, the loop would have been executed more than $i$ times.
 
-For the final set of loop output values, we make the following observations:
+For the loop output values, we make the following observations:
 
-We can check whether the loop is executed exactly $i$ times or not via the condition $iterations[l, i]$. If the loop is executed exactly $i$ times, the results are then equal to the outputs $out[l, i]$.  Continuing this observation for more iterations, leads to the algorithm \ref{alg:loop} that computes the dependency vector for a loop output value. To ensure the termination of the algorithm, we have to limit the number of loop iterations it computes to an upper bound $maxIter$.
-
+We can check whether the loop is executed exactly $i$ times or not via the condition $iterations[l, i]$. If the loop is executed exactly $i$ times, the results are then equal to the outputs $out[l, i]$.  Continuing this observation for more iterations, leads to the definition of algorithm \ref{alg:loop}that computes the dependency vector for a loop output value. To ensure the termination of the algorithm, we have to limit the number of loop iterations it computes to an upper bound $maxIter$. The following paragraph discusses the soundness of this approximation.
 \begin{figure}
     \centering
     \begin{algorithm}[H]
@@ -213,7 +202,7 @@ We can check whether the loop is executed exactly $i$ times or not via the condi
         \State $dVec(v) \leftarrow \bot$ // initialize with placeholder value
         \State $i: int \leftarrow 0$
         \While{$i < maxIter$}
-            \State $dVec(v) \leftarrow dVec(v).replace(\bot, \mathbb{IF}(iterate(i), \: dVec(v[i]), \bot))$
+            \State $dVec(v) \leftarrow dVec(v).replace(\bot, \mathbb{IF}(iterations[l, i], \: dVec(v[l, i]), \bot))$
             \State $i++$
         \EndWhile
         \end{algorithmic}
@@ -224,7 +213,7 @@ We can check whether the loop is executed exactly $i$ times or not via the condi
 
 
 \paragraph{Approximation: Limiting Loop Iterations}\label{sec:approx}
-Limiting the number of loop iterations means, that we exclude certain program inputs $h$ from the analysis, namely those that need more than $maxIter$ iterations. If such an input is used to evaluate the dependency vector of a loop output value $v$, $dVec(v)$ will evaluate to $\bot$. We interpret $\bot$ as an invalid execution and disregard the value in the following analysis. If the dependency vector $dVec(v) = \bot$ is used in the computation of the dependency vector for another value $v'$, $dVec(v')$ will also be set to $\bot$.
+Limiting the number of loop iterations means, that we exclude certain program inputs $h$ from the analysis, namely those that require more than $maxIter$ iterations. If such an input is used to evaluate the dependency vector of a loop output value $v$, $dVec(v)$ will evaluate to $\bot$. We interpret $\bot$ as an invalid execution and disregard the value in the following analysis. If the dependency vector $dVec(v) = \bot$ is used in the computation of the dependency vector for another value $v'$, $dVec(v')$ will also be set to $\bot$.
 
 The exclusion of certain input values means, we have to adjust the equivalence from theorem \ref{thm:equiv}:
 
@@ -239,49 +228,50 @@ Let $p$ be a program that contains a loop. We consider an execution that produce
 To compute the dynamic leakage of the execution and the channel capacity, we must adjust the method from section \ref{sec:leak} to take into account the weakened equivalence theorem.
 
 \paragraph{Dynamic Leakage}
-Any input value $h$ for which $\mathcal{V}_h(dVec(\mOut))$ doesn't evaluate to $\bot$ still fulfills theorem \ref{thm:equiv}. That means we can correctly decide if $h \in \mathcal{H}_l$. If for an input value $h'$ $\mathcal{V}_{h'}(dVec(\mOut)) = \bot$, our analysis is not able to decide whether $h' \in \mathcal{H}_l$. However, we can safely approximate the set $\mathcal{H}_l$, by not adding any inputs with invalid executions to $\mathcal{H}_l$. Under-approximation is sound, because the knowledge gained by the attacker increases as the size of $\mathcal{H}_l$ decreases. Therefore the approximated dynamic leakage is a safe upper bound for the information leaked by the execution.
+Any input value $h$ for which $\mathcal{V}_h(dVec(\mOut))$ doesn't evaluate to $\bot$ still fulfills theorem \ref{thm:equiv}. That means we can correctly decide if $h \in \mathcal{H}_l$. If we have an input value $h'$ for which $\mathcal{V}_{h'}(dVec(\mOut)) = \bot$, our analysis is not able to decide whether $h' \in \mathcal{H}_l$. However, we can safely approximate the set $\mathcal{H}_l$, by not adding any inputs with invalid executions to $\mathcal{H}_l$. Under-approximation is sound, because the knowledge gained by the attacker increases as the size of $\mathcal{H}_l$ decreases. Therefore the approximated dynamic leakage is a safe upper bound for the information leaked by the execution.
 
 \paragraph{Channel Capacity}
-The channel capacity analysis tries to find all possible outputs $l$ for which exit inputs $h$ that will produce the output $l$ when executing the program. If we restrict the set $\mathcal{H}$ from which the inputs are taken, we possibly also restrict the set of possible outputs $\mathcal{L}$. To safely approximate the size of the set $\mathcal{L}$, we must assume that every input $h$ with $\mathcal{V}_h(dVec(\mOut)) = \bot$ produces a distinct output $l$ that is not the result of any other program execution. Over-estimating the size of $\mathcal{L}$ means over-estimating the amount of information an attacker might gain and is therefore sound.
+The channel capacity analysis tries to find all possible outputs $l$. If we restrict the set $\mathcal{H}$ from which the inputs are taken, we possibly also restrict the set of possible outputs $\mathcal{L}$. To safely approximate the size of the set $\mathcal{L}$, we must assume that every input $h$ with $\mathcal{V}_h(dVec(\mOut)) = \bot$ produces a distinct output $l$ that is not the result of any other program execution. Over-estimating the size of $\mathcal{L}$ means over-estimating the amount of information an attacker might gain and is therefore sound.
 
 
 \paragraph{Example (cont'd)}
 Applying algorithm \ref{alg:loop} to the value $L_2$ from example \ref{fig:whilegraph}, gives the following results:
 \begin{center}
 \begin{align*}
-    dVec(L_2) && = &&([001] == [000]) && ? && [000] && : \\
-        && && (([010] == [000]) && ? && [001] && : \\
-        && && (([100] == [000]) && ? && [011] && : \\
-        && && (([000] == [000]) && ? && [111]))) && \\
-        && = && (\mfff) && ? && [000] && : \\[1em]
-        && && ((\mfff) && ? && [001] && : \\
-        && && ((\mfff) && ? && [011] && : \\
-        && && ((\mfff) && ? && [111]))) && \\[1em]
-        && = && [111]
+    dVec(L_2) && = && \mathbb{IF}(([001] == [000]), && [000], \\
+        && && \mathbb{IF}(([010] == [000]), && [001], \\
+        && && \mathbb{IF}(([100] == [000]), && [011], \\
+        && && \mathbb{IF}(([000] == [000]), && [111], \quad \bot)))) && \\[1em]
+        && = && \mathbb{IF}((\mfff), && [000], \\
+        && && \mathbb{IF}((\mfff), && [001], \\
+        && && \mathbb{IF}((\mfff), && [011], \\
+        && && \mathbb{IF}((\mttt), && [111], \quad \bot)))) && \\[1em]
+        && = && && [111]
     \end{align*}
 \end{center}
 
 \section{Functions}\label{sec:functions}
 We assume that all functions that are part of the input program are pure, i.e. they have no side effects. This means, the only way for information to flow into and out of the function is through the input parameters and the return value.
 
-We write $\func$ for the set of functions that belong to a program $p$ and for $f \in \func$. For the analysis of the function $f$, we treat $f$ as its own program, where the parameters correspond to the input $\mIn$ and the return value corresponds to the output $\mOut$.
+We write $\func$ for the set of functions that belong to a program $p$. For the analysis of the function $f$, we treat $f$ as its own program, where the parameters correspond to the input $\mIn$ and the return value corresponds to the output $\mOut$.
 
 \paragraph{Function Analysis}
-In the following we first consider the analysis of non-recursive functions with a single return statement. Independent of any call sites of the function, we use the standard dependency analysis algorithm to compute dependency vectors for all values inside the function.
+In the following, we first consider the analysis of non-recursive functions with a single return statement. Independent of any call sites of the function, we use the standard dependency analysis algorithm to compute dependency vectors for all values inside the function.
 
 The dependency vectors computed for values of this function are defined over the variables created to represent the function's parameters. They do not contain variables representing bits of values from outside the function.
 
 \paragraph{Dependency Analysis for \texttt{call}-Statements}
-The statement $v \leftarrow \mathtt{call} f(a)$ calls the function $f$ with the arguments $a := (a_0,..., a_m)$ and assigns the return value of the call to the value $v$. To compute the dependency vector $dVec(v)$, we substitute the variables in $\var_f$ with the dependency vectors of the arguments:
+The statement $v \leftarrow \mathtt{call} \: f(a)$ calls the function $f$ with the arguments $a := (a_0,..., a_m)$ and assigns the return value of the call to the value $v$. To compute the dependency vector $dVec(v)$, we substitute the variables in $\var_f$ with the dependency vectors of the arguments:
 
 \begin{definition}[Call Site Substitution]\label{def:callsiteSub}
-    Let $f \in \func$ be a function in $p$ that has input parameters $\mathtt{P} := (\mathtt{P}_0,...,\mathtt{P}_m)$ and let the expression $\mathtt{call} f(a)$ be a call to $f$ with the arguments $a := (a_0,..., a_m)$.
+    Let $f \in \func$ be a function in $p$ that has input parameters $\mathtt{P} := (\mathtt{P}_0,...,\mathtt{P}_m)$ and return value $r_f$ and let the expression $\mathtt{call} \: f(a)$ be a call to $f$ with the arguments $a := (a_0,..., a_m)$.
     
     The substitution $\sigma_{f(a)}$, defined as
     \begin{center}
-        $\sigma_{f(a)} := \{ \var(\mathtt{P}_i)^j \mapsto dVec(a_i)^j \: |  \mathtt{P}_i \in \mathtt{P}\}$
+        $\sigma_{f(a)} := \{ dVec(\mathtt{P}_i)^j \mapsto dVec(a_i)^j \: |  \: \mathtt{P}_i \in \mathtt{P}\}$
     \end{center}
-    is called the \emph{call site substitution} of the expr $\mathtt{call} \: f(a)$ and substitutes the variables $\var(\mathtt{P}_i)$ representing the input parameters $\mathtt{P}_i$ by the corresponding boolean predicates of the dependency vectors belonging to the call site's arguments.
+    is called the \emph{call site substitution} of the expr $\mathtt{call} \: f(a)$ and substitutes the variables in $dVec(\mathtt{P}_i)$ representing the input parameters $\mathtt{P}_i$ by the corresponding boolean predicates of the dependency vectors belonging to the call site's arguments (note that $dVec(P_i)$ contains only variables that represent the bits of the function parameter $P_i$).
+    
     The definition of $\mathcal{E}: \expr \to \mbform$ for function call expressions is then given as:
     \begin{center}
         $\mathcal{E}(\mathtt{call} f(a)) := \sigma_{f(a)} (dVec(r_f))$
@@ -292,25 +282,15 @@ The statement $v \leftarrow \mathtt{call} f(a)$ calls the function $f$ with the 
 Using the extended definition of $\mathcal{E}$ including call-expressions, theorem \ref{thm:equiv} (theorem \ref{thm:weak} in case of loop approximation) is still fulfilled.
 \end{lemma}
 
-\section{Functions with Multiple Return Statements}
+\section{Functions with Multiple Return Statements}\label{sec:multRet}
 
-A function $f$ may have more than one return statement. Those statements in general return different values $v_1, ... v_k$. Thus it is necessary to combine the dependency vectors of these values into a single vector $r_f$ that accurately represents the returned value based on the arguments of this function. Figure \ref{fig:mmult} shows a program that contains a function with three return statements. Each return statement returns a different value. We assume that return statements are not contained in a loop.
+A function $f$ may have more than one return statement. Those statements in general return different values $v_1, ... v_k$. Thus it is necessary to combine the dependency vectors of these values into a single vector $r_f$ that accurately represents the returned value based on the arguments of this function. We assume that return statements are not contained in a loop.
 
-The combining of multiple return values requires the following theorem:
+The combining of multiple return values requires the following observation: If $b_1, b_2 \in \: \mbb_f$ are basic blocks that each contain a return statement and $b_1 \neq b_2$, then $exec(b_1) \land exec(b_2)$ is unsatisfiable. If this were not true, and $exec(b_1) \land exec(b_2)$ was satisfiable, then lemma \ref{lemma:exec} tells us, that there must be a set of function arguments for f, for which both $b_1$ and $b_2$ are executed. This would mean the execution of $f$ has multiple return values, which is an obvious contradiction. Thus, $exec(b_1) \land exec(b_2)$ must be unsatisfiable.
 
-\begin{theorem}\label{thm:execMult}
-    Let $b_1, b_2 \in \mbb_f$ be basic blocks that each contain a return statement with $b_1 \neq b_2$. Then:
-    \begin{center}
-        $exec(b_1) \land exec(b_2)$ is unsatisfiable
-    \end{center}
-\end{theorem}
+It follows directly from this observation that if a function has $k$ return statements which appear in the blocks $b_1, ..., b_k$, at most one of the conditions $exec(b_1),..., exec(b_k)$ can be fulfilled for any truth assignment. Simultaneously, every execution of a function with a return value includes a return statement. Hence exactly of the conditions $exec(b_1),... exec(b_k)$ must be fulfilled for any truth assignment.
 
-\begin{proof}
-Let without loss of generality $\mathcal{V}_a (exec(b_1)) = \mttt$ for an arbitrary argument vector $a = (a_0, ..., a_k)$. Per \ref{def:exec} this means that block $b_1$ is executed when function $f$ is called with the arguments $a$. Because every execution of $f$ can only include a single return statement, block $b_2$ will not be executed in this case. Thus $exec(b_2) = \mfff$.
-\end{proof}
-It follows directly from theorem \ref{thm:execMult} that if a function has $k$ return statements which appear in the blocks $b_1, ..., b_k$ at most one of the conditions $exec(b_1),..., exec(b_k)$ can be fulfilled for any truth assignment. Simultaneously, every execution of a function with a return value includes a return statement. Hence exactly of the conditions $exec(b_1),... exec(b_k)$ must be fulfilled for any truth assignment.
-
-Let $v_1, ... v_k$ be the values that are possibly returned by a function. The return statements are located in $b_1, .., b_k$ respectively. We compute the vector $return(f)$ in such a way that, if for a function argument $a \mathcal{V}_a(exec(b_i))$ is true, $\mathcal{V}_a(return(f))$ will be equivalent to $\mathcal{V}_a(dVec(v_i))$. We define the function $select: 2^{\textsc{Val}_f \times BB_f} \to \mbform^w$ that fulfills this condition:
+Let $v_1, ... v_k$ be the values that are possibly returned by a function. The return statements are located in $b_1, .., b_k$ respectively. We compute the vector $r_f$ in such a way that, if for a function argument $a$ the condition $\mathcal{V}_a(exec(b_i))$ is true, $\mathcal{V}_a(r_f)$ will be equivalent to $\mathcal{V}_a(dVec(v_i))$. We define the function $select: 2^{\textsc{Val}_f \times BB_f} \to \mbform^w$ that fulfills this condition:
 
 \begin{definition}[Value Selection]
     Let $s = \{s_0, ..., s_k\} \in 2^{\textsc{Val}_f \times BB_f}$ be a set of tuples where $s_i = (v_i, b_i)$. We define
@@ -318,16 +298,26 @@ Let $v_1, ... v_k$ be the values that are possibly returned by a function. The r
         $select: 2^{\textsc{Val}_f \times BB_f} \to \mbform^w$
         $select(s) = \begin{cases}
             dVec(v) & |s| = 1 \text{ and } s = {(v, b)} \\
-            \mathbb{IF}(exec(b_i, dVec(v_i), select(s \setminus s_i) & |s| > 1, s_i = (v_i, b_i) \in s \text{ arbitrary}
+            \mathbb{IF} \left( exec(b_i), dVec(v_i), select(s \setminus s_i) \right) & |s| > 1, s_i = (v_i, b_i) \in s \text{ arbitrary}
         \end{cases}$
     \end{center}
-    For $|s| = 2$ the $select(\cdot)$ is the same as applying the ternary operator $\mathbb{IF}(\cdot, \cdot, \cdot)$ to the elements of $s$. For $|s| > 2$, $select(s)$ corresponds to a sequential application of $\mathbb{IF}(\cdot, \cdot, \cdot)$
+    $select(s)$ corresponds to a sequential application of $\mathbb{IF}(\cdot, \cdot, \cdot)$
 \end{definition}
 
 \paragraph{Example}
-The possible return values in the example program are $0$ in block $b_1$, $1$ in block $b_3$ and $2$ in block $b_4$.
+Figure \ref{fig:mmult} shows a program that contains a function with three return statements. The possible return values in the example program are $0$ in block $b_1$, $1$ in block $b_3$ and $2$ in block $b_4$. The dependency vectors and execution conditions for the function \textsc{isEvenGreaterZero()} are:
 
-The return vector of the function \textsc{isEvenGreaterZero()} is given by \\ $return(\textsc{isEvenGreaterZero()}) := select({(0, b_1), (1, b_2), (2, b_3)})$:
+\begin{align*}
+    dVec(x) &&= && [x^2 x^1 x^0] \\
+    dVec(0) &&= && [000] \\
+    dVec(1) &&= && [001] \\
+    dVec(2) &&= && [010] \\[1em]
+    exec(b_1) &&= && x^2 \iff \mathtt{false} \\
+    exec(b_3) &&= && x^2 \centernot\iff \mathtt{false} &&\land && x^0 \iff \mathtt{false} \\
+    exec(b_4) &&= && x^2 \centernot\iff \mathtt{false} &&\land && x^0 \centernot\iff \mathtt{false}
+\end{align*}
+
+The return vector of the function \textsc{isEvenGreaterZero()} is given by:
 
 \begin{align*}
     select({(0, b_1), (1, b_2), (2, b_3)}) && = \mathbb{IF}(exec(b_1), 0, && select({(1, b_2), (2, b_3)}) && \\
@@ -339,7 +329,6 @@ The return vector of the function \textsc{isEvenGreaterZero()} is given by \\ $r
 \begin{figure}
 \centering
     \begin{subfigure}{.7\textwidth}
-        \centering
     \begin{algorithm}[H]
         \hspace*{\algorithmicindent} \textbf{Input} $\mIn: int$ \\
         \hspace*{\algorithmicindent} \textbf{Output} $\mOut: int$\\
@@ -350,7 +339,7 @@ The return vector of the function \textsc{isEvenGreaterZero()} is given by \\ $r
             \If{$x < 0$}
                 \State \Return 0 
                 \Else
-                \If{$x \% 2 ==  0$}
+                \If{$x \: \% \: 2 ==  0$}
                 \State \Return 1
                 \Else
                 \State \Return 2
@@ -359,12 +348,11 @@ The return vector of the function \textsc{isEvenGreaterZero()} is given by \\ $r
             \EndProcedure
         \end{algorithmic} 
     \end{algorithm}
+    \caption{Source code of the example}
     \end{subfigure}
-    \caption{Example program containing a function with multiple return statements}\label{fig:mmult}
-\end{figure}
-
-\begin{figure}
-        \begin{subfigure}[t]{.5\textwidth}
+    
+     \begin{subfigure}{.7\textwidth}
+     \centering
        \begin{tikzpicture}
            \tikzstyle{node} = [rectangle, minimum width=2cm, minimum height=1cm, text centered, draw=black, node distance=2cm]
             \tikzstyle{arrow} = [thick,->,>=stealth]
@@ -389,26 +377,14 @@ The return vector of the function \textsc{isEvenGreaterZero()} is given by \\ $r
        \end{tikzpicture}
        \caption{CFG for the function \textsc{isEvenGreaterZero}$(\cdot)$}
     \end{subfigure}
-    
-    \begin{subfigure}[t]{.7\textwidth}
-        \begin{align*}
-            dVec(x) &&= && [x^2 x^1 x^0] \\
-            dVec(0) &&= && [000] \\
-            dVec(1) &&= && [001] \\
-            dVec(2) &&= && [010] \\[1em]
-            \mathcal{E}(x < 0) &&= && x^2 \iff \mathtt{false}  \\
-            \mathcal{E}(x \% 2 == 0) &&= && x^0 \iff \mathtt{false}  \\[1em]
-            exec(b_1) &&= && x^2 \iff \mathtt{false} \\
-            exec(b_3) &&= && x^2 \centernot\iff \mathtt{false} &&\land && x^0 \iff \mathtt{false} \\
-            exec(b_4) &&= && x^2 \centernot\iff \mathtt{false} &&\land && x^0 \centernot\iff \mathtt{false}
-        \end{align*}
-    \end{subfigure}
+    \caption{Example program containing a function with multiple return statements}\label{fig:mmult}
 \end{figure}
 
-\section{Recursion}
-We restrict the analysis of recursive functions in this section to functions, that contain at most one recursive call. The analysis we present can be extended to functions with an arbitrary number of recursive calls.
 
-To analyse recursive functions, we begin by applying the standard function analysis described in $\ref{sec:functions}$. However call statements that recursively invoke the function that they are part of are not handled in the standard way. Instead, we use a placeholder value $\bot$ as the return value of the call. Analogous to the placeholder value $\bot$ used in the loop analysis, the value $\bot$ is propagated if other values depend on the value represented by $\bot$.
+\section{Recursion}
+We restrict the analysis of recursive functions in this section to functions that contain at most one recursive call. The analysis we present can be extended to functions with an arbitrary number of recursive calls.
+
+To analyze recursive functions, we begin by applying the standard function analysis described in \ref{sec:functions} and \ref{sec:multRet}. However, call statements that recursively invoke the function that they are part of, are not handled in the standard way. Instead, we use placeholder variables $\rec := [\rec^{w - 1}, \rec^{w - 2}, ..., \rec^0]$ as the return value of the call.
 
 \iffalse
 \begin{figure}
@@ -432,7 +408,7 @@ To analyse recursive functions, we begin by applying the standard function analy
             \EndProcedure
         \end{algorithmic} 
     \end{algorithm}
-    \caption{Program containing a recursive function. The recursive function takes two arguments and adds their values together.}\label{fig:rec}
+    \caption{A program containing a recursive function. The recursive function takes two arguments and adds their values together.}\label{fig:rec}
     \end{subfigure}
     \hfill
     \begin{subfigure}{.45\textwidth}
@@ -452,14 +428,13 @@ To analyse recursive functions, we begin by applying the standard function analy
 \fi
 
 \paragraph{Simulating Recursive Calls}
-The analysis of a recursive function $f$ yields a dependency vector for the return value $r_f$ of $f$, that depends on the variables representing the input bits and contains the placeholder value $\bot$. $\bot$ represents the return value $r_f$ of the recursive call inside the function.
+The analysis of a recursive function $f$ yields a dependency vector for the return value $r_f$ of $f$, which depends on the variables representing the input bits and contains placeholder variables from the vector $\rec$. These variables represent the return value $r_f$ of the recursive call inside the function.
 
-Under our assumption that all program executions terminate, the vector $dVec(r_f)$ will not evaluate to $\bot$ for at least one value of $h$.
-
+Under our assumption that all program executions terminate, the vector $dVec(r_f)$ will not contain variables from $\rec$ for at least one function argument. If this wasn't the case, then there would be no way to end the recursion during the execution.
 
 For notation, we use $r_f[i]$ to mean the value $r_f$ after the function $f$ was executed with a maximum recursion depth $i$. The return value we have computed so far is $r_f[0]$. We analyse recursive calls up until a recursion bound $recBound$ and write $r_f$ for $r_f[recBound]$.
 
-To simulate the information flow of the recursive function call in the function $f$, we replace the placeholder value $\bot$ with $\sigma_{f(a)}(dVec(r_f))$, where $\sigma_{f(a)}$ is the call site substitution defined in \ref{def:callsiteSub}. The result vector of the replacement operation represents the execution of function $f$ including one recursive call and the placeholder value $\bot$ for any further recursive calls.
+To simulate the information flow of the recursive function call in the function $f$, we replace the placeholder value $\rec$ with $\sigma_{f(a)}(dVec(r_f))$, where $\sigma_{f(a)}$ is the call site substitution defined in \ref{def:callsiteSub} for the recursive call of $f$ with arguments $a$. The result vector of the replacement operation represents the execution of function $f$ including one recursive call and the placeholder value $\rec$ for any further recursive calls.
 
 To simulate more than one recursive call, we repeat the same replacement operation until we reach a predefined recursion bound $recBound$. The algorithm to compute the final dependency vector of the return value of a recursive function is shown in figure \ref{alg:rec}.
 
@@ -467,33 +442,31 @@ To simulate more than one recursive call, we repeat the same replacement operati
     \centering
     \begin{algorithm}[H]
     \hspace*{\algorithmicindent} \textbf{Input} $dVec(r_f[0]):$ Dependency vector of $f$'s return value, \\
-    \hspace*{\algorithmicindent} \hspace*{\algorithmicindent} containing $\bot$ as a placeholder.\\
+    \hspace*{\algorithmicindent} \hspace*{\algorithmicindent} containing $\rec$ as a placeholder.\\
     \hspace*{\algorithmicindent} \hspace*{\algorithmicindent} $\sigma_f(a): $Call site substitution for recursive call $\mathtt{call} f(a)$ \\
     \hspace*{\algorithmicindent} \textbf{Output} $dVec(r_f):$ Dependency vector of $f$'s return value.\\
     
     \begin{algorithmic}[1]
         \State $i: int \leftarrow 0$
         \While{$i < recBound$}
-            \State $dVec(r_f[i + 1]) \leftarrow dVec(r_f[i]).replace(\bot, \: \sigma_{f(a)}(dVec(r_f[0])))$
+            \State $dVec(r_f[i + 1]) \leftarrow dVec(r_f[i]).replace(\rec, \: \sigma_{f(a)}(dVec(r_f[0])))$
             \State $i++$
         \EndWhile
         \end{algorithmic}
 \caption{Recursive Function Return Value Computation}
 \end{algorithm}
-    \caption{Algorithm for the computation of return values of recursive functions. The function \texttt{o.replace(x, y))} replaces occurrences of \texttt{x} in expression \texttt{o} with \texttt{y}}\label{alg:rec}
+    \caption{Algorithm for the computation of return values of recursive functions. The function \texttt{o.replace(x, y))} replaces the elements of the vector \texttt{x} in expression \texttt{o} with the elements of the vector \texttt{y} that have the same index.}\label{alg:rec}
 \end{figure}
 
 \paragraph{Approximation: Limiting Recursion Depth}
-By limiting the recursion depth to $recBound$, we may excludes inputs $h \in \mathcal{H}$ from the analysis, if the execution pf $p$ with input $h$ requires more than $recBound$ recursive calls. The effects of this approximation on the computation of the information leakage of $p$ are the same as for the approximation in the loop analysis described in \ref{sec:approx}.
+By limiting the recursion depth to $recBound$, we may exclude inputs $h \in \mathcal{H}$ from the analysis, if the execution of $p$ with input $h$ requires more than $recBound$ recursive calls. The effects of this approximation on the computation of the information leakage of $p$ are the same as for the approximation in the loop analysis described in \ref{sec:approx}. We treat the approximations of the dynamic leakage and the channel capacity in the same manner as in the approximation for loop iterations.
 
 \section{Break-Statements}
-To analyse loops that contain break statements, the loop analysis from section \ref{sec:loops} has to be adapted at two points:
+To analyze loops that contain break statements, the loop analysis from section \ref{sec:loops} has to be adapted at two points:
 \begin{enumerate}
-    \item Which values the output values of the loop are now depends on the point at which the loop is exited: At the end of the loop body or at a break point?
+    \item Which values act as the output values of the loop now depends on the point at which the loop is exited: At the end of the loop body or at a break point?
     \item When the loop is exited is now also determined by whether or not a break statement is executed.
 \end{enumerate}
-
-To illustrate the adapted loop analysis, we use the example program shown in figure \ref{fig:break}
 
 \begin{figure}
 \begin{subfigure}{.5\textwidth}
@@ -549,78 +522,56 @@ To illustrate the adapted loop analysis, we use the example program shown in fig
 \end{figure}
 
 \paragraph{Loop Output Values}
-The identification of the loop output values happens during the general loop body analysis, where we analyse the loop body independent of the rest of the program. The goal is to identify values, that represent the output of a single loop iteration. We continue to use the notations from section \ref{sec:loops}.
+The identification of the loop output values happens during the general loop body analysis, where we analyze the loop body independent of the rest of the program. The goal is to identify values, that represent the output of a single loop iteration. We continue to use the notations from section \ref{sec:loops}.
 
-Previously we identified the output values of a loop by analysing the arguments of the $\phi$-functions inside the loop header. For every input value, an output value is identified. The input value is mapped to this output value. The mapping represents the execution of the loop. When the loop contains a break statement, the output value might be ambiguous, since it might change if the execution of the loop body is not completed, but exited early via break statement.
+Previously we identified the output values of a loop by analyzing the arguments of the $\phi$-functions inside the loop header. For every input value, an output value is identified. The input value is mapped to this output value. The mapping represents the execution of the loop. When the loop contains a break statement, the output value depends on whether the execution of the loop body is completed or exited early via a break statement.
 
-Consider a single iteration of the loop in the example program \ref{prog:break}. The value of the variable $j$ is unchanged if the loop is exited via the break statement. If the loop is exited normally, $j$ is left-shifted by 1 bit. For the variable $L$, the value after taking the break statement is the same as the value if the iteration is exited normally.
+Let $v[l]$ be an input value to a loop. If the loop is without break statements we can map $v[l]$ to a single loop output value $v'[l]$. If the loop does contain break statements, we first collect the set of possible output values for $v[l]$: For each location, the loop could be exited at, the set contains the value that $v'[l]$ should be mapped to, if the exit is taken. This value can be found by analyzing whether the block following the loop exit contains a $\phi$-function for this value and if yes, which arguments the $\phi$-function has.
 
-The differences in loop output values are reflected in the CFG \ref{fig:breakcfg} in the following way: The block $b_4$ acts as a \enquote{bridge} between the end of the loop execution and the start of the execution of the code following the loop. At this block, the execution path via the break statement and via the loop header merge.
+If no $\phi$-function is present, the output value at this point is the same as the input value of the loop. If a $\phi$-function is present, the output value at this point is the argument that belongs to the control flow of the basic block containing the break statement.
 
-If the output of the loop via the break statement is different to the normal output, a $\phi$-function is necessary to evaluate which value should be used in the further execution. The block $b_4$ has a $\phi$-function with the arguments $L_1$ and $L_2$. $L_1$ is used if the loop is exited normally. $L_2$ is used if the loop is exited via the break statement. 
-
-If the output of the loop via the break statement is the same as the normal output, there is no $\phi$ function in the bridge block. In the example, this is the case for the value $j_1$.
-
-Let $v[l]$ be an input value to a loop. If the loop is without break statements we can map $v[l]$ to a single loop output value $v'[l]$. If the loop does contain break statements, we first collect the set of possible output values for $v[l]$: For each location the loop could be exited at, the set contains the value that $v'[l]$ should be mapped to, if the exit is taken.
-
-For exiting the loop normally, we use the output value we determined in the general loop body analysis.
-
-For exiting the loop via a break statement, we need to examine the $\phi$-statements in the bridge block mentioned earlier. The bridge block is the successor of the basic block that contains the break statement. Every break statement will have its own bridge block. 
-After having collected all possible output values for a loop input value, we combine the dependency vectors of those values into a single propositional vector that represents the overall output value for the aforementioned input value. The method for combining the dependency vectors is the same as for the combination of return values during the function analysis. In the function analysis, we use the execution conditions of the blocks containing the return statements. In the loop analysis we need to use the execution conditions of the blocks containing the break statements. For the output value that belongs to a normal jump out of the loop iteration, there is no corresponding beak block. We arrange the values in such a way, that this output value is chosen iff all execution conditions of the break blocks evaluate to false.
+After having collected all possible output values for a loop input value, we combine the dependency vectors of those values into a single propositional vector that represents the overall output value for the aforementioned input value. The method for combining the dependency vectors is the same as for the combination of return values during the function analysis. When applying the $select(\cdot)$ function, we arrange the values in such a way, that this output value is chosen iff all execution conditions of the break blocks evaluate to false.
 
 \paragraph{Example}
-The loop in the example program has the input values $L_1$ and $j_1$. For each of those, there are two possible output values: one value for exiting the loop via the break condition and one value for exiting the loop normally. For the value $L_1$ both of those output values are equal. Table \ref{tab:break} shows the dependency vectors of the values in question.
+An example program containing a \texttt{break}-statement is given in figure \ref{fig:break}. The loop in the example program has the input values $L_1$ and $j_1$. For each of those, there are two possible output values: one value for exiting the loop via the break statement and one value for exiting the loop normally. For the value $L_1$ both of those output values are equal. $L_1$ is mapped to the output value $L_2$. The input value $j_1$ is mapped to itself, if the loop is exited via the \texttt{break} and to $j_2$ otherwise.
 
 The execution condition $exec(b_4)$ of the block containing the break is given by $exec(b_4) := \mIn < 0$. Not that the execution conditions for blocks inside a loop are computed separately from the rest of the program.
 
 The propositional vectors for the output values of the loop are finally given by:
 \begin{align*}
-    \text{Output value for input $L_1$:} && \mathbb{IF}(\mIn < 0 , L_2 , L_2) && = L_2 \\
+    \text{Output value for input $L_1$:} && \mathbb{IF}(\mIn < 0 , L_2 , L_2) && = && L_2 \\
     \text{Output value for input $j_1$:} && \mathbb{IF}(\mIn < 0 , j_1, j_2)\\
 \end{align*}
 
-\begin{table}[]
-    \centering
-    \begin{tabular}{|c|c|c|}
-     Input Value &  Loop exited via break & Loop exited normally \\
-        $L_1$ & $L_2 := L_1 \: | \: j_1$ & $L_2 := L_1 \: | \: j_1$ \\
-        $j_1$ & $j_1$ & $j_2 := j_1 << 1$
-\end{tabular}
-    \caption{Input values and output values for the loop in \ref{fig:break}}
-    \label{tab:break}
-\end{table}
-
 \paragraph{Exiting the Loop}
-A loop that contains break statements is exited if the loop condition in the header is unfulfilled or if a break statements is executed. A break statement is executed if the condition $exec(b)$ for the block $b$ that contains the break statement is fulfilled. If $b_0, ..., b_k$ are all blocks in the loop that contain a break statement, the loop is exited if $exit[l] \lor (\bigvee\limits_{0 \leq i \leq k} exec(b_i))$ is fulfilled. This extended exit condition replaces the simple exit condition $exit[l]$ during the loop analysis.
+A loop that contains break statements is exited if the loop condition in the header is unfulfilled or if a break statement is executed. A break statement is executed if the condition $exec(b)$ for the block $b$ that contains the break statement is fulfilled. If $b_0, ..., b_k$ are all blocks in the loop that contain a break statement, the loop is exited if $exit[l] \lor \left(\bigvee\limits_{0 \leq i \leq k} exec(b_i)\right)$ is fulfilled. This extended exit condition replaces the simple exit condition $exit[l]$ during the loop analysis.
 
 \section{Arrays}
 The analysis can support fixed-size arrays with value semantics. For fixed-size arrays, the length must be known at compile time.
 
-Before the dependency analysis begins, arrays are turned into a set of variables that each represent an array element. The variables have to be transformed into SSA-form. New array variable copies are introduced at the instantiation of the array as well at every \texttt{write} instruction. Even though a only modifies a single array element, we generate new variable copies for all array elements. This is necessary, because in general it is not possible to know which array element is modified.
+Before the dependency analysis begins, arrays are turned into a set of values that each represent an array element. The values have to be transformed into SSA-form. New array value copies are introduced at the instantiation of the array as well at every \texttt{write} instruction. Even though a \texttt{write} only modifies a single array element, we generate new value copies for all array elements. This is necessary, because in general, it is not possible to know which array element is modified.
 
-For notation we use superscript indices ($a^0, a^1, ...$) for the values representing the elements of the array $a$. Subscript indices ($a^0_0, a^0_1,...$) indicate the copies of those variables created during the SSA-transformation.
+For notation, we use superscript indices ($a^0, a^1, ...$) for the values representing the elements of the array $a$. Subscript indices ($a^0_0, a^0_1,...$) indicate the copies of those variables created during the SSA transformation.
 
-The following paragraphs explain, how the dependency vectors for the array variables are computed during the analysis:
+The new values represent array entries for which we compute dependency vectors that describe the execution value of the array entry, analogous to the other values.
 
 \paragraph{Array Instantiation}
 If a new array is instantiated, all values are initialized with \texttt{0}. Their dependency vectors are constant vectors containing the value $\mfff$.
 
 \paragraph{Array Write}
-Consider the expression $a[k] \leftarrow e$, where we write the result of the expression $e$ to the k-th element of the array $a$.
-
-Let $a$ be an array of length $m$. The array entries before the write instruction will be called $a_i^0, a_i^1,..., a_i^{m-1}$.  The array entries before the write instruction will be called $a_{i+1}^0, a_{i+1}^1,..., a_{i+1}^{m-1}$.
+Consider the expression $a[k] \leftarrow e$, where we write the result of the expression $e$ to the k-th element of the array $a$. Let $a$ be an array of length $m$. The values for the array entries before the write instruction are called $a_i^0, a_i^1,..., a_i^{m-1}$ and the values for the array entries after the write instruction are called $a_{i+1}^0, a_{i+1}^1,..., a_{i+1}^{m-1}$.
 
 The dependency vectors of the values $a_{i+1}^0, a_{i+1}^1,..., a_{i+1}^{m-1}$ are given by:
 \begin{center}
     $dVec(a_{i+1}^j) := \mathbb{IF}(j == k, \mathcal{E}(e), a_i^j), \quad i = 0...m-1$
 \end{center}
-The expression assigns the array entry value the propositional vector $\mathcal{E}(e)$, if the index $j$ of the entry corresponds to the write-index $k$. Otherwise the array entry is not changed.
+The expression assigns the array entry value the propositional vector $\mathcal{E}(e)$, if the index $j$ of the entry corresponds to the write-index $k$. Otherwise, the array entry is not changed.
 
 \paragraph{Array Read}
 Consider the expression $v \leftarrow a[i]$, where we assign the value of the i-th element of the array $a$ to the value $v$.
 Let $a := [a^0, ..., a^m]$ be the array entry values that represent the array $a$ at the read instruction.
 
-We define a function $select(\cdot, \cdot): \mathbb{N} \times 2^{\val_p} \to \val_p$ that accepts an integer $i$ and an ordered set $S$ of values as inputs and returns the $i$-th element of $S$. Using this function we define the dependency vector for the value $v$ as:
+We define a function $choose(\cdot, \cdot): \: \mathbb{N} \times 2^{\val_p} \to \val_p$ that accepts an integer $i$ and an ordered set $S$ of values as inputs and returns the $i$-th element of $S$. Using this function we define the dependency vector for the value $v$ as:
 \begin{center}
-    $dVec(v) := select(i, a)$
-\end{center}
+    $dVec(v) := choose(i, a)$
+ a\end{center}

@@ -27,9 +27,9 @@ In this section, we will introduce techniques to integrate static analyses (Nild
     \label{fig:pp}
 \end{figure}
 
-To keep the effort of computing the dependency formulas, as well as their evaluation through the model counter, as low as possible, we statically pre-process the input program to identify those statements that do not need to be included in the dependency analysis \td{find better wording than `dependency analysis'}.
+To keep the effort of computing the dependency formulas, as well as their evaluation with the model counter, as low as possible, we statically pre-process the input program to identify those statements that do not need to be included in the dependency analysis.
 
-The pre-processing consists of three stages, shown in figure \ref{fig:pp}. In the following section we will use the program from \ref{fig:ec} as a running example to demonstrate the effects of the pre-processing.
+The pre-processing consists of the three stages shown in figure \ref{fig:pp}. In the following section we will use the program from figure \ref{fig:ec} as a running example to demonstrate the effects of the pre-processing.
 
 \paragraph{Constant Bit Analysis}
 We use \emph{Nildumu} \cite{bechberger18} to perform a constant bit analysis on the input program. The goal is to identify values that are \emph{effectively constant}. Effectively constant values have the same execution value in every run of $p$, regardless of the inputs that were used.
@@ -37,7 +37,7 @@ We use \emph{Nildumu} \cite{bechberger18} to perform a constant bit analysis on 
 \begin{definition}[Effectively constant value]
     A program value $v$ of the program $p$ is called \emph{effectively constant} iff:
     \begin{center}
-        $\forall \mIn_1, \mIn_2 \in \mathcal{H}: \llbracket p \rrbracket_{\mIn_1} (v) = \llbracket p \rrbracket_{\mIn_2}(v)$
+        $\forall h_1, h_2 \in \mathcal{H}: \llbracket p \rrbracket_{h_1} (v) = \llbracket p \rrbracket_{h_2}(v)$
     \end{center}
 \end{definition}
 
@@ -52,57 +52,58 @@ If a value is effectively constant, we can safely exclude it from any further an
             \hspace{1em}
             \begin{algorithmic}[1]
                 \If{$\mIn < 0$}
-                \State $l_1 \leftarrow 42$
+                \State $\mOut \leftarrow f(-\mIn, 1)$
                 \Else
-                \State $l_2 \leftarrow 42$
+                \State $\mOut \leftarrow f(\mIn, 1)$
                 \EndIf
-                \State $\mOut = \phi(l_1, l_2)$
             \end{algorithmic}
         \end{algorithm}
     \end{minipage}
-    \caption{The value $l$ in this program is \emph{effectively constant}, since its execution value will always be 42.}
+    \caption{Assume that $f(\mathtt{int} \: x, \mathtt{int} \: y): \mathtt{int}$ is a function, that returns the second parameter $y$. The value $\mOut$ in this program is \emph{effectively constant}, since its execution value will always be $1$ every input $\mIn$.}
     \label{fig:ec}
 \end{figure}
 
 \paragraph{PDG Pruning}
-If a value is effectively constant, an observer cannot learn anything about the secret inputs of a program by observing the behaviour of that particular value. Since we are only interested in information flow that will help an attacker in learning our secret, the data and control dependencies of effectively constant values can safely be ignored. \question{do i need more explanation of why this is?} We prune the PDG of the analysed program by removing all incoming edges of nodes that define effectively constant values. Figure \ref{fig:prune} shows the original and the pruned version of the PDG of the program in figure \ref{fig:ec}.
+If a value is effectively constant, an observer cannot learn anything about the secret inputs of a program by observing the behaviour of that particular value. Since we are only interested in information flow that will help an attacker in learning our secret, the data dependencies of effectively constant values can safely be ignored. We prune the PDG of the analysed program by removing all incoming data edges of nodes that define effectively constant values.
+Control dependency edges that start at a loop header (an if-statement header) can be removed if all values that result from the loop (from the two branches) are effectively constant. Figure \ref{fig:prune} shows the original and the pruned version of the PDG of the program in figure \ref{fig:ec}.
 
 \begin{figure}
     \centering
     
-    \begin{subfigure}{.33\textwidth}
+    \begin{subfigure}{.7\textwidth}
+           \centering
         \begin{tikzpicture}
         \tikzstyle{node} = [ellipse, minimum width=1.5cm, minimum height=.6cm, text centered, draw = black, node distance=1.5cm]
         \tikzstyle{arrow} = [thick,->,>=stealth]
 
         \node (if) [node] {$\mathtt{if} \: \mIn < 0$};
-        \node (l1) [node, below of=if, xshift=-1.2cm] {$\mOut_0 \leftarrow 42$};
-        \node (l2) [node, below of=if, xshift=1.2cm] {$\mOut_1 \leftarrow 42$};
-        \node (l) [node, below of=l2, xshift=-1.2cm] {$\mOut = \phi(\mOut_0, \mOut_1)$};
+        \node (l1) [node, below of=if, xshift=-1.8cm] {$\mOut_0 \leftarrow f(-\mIn, 1)$};
+        \node (l2) [node, below of=if, xshift=1.8cm] {$\mOut_1 \leftarrow f(\mIn, 1)$};
+        \node (l) [node, below of=l2, xshift=-1.8cm] {$\mOut = \phi(\mOut_0, \mOut_1)$};
 
-        \draw [arrow] (if) -- (l1);
-        \draw [arrow] (if) -- (l2);
+        \draw [arrow, blue] (if) -- (l1);
+        \draw [arrow, blue] (if) -- (l2);
         \draw [arrow] (l1) -- (l);
         \draw [arrow] (l2) -- (l);
     \end{tikzpicture}
-    \caption{Before Pre-processing}
+    \caption{Before Pre-processing. The blue edges are control dependencies, while the black edges are data dependencies.}
     \end{subfigure}
-       \begin{subfigure}{.32\textwidth}
+       \begin{subfigure}{.7\textwidth}
+       \centering
         \begin{tikzpicture}
         \tikzstyle{node} = [ellipse, minimum width=1.5cm, minimum height=.7cm, text centered, draw = black, node distance=1.5cm]
         \tikzstyle{arrow} = [thick,->,>=stealth]
 
         \node (if) [node] {$\mathtt{if} \: \mIn < 0$};
-        \node (l1) [node, below of=if, xshift=-1.2cm] {$\mOut_0 \leftarrow 42$};
-        \node (l2) [node, below of=if, xshift=1.2cm] {$\mOut_1 \leftarrow 42$};
-        \node (l) [node, below of=l2, xshift=-1.2cm] {$\mOut = \phi(\mOut_0, \mOut_1)$};
-
-        \draw [arrow] (if) -- (l1);
-        \draw [arrow] (if) -- (l2);
+        \node (l1) [node, below of=if, xshift=-1.8cm] {$\mOut_0 \leftarrow f(-\mIn, 1)$};
+        \node (l2) [node, below of=if, xshift=1.8cm] {$\mOut_1 \leftarrow f(\mIn, 1)$};
+        \node (l) [node, below of=l2, xshift=-1.8cm] {$\mOut = \phi(\mOut_0, \mOut_1)$};
     \end{tikzpicture}
-    \caption{After Pruning}
+    \caption{After Pruning. The data edges were removed, because the value $\mOut$ is effectively constant. The control dependencies were removed, because the value $\mOut$, which is the value resulting from the conditional after the two branches merged, is effectively final.}
     \end{subfigure}
-       \begin{subfigure}{.33\textwidth}
+           
+       \begin{subfigure}{.7\textwidth}
+       \centering
         \begin{tikzpicture}
         \tikzstyle{node} = [ellipse, minimum width=1.5cm, minimum height=.7cm, text centered, draw = black, node distance=1.5cm]
         \tikzstyle{arrow} = [thick,->,>=stealth]
@@ -113,20 +114,20 @@ If a value is effectively constant, an observer cannot learn anything about the 
         \node (l) [node, below of=l2, xshift=-1cm] {$\mOut = \phi(\mOut_0, \mOut_1)$};
 
     \end{tikzpicture}
-    \caption{After Slicing}
+    \caption{After Slicing. The backward slice for the criterion $\langle \mOut = \phi(\mOut_0, \mOut_1), l \rangle$ now only contains a single node and is the result of the pre-processing.}
     \end{subfigure}
     
-    
-    \caption{The PDG of the program in figure \ref{fig:ec}, at different stages during the pre-processing. The right-most graph shows the result of the whole pipeline: the backward slice for the criterion $\langle \mOut = \phi(\mOut_0, \mOut_1), l \rangle$ is the result of the pre-processing}
+    \caption{The PDG of the program in figure \ref{fig:ec}, at different stages during the pre-processing.}
     \label{fig:prune}
 \end{figure}
 
 \paragraph{Backward Slicing}
-As a last step, we calculate a backward slice with the slicing criterion $\langle s, v \rangle$ being the value $v$ that is leaked to a public channel combined with the statement $s$ of the leak. If more than one value is leaked, we compute the backward slice for each value and union the results. \com{can union be used as a verb? sounds weird.} For slicing, we use the pruned PDG from the previous stage. In our analysis, we used a static interprocedual backward slicing algorithm via the JOANA framework. \com{more specific? also we slice the sdg, not the pdg-- > correct!}
-The resulting backward slice contains those statements, that are needed for computing the dependency vector for the leaked value. Program statements that are not part of the slice do not have to analysed. Control structures, such as loops or conditional statements can be omitted, if the head of the structure is not contained in the backward slice: If the head is not part of the backward slice, the resulting output value does not depend on the truth value of the expression. Therefore it also doesn't depend on any computations that are contained in the control structure. In this case, we will also omit them from the computation of the path conditions that keep track of implicit information flows.
+As a last step, we calculate a backward slice with the slicing criterion $\langle s, v \rangle$ being the value $v$ that is leaked to a public channel combined with the statement $s$ of the leak. For slicing, we use the pruned PDG from the previous stage. In our analysis, we used a static inter-procedural backward slicing algorithm from the JOANA framework.
+The resulting backward slice contains those statements, that are needed for computing the dependency vector of the leaked value. Program statements that are not part of the slice do not have to analyzed. Control structures, such as loops or conditional statements can be omitted, if the head of the structure is not contained in the backward slice: If the head is not part of the backward slice, the resulting output value does not depend on the truth value of the expression. Therefore it also doesn't depend on any computations that are contained in the control structure. In this case, we will also omit them from the computation of the path conditions that keep track of implicit information flows.
 
 Omitting certain statements from the dependency analysis is safe, as long as we can guarantee, that we have enough information to determine the dependency vectors of the values defined in the remaining statements. Enough information in this case means that the dependency vectors of all used values of the expression defining the value are known. Each use value falls into one of the following categories:
 \begin{enumerate}
+    \setlength\itemsep{0em}
     \item \emph{Constants: }The dependency vector is constant and corresponds to the constants twos-complement representation.
     \item \emph{Parameters: }Parameters are unknown values whose dependency vectors are filled with placeholder variables.
     \item \emph{Effectively Constant Values: }The dependency vector is constant and corresponds to the twos-complement representation of the value determined by the constant bit analysis.
@@ -134,26 +135,11 @@ Omitting certain statements from the dependency analysis is safe, as long as we 
 \end{enumerate}
 Therefore it is indeed safe to omit statements in our analysis that were not included in the final backward slice of the pre-processing.
 
-By using this pre-processing method we can shrink the propositional formulas that are produced by the dependency analysis. An example of this is shown in figure \ref{fig:ppRes}, where we can eliminate an unnecessary ternary operator. This helps to increase efficiency in two ways: Firstly, the formulas the program needs to handle become smaller and thus take less time to process and secondly, the computation time of ApproxMC decreases with the decrease of the size of the input formula. A more in-depth analysis of the effects of the pre-processing on the cost of the analysis as a whole is given in \ref{sec:eval}. \td{insert reference when evaluation is done}
-
-\begin{figure}
-    \begin{subfigure}[t]{.4\textwidth}
-        \centering
-        $cd(l) : l = \mathbb{IF}(h < 0, l_1, l_2)$ \\ $\land l_1 = 42 \land l_2 = 42$
-        \caption{without pre-processing}
-    \end{subfigure}
-    \begin{subfigure}[t]{.4\textwidth}
-        \centering
-        $cd(l) : l = 42$
-        \vspace{\baselineskip}
-        \caption{with pre-processing}
-    \end{subfigure}
-    \caption{The resulting dependency formula for the value $l$ of the example in \ref{fig:ec}. \td{check back for notation etc after completing previous chapter}}
-    \label{fig:ppRes}
-\end{figure}
+By using this pre-processing method we can shrink the propositional formulas that are produced by the dependency analysis. In the example program, the dependency vector of the value $\mOut$ is reduced to $dVec(\mOut) = [001]$, whereas without the pre-processing it would include a ternary operator: $dVec(\mOut) = \mathbb{IF}(\mIn < 0, [001], [001])$.
+This helps to increase efficiency in two ways: Firstly, the formulas the program needs to handle become smaller and thus take less time to process and secondly, the computation time of ApproxMC decreases with the decrease of the size of the input formula. A more in-depth analysis of the effects of the pre-processing on the cost of the analysis as a whole is given in \ref{sec:eval}.
 
 \section{Hybrid Analysis for Channel Capacity}\label{sec:hybridcc}
-The channel capacity measures the number of distinct program outputs. Measuring the channel capacity exactly is however not always feasible. For example, if the program contains a loop, there might be too many possible program paths for the analysis to consider.
+The channel capacity measures the number of distinct program outputs. Measuring the channel capacity exactly is, however, not always feasible. For example, if the program contains a loop, there might be too many possible program paths for the analysis to consider.
 
 In this case, the analysis will disregard certain program paths estimate the channel capacity based on the program paths it did consider.
 
@@ -164,6 +150,7 @@ The basic idea of this hybrid analysis is, to divide the program into segments. 
 \paragraph{Program Segmentation and Segment Analysis}
 The program is divided according to the control flow structures it contains. The structures that are isolated are:
 \begin{itemize}
+    \setlength\itemsep{0em}
     \item loops
     \item conditional statements together with their branches
     \item functions
@@ -171,29 +158,29 @@ The program is divided according to the control flow structures it contains. The
 \end{itemize}
 
 For each segment, we compute its channel capacity. We begin by identifying the input and output values of each segment. Input values are values that are used in at least one expression, but were not defined inside the segment. Output values are values that are defined inside the segment and are used in locations outside the segment.
+
 For each segment, the computation of the channel capacity is handled in one of the following three ways:
 \begin{enumerate}
+\setlength\itemsep{0em}
     \item The segment is analysed using the dependency analysis from chapter \ref{sec:design}.
     \item The segment is analysed using Nildumu.
     \item The segment is recursively analysed using the hybrid analysis.
 \end{enumerate}
 
-In general, using the dependency analysis yields the most precise results, however it is also the most costly approach in terms of computation time. The decision, which analysis approach should be taken for a given program segment depends on the following factors:
+In general, using the dependency analysis yields the most precise results, however, it is also the most costly approach in terms of computation time. The decision which analysis approach should be taken for a given program segment depends on the following factors:
 
 If the size of the propositional formulas becomes too large, they cannot be handled in a timely fashion by the model counter. Large formulas are mainly the result of loops, where many iterations have to be taken into account, or nested and/or recursive function calls. Very long linear programs might become problematic even without loops and function calls.
 
-The second factor is the number of segments we divided the program into: Each segment will incur a certain amount of overhead time, needed to prepare the segment for the analysis and invoke the tools used in the analysis (Nildumu, ApproxMC, further dependencies).
-
-In our analysis, we  decided to use the Nildumu analysis for all loops and function calls that are nested inside another loop or function call. Control structures containing statically analysed segments have to be analysed in a hybrid analysis. All other segments are analysed using the dependency analysis.
+The second factor is the number of segments we divided the program into: Each segment will incur a certain amount of overhead time needed to prepare the segment for the analysis and invoke the tools used in the analysis (Nildumu, ApproxMC, further dependencies).
 
 
 \paragraph{Consolidation of Segment Results}
 Assume we are given a program containing a loop. We split the program into 3 segments: The part before the loop $p_b$, the loop itself $p_l$ and the part after the loop $p_a$.
 We compute the channel capacities for all three parts separately: $k_b, k_l, k_a$.
 
-In each segment analysis we over-approximate the possible inputs for the program section. Thus, the computed channel capacities possibly larger than they actually are. Because the attacker knowledge increases as the channel capacity increases, this is a sound upper limit for the information leakage of the program segment.
+In each segment analysis we over-approximate the possible inputs for the program section. Thus, the computed channel capacities are possibly larger than they actually are. Because the attacker knowledge increases as the channel capacity increases, this is a sound upper limit for the information leakage of the program segment.
 
-Because the programs we examine are deterministic, the number of outputs is always less or equal to the number of inputs of a program. Furthermore, the number of outputs of a segment is equal to the number of inputs of the following segment. Thus, we can obtain an overall estimation of the channel capacity for the program as a whole by taking the minimum of $k_b, k_l, k_a$.
+Because the programs we examine are deterministic, the number of outputs is always less or equal to the number of inputs of a program. Furthermore, the number of outputs of a segment is equal to the number of possible inputs of the following segment. Thus, we can obtain an overall estimation of the channel capacity for the program as a whole by taking the minimum of $k_b, k_l, k_a$.
 
 The approach can be generalized to an arbitrary number of segments.
 
